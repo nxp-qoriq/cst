@@ -62,15 +62,19 @@ static int generate_rsa_keys(const unsigned int n, FILE *fpri, FILE *fpub)
 
 	ret = PEM_write_RSAPrivateKey(fpri, srk, NULL, NULL, 0, 0, NULL);
 
-	if (!ret)
+	if (!ret) {
+		RSA_free(srk);
 		return -1;
+	}
 
 	ret = 0;
 
 	ret = PEM_write_RSAPublicKey(fpub, srk);
 
-	if (!ret)
+	if (!ret) {
+		RSA_free(srk);
 		return -1;
+	}
 
 #ifdef DEBUG
 	printf("public modulus (n):\n");
