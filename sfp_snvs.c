@@ -159,12 +159,12 @@ int main(const int argc, const char **argv)
 	/* copy N and E */
 	key = buf;
 	tmp = (unsigned char *)(((BIGNUM *) srk->n)->d);
-	for (j = key_len - 1, i = 0; i < ((BIGNUM *) srk->n)->top * 8; i++, j--)
+	for (j = key_len - 1, i = 0; i < ((BIGNUM *) srk->n)->top * sizeof(BIGNUM *); i++, j--)
 		key[j] = tmp[i];
 
 	key = buf + key_len;
 	tmp = (unsigned char *)(((BIGNUM *) srk->e)->d);
-	for (j = key_len - 1, i = 0; i < ((BIGNUM *) srk->e)->top * 8; i++, j--)
+	for (j = key_len - 1, i = 0; i < ((BIGNUM *) srk->e)->top * sizeof(BIGNUM *); i++, j--)
 		key[j] = tmp[i];
 
 	/* hash-->srk n e entries */

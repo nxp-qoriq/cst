@@ -42,7 +42,6 @@ usage2 ()
 	echo Usage: $0 ' sign <no of SG entries> <Entry1, Entry2...Entry8> <header address> <table address> <entry1 address,entry2 address...>'
 }
 
-simics_dir="../simics_scripts/"
 bootfile="boot.simics"
 
 if [ $# -lt 2 ] ;then
@@ -118,7 +117,6 @@ elif [ "$1" == sign ] ;then
 				echo "\$guest_image[$i]  = "  ${ARRAY[$i-2]}>>$bootfile
 				echo "\$guest_addr[$i]   = "  ${ARRAY[$numentries+i]}>>$bootfile
 				echo >>$bootfile
-				cp   ${ARRAY[$i-2]} $simics_dir
 			done
 			echo "run-command-file \"bootsim.include\"">>$bootfile
 			echo >>$bootfile
@@ -127,8 +125,6 @@ elif [ "$1" == sign ] ;then
 			echo >>$bootfile
 
 			./sg_sign    ${ARRAY[1]} ${ARRAY[2]}  ${ARRAY[3]}   ${ARRAY[4]}  ${ARRAY[5]}  ${ARRAY[6]} ${ARRAY[7]} ${ARRAY[8]} ${ARRAY[9]}  ${ARRAY[10]} ${ARRAY[11]} ${ARRAY[12]} ${ARRAY[13]} ${ARRAY[14]} ${ARRAY[15]} ${ARRAY[16]} ${ARRAY[17]} ${ARRAY[18]} ${ARRAY[19]}
-			cp sfp.out snvs.out boot.simics  esbc_hdr.out sg_table.out $simics_dir
-			echo "The SIMICS script file is $simics_dir$bootfile"
 			echo
 			exit
 		fi
