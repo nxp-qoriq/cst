@@ -287,7 +287,7 @@ int main(const int argc, const char **argv)
 	hesbc->fsl_uid = htonl(hdr->fsl_uid);
 	hesbc->oem_uid = htonl(hdr->oem_uid);
 	/* see the usage */
-	hesbc->psgtable = htonl(strtol(argv[3+sg_entries], 0, 16));
+	hesbc->psgtable = htonl(strtoul(argv[3+sg_entries], 0, 16));
 #else
 	hesbc->key_len = hdr->key_len;
 	hesbc->sign_len = hdr->sign_len;
@@ -354,7 +354,7 @@ int main(const int argc, const char **argv)
 	for (i = 0; i < sg_entries; i++) {
 #ifdef SIMICS
 		hsgtbl[i].len = htonl(sgtbl[i].len);
-		hsgtbl[i].pdata = htonl(strtol(argv[4+sg_entries+i], 0, 16));
+		hsgtbl[i].pdata = htonl(strtoul(argv[4+sg_entries+i], 0, 16));
 #else
 		hsgtbl[i].len = sgtbl[i].len;
 		hsgtbl[i].pdata = (u8 *) sgtbl[i].pdata;
@@ -471,12 +471,12 @@ int main(const int argc, const char **argv)
 	}
 
 #ifdef SIMICS
-	printf ("Load %s at %x\n", HDR_FILE, strtol(argv[2+sg_entries], 0, 16));
-	printf ("Load %s at %x\n", TBL_FILE, strtol(argv[3+sg_entries], 0, 16));
+	printf ("Load %s at %x\n", HDR_FILE, strtoul(argv[2+sg_entries], 0, 16));
+	printf ("Load %s at %x\n", TBL_FILE, strtoul(argv[3+sg_entries], 0, 16));
 	for (i = 0; i < sg_entries; i++) {
 		hsgtbl[i].len = htonl(sgtbl[i].len);
-		hsgtbl[i].pdata = htonl(strtol(argv[4+sg_entries+i], 0, 16));
-		printf("load %s at %x \n", argv[2+i], strtol(argv[4+sg_entries+i], 0, 16));
+		hsgtbl[i].pdata = htonl(strtoul(argv[4+sg_entries+i], 0, 16));
+		printf("load %s at %x \n", argv[2+i], strtoul(argv[4+sg_entries+i], 0, 16));
 	}
 #endif
 
