@@ -42,9 +42,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/ssl.h>
+#include <unistd.h>
+#include <getopt.h>
 
-#define RSA_MIN_LEN 1024
-#define RSA_MAX_LEN 4096
+#define RSA_LEN1	1024
+#define RSA_LEN2	2048	
+#define RSA_LEN3	4096
 
 #define PRI_KEY_FILE "srk.pri"
 #define PUB_KEY_FILE "srk.pub"
@@ -108,12 +111,38 @@ static int generate_rsa_keys(const unsigned int n, FILE *fpri, FILE *fpub)
 	return 0;
 }
 
-int main(const int argc, const char **argv)
+void usage(void)
+{
+	printf("Usage: genkeys <Key length in bits >\n");
+	printf("Key length can be %d or %d or %d\n\n",
+					RSA_LEN1, RSA_LEN2, RSA_LEN3);
+
+	printf("Options\n\n");
+	printf("-h,--help\t\tUsage of the command\n");
+	printf("-k,--pubkey\t\tFile where Public key would be stored in PEM format"\
+			"(default = srk.pub)\n"); 
+	printf("-p,--privkey\t\tFile where Private key would be stored in PEM format"\
+			"(default = srk.priv)\n"); 
+
+	printf("\n");
+}
+
+int main(int argc, char **argv)
 {
 	int ret = 0;
 	unsigned int length;
 	FILE *fpri;
 	FILE *fpub;
+	unsigned char *buf;
+	unsigned char *tmp;
+	unsigned char *key;
+	char *pub_fname = PUB_KEY_FILE;
+	char *priv_fname = PRI_KEY_FILE;
+
+	int i, j, c;
+	int key_len;
+	unsigned char hash[SHA256_DIGEST_LENGTH];
+	RSA *srk;
 
 	printf("\n");
 	printf("===============================================================\n");
@@ -123,33 +152,77 @@ int main(const int argc, const char **argv)
 	printf("Eric Young (eay@cryptsoft.com)\n");
 	printf("===============================================================\n");
 	printf("\n");
-	printf("Generating SRK pair stored in ===> srk.pri and srk.pub\n");
 
-	if (argc != 2) {
-		fprintf(stderr, "Usage: %s <Key length in bits >\n", argv[0]);
+	while (1) {
+		static struct option long_options[] = {
+		{"help", no_argument,       0, 'h'},
+		/* These options don't set a flag.
+		 * We distinguish them by their indices. */
+		{"pubkey",  required_argument, 0, 'k'},
+		{"privkey",  required_argument, 0, 'p'},
+		{0, 0, 0, 0}
+		};
+		int option_index = 0;
+
+		c = getopt_long(argc, argv, "p:k:h",
+				long_options, &option_index);
+
+		/* Detect the end of the options. */
+		if (c == -1)
+			break;
+
+		switch (c) {
+		case 'h':
+		usage();
+		exit(0);
+
+		case 'k':
+		pub_fname = optarg;
+		break;
+		
+		case 'p':
+		priv_fname = optarg;
+		break;
+
+		case '?':
+		/* getopt_long already printed an error message. */
+		printf("?");
+		break;
+
+		default:
+		printf("default");
+		exit(0);
+		}
+	}
+	if (optind < argc) {
+		if ((argc - optind) != 1) {
+			printf("Only 1 argumnet is allowed with the command\n");
+			usage();
+			exit(1);
+		}
+		length = atol(argv[optind]);
+		if (length != RSA_LEN1 && length != RSA_LEN2 && length != RSA_LEN3) {
+			printf("Wrong key length\n\n");
+			usage();
+			exit(1);
+		}
+	} else {
+		usage();
 		exit(1);
 	}
 
-	length = atol(argv[1]);
-	if ((length < RSA_MIN_LEN) || (length > RSA_MAX_LEN)) {
-		fprintf(stderr,
-			"RSA key length should be between %d and  %d both inclusive \n",
-			RSA_MIN_LEN, RSA_MAX_LEN);
-		return -1;
-	}
-
 	/* open the file */
-	fpri = fopen(PRI_KEY_FILE, "w");
+	fpri = fopen(priv_fname, "w");
 	if (fpri == NULL) {
 		fprintf(stderr, "error in opening the file: %s\n",
-			PRI_KEY_FILE);
+			priv_fname);
 		return -1;
 	}
 
-	fpub = fopen(PUB_KEY_FILE, "w");
+	fpub = fopen(pub_fname, "w");
 	if (fpub == NULL) {
 		fprintf(stderr, "error in opening the file: %s\n",
-			PUB_KEY_FILE);
+			pub_fname);
 		fclose(fpri);
 		return -1;
 	}
@@ -161,6 +234,9 @@ int main(const int argc, const char **argv)
 
 	fclose(fpri);
 	fclose(fpub);
+
+	printf("Generated SRK pair stored in :\n\t\tPUBLIC KEY %s\n"\
+				"\t\tPRIVATE KEY %s\n", pub_fname, priv_fname);
 
 	return ret;
 }
