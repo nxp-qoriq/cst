@@ -10,7 +10,7 @@ RM=rm -f
 CCFLAGS= -g -DSIMICS
 LDFLAGS=
 
-sg_sign_OBJS = sg_sign.o
+sign_OBJS = sign.o
 genkeys_OBJS = gen_keys.o
 sfp_snvs_OBJS = sfp_snvs.o
 
@@ -18,12 +18,12 @@ sfp_snvs_OBJS = sfp_snvs.o
 .PHONY: all clean
 
 # make targets
-all: sg_sign gen_keys sfp_snvs
+all: sign gen_keys sfp_snvs
 
 gen_keys: ${genkeys_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ -lssl -ldl -lcrypto -L$(PATH_OPENSSL_DIR)
 
-sg_sign: ${sg_sign_OBJS}
+sign: ${sign_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ -lssl -ldl -lcrypto -L$(PATH_OPENSSL_DIR)
 
 sfp_snvs: ${sfp_snvs_OBJS}
