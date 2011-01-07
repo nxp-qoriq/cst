@@ -47,8 +47,11 @@
 #include <unistd.h>
 #include <getopt.h>
 
-#define FSL_UID1 0x11111111
-#define OEM_UID1 0x99999999
+#define OUID_FUID_BOTH 0x1
+#define OUID_ONLY 0x2
+#define FUID_ONLY 0x4
+#define NO_UID	0x0
+
 #define PRI_KEY_FILE "srk.pri"
 #define PUB_KEY_FILE "srk.pub"
 #define TBL_FILE "sg_table.out"
@@ -110,6 +113,8 @@ struct global {
 	char *priv_fname;
 	char *hdrfile;
 	char *sgfile;
+	uint32_t oemuid_flag;
+	uint32_t fsluid_flag;
 	uint32_t fslid;
 	uint32_t oemid;
 	unsigned long sg_addr;
@@ -277,7 +282,16 @@ void fill_header(SHA256_CTX *ctx, u32 key_len, u32 sign_len)
 	gd.himg.psign = htonl(size +  2 * key_len);
 	gd.himg.img_start = htonl(gd.entry_addr);
 	gd.himg.sg_flag = htonl(gd.sg_flag);
-	gd.himg.uid_flag = htonl(1);
+
+	if (gd.fsluid_flag && gd.oemuid_flag) 
+		gd.himg.uid_flag = htonl(OUID_FUID_BOTH);
+	else if (gd.fsluid_flag)
+		gd.himg.uid_flag = htonl(FUID_ONLY);
+	else if (gd.oemuid_flag)
+		gd.himg.uid_flag = htonl(OUID_ONLY);
+	else
+		gd.himg.uid_flag = htonl(NO_UID);
+
 	gd.himg.fsl_uid = htonl(gd.fslid);
 	gd.himg.oem_uid = htonl(gd.oemid);
 
@@ -455,8 +469,10 @@ int main(int argc, char **argv)
 	gd.priv_fname = PRI_KEY_FILE;
 	gd.hdrfile = HDR_FILE;
 	gd.sgfile = TBL_FILE;
-	gd.oemid = OEM_UID1;
-	gd.fslid = FSL_UID1;
+	gd.oemuid_flag = 0;
+	gd.fsluid_flag = 0;
+	gd.oemid = 0;
+	gd.fslid = 0;
 
 	while (1) {
 		static struct option long_options[] = {
@@ -489,14 +505,17 @@ int main(int argc, char **argv)
 		/* If this option set a flag, do nothing else now. */
 		if (long_options[option_index].flag != 0)
 			break;
-		if (strcmp(long_options[option_index].name, "hdrfile") == 0)
+		if (strcmp(long_options[option_index].name, "hdrfile") == 0) {
 			gd.hdrfile = optarg;
-		else if (strcmp(long_options[option_index].name, "sgfile") == 0)
+		} else if (strcmp(long_options[option_index].name, "sgfile") == 0){
 			gd.sgfile = optarg;
-		else if (strcmp(long_options[option_index].name, "oemuid") == 0)
+		} else if (strcmp(long_options[option_index].name, "oemuid") == 0){
 			gd.oemid = strtoul(optarg, 0, 16);
-		else if (strcmp(long_options[option_index].name, "fsluid") == 0)
+			gd.oemuid_flag = 1;
+		} else if (strcmp(long_options[option_index].name, "fsluid") == 0){
 			gd.fslid = strtoul(optarg, 0, 16);
+			gd.fsluid_flag = 1;
+		}
 		break;
 
 		case 's':
