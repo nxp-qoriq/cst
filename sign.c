@@ -117,9 +117,9 @@ struct global {
 	uint32_t fsluid_flag;
 	uint32_t fslid;
 	uint32_t oemid;
-	unsigned long sg_addr;
-	unsigned long img_addr;
-	unsigned long entry_addr;
+	uint32_t sg_addr;
+	uint32_t img_addr;
+	uint32_t entry_addr;
 	int verbose_flag;
 	struct sg_input entries[NUM_SG_ENTRIES];
 };
@@ -199,7 +199,7 @@ static void dump_img_hdr1(struct img_hdr *h)
 	int i;
 	printf("barker:0x");
 	for (i = 0; i < BARKER_LEN; i++)
-		printf("%02.2x", htonl(h->barker[i]));
+		printf("%2.2x", htonl(h->barker[i]));
 	printf("\n");
 	printf("pkey %d, key length %d\n", htonl(h->pkey), htonl(h->key_len));
 	printf("psign %d, length %d\n", htonl(h->psign), htonl(h->sign_len));
