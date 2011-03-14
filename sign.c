@@ -358,13 +358,13 @@ void printonlyhash(void)
 	memset(key, 0, 2 * key_len);
 	tmp = (unsigned char *)(((BIGNUM *) srk_pub->n)->d);
 	for (j = key_len - 1, i = 0;
-			i < ((BIGNUM *) srk_pub->n)->top * 8; i++, j--)
+			i < ((BIGNUM *) srk_pub->n)->top * sizeof(BIGNUM *); i++, j--)
 		key[j] = tmp[i];
 
 	exponent =  key + key_len;
 	tmp = (unsigned char *)(((BIGNUM *) srk_pub->e)->d);
 	for (j = key_len - 1, i = 0;
-			i < ((BIGNUM *) srk_pub->e)->top * 8; i++, j--)
+			i < ((BIGNUM *) srk_pub->e)->top * sizeof(BIGNUM *); i++, j--)
 		exponent[j] = tmp[i];
 
 	SHA256_Init(&key_ctx);
@@ -623,14 +623,14 @@ int main(int argc, char **argv)
 	/* Copy N component */
 	tmp = (unsigned char *)(((BIGNUM *) gd.srk->n)->d);
 	for (j = key_len - 1, i = 0;
-			i < ((BIGNUM *) gd.srk->n)->top * 8; i++, j--)
+			i < ((BIGNUM *) gd.srk->n)->top * sizeof(BIGNUM *); i++, j--)
 		key[j] = tmp[i];
 
 	/* Copy E component */
 	key = header + sizeof(struct img_hdr) + key_len;
 	tmp = (unsigned char *)(((BIGNUM *) gd.srk->e)->d);
 	for (j = key_len - 1, i = 0;
-			i < ((BIGNUM *) gd.srk->e)->top * 8; i++, j--)
+			i < ((BIGNUM *) gd.srk->e)->top * sizeof(BIGNUM *); i++, j--)
 		key[j] = tmp[i];
 
 	SHA256_Update(&ctx, header + sizeof(struct img_hdr),  2 * key_len);
