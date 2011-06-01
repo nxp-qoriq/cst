@@ -23,6 +23,9 @@ endif
 
 LDFLAGS += -lssl -lcrypto -ldl
 
+cf_legacy_OBJS = cfhdr_legacy.o
+cf_sign_OBJS = cfhdr_sign.o
+esbc_sign_OBJS = esbchdr_sign.o
 sign_OBJS = sign.o
 genkeys_OBJS = gen_keys.o
 sfp_snvs_OBJS = sfp_snvs.o
@@ -31,9 +34,18 @@ sfp_snvs_OBJS = sfp_snvs.o
 .PHONY: all clean
 
 # make targets
-all: sign gen_keys sfp_snvs
+all: cfhdr_legacy cfhdr_sign esbchdr_sign sign gen_keys sfp_snvs
 
 gen_keys: ${genkeys_OBJS}
+	${LD} ${LDFLAGS} -o $@ $^
+
+cfhdr_legacy: ${cf_legacy_OBJS}
+	${LD} ${LDFLAGS} -o $@ $^ 
+
+cfhdr_sign: ${cf_sign_OBJS}
+	${LD} ${LDFLAGS} -o $@ $^
+
+esbchdr_sign: ${esbc_sign_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^
 
 sign: ${sign_OBJS}
@@ -46,7 +58,7 @@ sfp_snvs: ${sfp_snvs_OBJS}
 	${CC} -c ${CCFLAGS} $<
 
 clean:
-	${RM} *.o gen_keys *.out sfp_snvs sign
+	${RM} *.o gen_keys cfhdr_legacy cfhdr_sign esbchdr_sign cf_hdr_legacy.bin *.out sfp_snvs sign
 
 distclean:	clean
 	rm -rf srk.pub srk.pri
