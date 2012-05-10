@@ -1,8 +1,8 @@
 /** @file
- * ibr.h
+ * uni_cfsign.h
  */
 
-/* Copyright (c) 2011, Freescale Semiconductor, Inc.
+/* Copyright (c) 2011,2012 Freescale Semiconductor, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,8 +28,25 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __IBR_H__
-#define __IBR_H__
+
+#ifndef __UNI_CFSIGN_H__
+#define __UNI_CFSIGN_H__
+
+
+#define HDR_FILE "cf_hdr.out"
+#define MAKE_WORD(ADDR, DATA)\
+	words[word_count++] = htonl(ADDR);\
+	words[word_count++] = htonl(DATA);
+
+
+char *group[][2] = { {"1010", "1"},
+{"9131", "1"},
+{"9132", "1"},
+{"1040", "2"},
+{"C290", "2"},
+{"c290", "2"},
+{"LAST", "0"}
+};
 
 struct cf_hdr_legacy {
 	u32 boot_sig;		/*0x40*/
@@ -48,54 +65,50 @@ struct cf_hdr_legacy {
 
 struct cf_hdr_secure {
 	u32 ehdrloc;
-	u32 esbc_target_id;	/*0xB4-0xB7*/
-	u32 pkey_off; 		/*0xB8-0xBB*/	/* public key offset */
-	u32 key_len;  		/*0xBC-0xBF*/	/* pub key length */
-	u32 psign_off;  	/*0xC0-0xC3*/	/* sign ptr */
-	u32 sign_len; 		/*0xC4-0xC7*/	/* length of the signature */
+	u32 esbc_target_id;
+	union {
+		u32 pkey_off;		/* public key offset */
+		u32 srk_table_offset;
+	};	
+	union {
+		u32 key_len;		/* pub key length */
+		struct {
+			u32 srk_table_flag:4;
+			u32 srk_sel:12;
+			u32 num_srk_entries:16;	
+		}len_kr;	
+	};
+	u32 psign_off;			/* sign ptr */
+	u32 sign_len;			/* length of the signature */
+	u32 ehdrloc_simg;
 };
 
-/**
-\brief          ESBC header structure.
-
-\details        contain the following fields
-		barker code
-		public key offset
-		pub key length
-		signature offset
-		length of the signature
-		ptr to SG table
-		no of entries in SG table
-		esbc ptr
-		size of esbc
-		esbc entry point
-		Scatter gather flag
-		UID flag
-		FSL UID
-		OEM UID
-
-\note		pub key is modulus concatenated with exponent 
-		of equal length 
-*/
-struct esbc_hdr {
-	u8 barker[ESBC_BARKER_LEN];	/* barker code */
-	u32 pkey;		/* public key offset */
-	u32 key_len;		/* pub key length in bytes */
-	u32 psign;		/* signature offset */
-	u32 sign_len;		/* length of the signature in bytes */
-	u32 sg_table_addr;	/* ptr to SG table */
-	u32 sg_entries;	/* no of entries in SG table */
-	u32 entry_point;		/* ESBC entry point */
-	u32 sg_flag;		/* Scatter gather flag */
-	u32 uid_flag;		/* Flag to indicate uid is present or not */
-	u32 fsl_uid;		/* Freescale unique id */
-	u32 oem_uid;		/* OEM unique id */
+struct size_format {
+	u32 hdr_legacy;
+	u32 cfw;
+	u32 hdr_secure;
+	u32 padd1;
+	u32 key_table;
+	u32 padd2;
+	u32 sign_len;
 };
 
-struct sg_table {
-	u32 len;
-	u32 trgt_id;
-	u32 src_addr;
-	u32 dst_addr;
+struct srk_table {
+	u32 key_len;
+	u8 pkey[1024];
 };
+
+
+struct global {
+	FILE * fsrk_pri[MAX_NUM_KEYS];
+	RSA * srk[MAX_NUM_KEYS];
+	int group;
+	char *priv_fname[MAX_NUM_KEYS];
+	struct srk_table key_table[MAX_NUM_KEYS];
+	uint32_t num_srk_entries;
+	uint32_t srk_sel;
+	uint32_t srk_table_flag;
+	char *hdrfile;
+};
+
 #endif
