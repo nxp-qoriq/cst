@@ -179,7 +179,7 @@ struct global {
 	uint32_t hksize;
 	uint32_t srk_sel;
 	uint32_t srk_table_flag;
-	uint32_t sfp_wp;
+	int sfp_wp;
 	uint32_t sec_image_flag;
 	uint32_t hkptr_flag;
 	uint32_t hksize_flag;
@@ -187,9 +187,9 @@ struct global {
 	uint32_t target_flag;
 	struct srk_table key_table[MAX_NUM_KEYS];
 	uint32_t num_srk_entries;
-	uint32_t esbc_flag;
-	uint32_t file_flag;
-	uint32_t sec_image;
+	int esbc_flag;
+	int file_flag;
+	int sec_image;
 };
 
 

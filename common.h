@@ -32,6 +32,8 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#include <ctype.h>
+
 #define BOOT_SIG        0x424f4f54      /*offset 0x40-43 */
 #define BARKER_LEN 0x4 
 #define SHA256_DIGEST_LENGTH 32
@@ -179,7 +181,7 @@ exit1:
 
 }
 
-int check_target(char *target_name, int *targetid)
+int check_target(char *target_name, uint32_t *targetid)
 {
 	int i = 0;
 	while (strcmp(tar[i][0], "LAST")) {

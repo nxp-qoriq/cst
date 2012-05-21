@@ -218,4 +218,5 @@ int main(int argc, char *argv[])
 	generate_code_bits(num);
 
 	printf("\n");
+	return 0;
 }

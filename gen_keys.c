@@ -2,7 +2,7 @@
  * keys in file.
  */
 
-/* Copyright (c) 2008 - 2011 Freescale Semiconductor, Inc.
+/* Copyright (c) 2008 - 2012 Freescale Semiconductor, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -133,16 +133,9 @@ int main(int argc, char **argv)
 	unsigned int length;
 	FILE *fpri;
 	FILE *fpub;
-	unsigned char *buf;
-	unsigned char *tmp;
-	unsigned char *key;
 	char *pub_fname = PUB_KEY_FILE;
 	char *priv_fname = PRI_KEY_FILE;
-
-	int i, j, c;
-	int key_len;
-	unsigned char hash[SHA256_DIGEST_LENGTH];
-	RSA *srk;
+	int c;
 
 	printf("\n");
 	printf("===============================================================\n");

@@ -73,7 +73,7 @@ int check_group(char *platform)
 
 struct input_field get_field(char *line)
 {
-	struct input_field field = { NULL, NULL, NULL, NULL, 0 };
+	struct input_field field = { {NULL, NULL, NULL, NULL}, 0 };
 
 	int i = 0;
 	char delims[] = ",";
@@ -121,7 +121,6 @@ int get_size_and_updatehash(const char *fname, SHA256_CTX * ctx)
 	unsigned char buf[IOBLOCK];
 	size_t bytes = 0;
 	size_t len = 0;
-	int j = 0;
 
 	/* open the file */
 	fp = fopen(fname, "rb");
@@ -281,13 +280,13 @@ int open_priv_file(void)
 		}
 
 	}
+	return 0;
 }
 
 void fill_header(SHA256_CTX *ctx, u32 key_len, u32 sign_len)
 {
 
 	u16 temp = 0;
-	u32 key_sel = 0x1;
 	gd.himg.barker[0] = 0x68;
 	gd.himg.barker[1] = 0x39;
 	gd.himg.barker[2] = 0x27;
@@ -403,7 +402,7 @@ void printkeyhash(u8 *addr, uint32_t len, uint32_t srk_table_flag)
 {
 	SHA256_CTX key_ctx;
 	unsigned char hash[SHA256_DIGEST_LENGTH];
-	int i, ctr;
+	int i;
 
 	SHA256_Init(&key_ctx);
 	if (srk_table_flag == 0) {
@@ -424,7 +423,7 @@ void printkeyhash(u8 *addr, uint32_t len, uint32_t srk_table_flag)
 
 void printonlyhash(void)
 {
-	int i, j, n, ctr;
+	int i, j, n;
 	SHA256_CTX key_ctx;
 	unsigned char hash[SHA256_DIGEST_LENGTH];
 	FILE *fsrk_pub[MAX_NUM_KEYS];
@@ -434,7 +433,6 @@ void printonlyhash(void)
 	u8 key[1024];
 	unsigned char *key_len_ptr;
 	u32 key_len = 0, total_key_len;
-	struct srk_table pub_table[MAX_NUM_KEYS];
 	n = 0;
 	if (input_pub_key.count > 1)
 		gd.srk_table_flag = 1;
@@ -513,16 +511,16 @@ void usage(void)
 		printf("For format of header generated refer to the "
 			"User Document.\n");
 		printf("\nUsage I:\n");
-		printf("./sign --file INPUT_FILE" "\n");
+		printf("./uni_sign --file INPUT_FILE" "\n");
 		printf("--file INPUT_FILE\t");
 		printf("Refer Default input_file and provide all the input "
 			"in the input file for header generation .\n");
 
 		printf("\nUsage II:\n");
-		printf("./sign PLATFORM [OPTION] FILE ADDR [DEST_ADDR]"
+		printf("./uni_sign PLATFORM [OPTION] FILE ADDR [DEST_ADDR]"
 			"[FILE ADDR [DEST_ADDR]...]\n");
 		printf("\nPLATFORM\t\tChoose Platform - "
-			"1010/1040/3041/4080/5020/5040/9131/9132/9164");
+			"1010/1040/3041/4080/5020/5040/9131/9132/4860/4240");
 		printf("\nFILE\t\t\tFile to be signed\n");
 		printf("ADDR\t\t\tAddress where this binary would be "
 			"loaded by user.\n");
@@ -571,10 +569,10 @@ void usage(void)
 			"\n");
 		printf("--oemuid OEMUID\t\t");
 		printf("OEM UID to be populated in the header "
-			"(default=0x99999999).\n");
+			"\n");
 		printf("--fsluid FSLUID\t\t");
 		printf("FSL UID to be populated in header."
-			"(default=0x11111111)\n");
+			"\n");
 		printf("--hkptr HK_AREA\t\t");
 		printf("House Keeping Area Starting Pointer Required by Sec\n");
 		printf("\t\t\t(Required for 9164 and 1040 only when esbc "
@@ -1382,8 +1380,6 @@ int main(int argc, char **argv)
 	}
 
 	if (gd.hash_flag == 1 || gd.file_flag == 1) {
-		printf("Key location - %x \n",size.header+size.padd1);
-		
 		printkeyhash(header + size.header + size.padd1,
 			     2 * key_len, gd.srk_table_flag);
 	}

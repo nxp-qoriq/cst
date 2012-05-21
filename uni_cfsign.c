@@ -255,7 +255,7 @@ int main(int argc, char **argv)
 	int i, j, n;
 	u8 *tmp;
 	u8 *sign;
-	int sign_len;
+	uint32_t sign_len;
 	u8 *key;
 	int key_len;
 	/* this buffer is written to the file */
