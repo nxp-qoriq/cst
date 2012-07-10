@@ -15,7 +15,6 @@ OPENSSL_INC_PATH := $(PATH_OPENSSL_DIR)/include
 CCFLAGS += -I$(OPENSSL_INC_PATH)
 LDFLAGS= -L$(OPENSSL_LIB_PATH)
 
-#LDFLAGS += -lssl -lcrypto -ldl
 LIBS += -lssl -lcrypto -ldl
 
 genkeys_OBJS = gen_keys.o
@@ -28,7 +27,6 @@ genotpmk_OBJS = gen_otpmk.o
 
 # make targets
 all: uni_sign uni_cfsign gen_otpmk gen_keys
-#all: gen_keys
 
 gen_keys: ${genkeys_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}

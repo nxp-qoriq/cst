@@ -362,7 +362,7 @@ int main(int argc, char **argv)
 	size.padd1 =
 	    (factor + 2) * 512 - (size.hdr_legacy + size.cfw + size.hdr_secure +
 				  0x40);
-	size.padd2 = 0x1100 - size.key_table;
+	size.padd2 = 0x1200 - size.key_table;
 	buf_len = 0x40 + size.hdr_legacy + size.cfw +
 	    size.hdr_secure + size.key_table + size.sign_len + size.padd1 +
 	    size.padd2;

@@ -1282,7 +1282,7 @@ int main(int argc, char **argv)
 	/* To add padding in the header */
 #ifndef MIN_HDR
 	size.padd1 = 512 - size.header;
-	size.padd2 = 0x1100 - size.key_table;
+	size.padd2 = 0x1200 - size.key_table;
 	size.padd3 = 512 - size.sign_len;
 #endif
 	/* Hdrlen - size of header, key, sign and padding */
@@ -1373,7 +1373,6 @@ int main(int argc, char **argv)
 			/*Update for all the keys present in the Key table */
 			n++;
 		}
-		printf("Key location - %x \n",size.header+size.padd1);
 		SHA256_Update(&ctx, header + size.header + size.padd1,
 			gd.num_srk_entries * sizeof(struct srk_table));
 
