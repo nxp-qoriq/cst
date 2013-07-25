@@ -3,17 +3,19 @@
 #
 # Set PATH_OPENSSL_DIR to OPENSSL dir on your machine.
 #
-
+ARCH ?= arm
 CC=gcc
 LD=gcc
 RM=rm -f
 CCFLAGS= -g -Wall
 #-DBLOCK_ADDRESS_FORMAT
-
 OPENSSL_LIB_PATH := $(PATH_OPENSSL_DIR)/lib
 OPENSSL_INC_PATH := $(PATH_OPENSSL_DIR)/include
 CCFLAGS += -I$(OPENSSL_INC_PATH)
 LDFLAGS= -L$(OPENSSL_LIB_PATH)
+ifeq ($(ARCH),arm)
+CCFLAGS += -DARM
+endif
 
 LIBS += -lssl -lcrypto -ldl
 

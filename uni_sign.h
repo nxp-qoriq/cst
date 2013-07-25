@@ -32,6 +32,13 @@
 #ifndef __UNI_SIGN_H__
 #define __UNI_SIGN_H__
 
+#ifndef ARM
+#define BYTE_ORDER_L(x)	htonl(x)
+#define BYTE_ORDER_S(x)	htons(x)
+#else
+#define BYTE_ORDER_L(x)	(x)
+#define BYTE_ORDER_S(x)	(x)
+#endif
 
 #define OUID_FUID_BOTH 0x1
 #define OUID_ONLY 0x2
@@ -56,6 +63,7 @@ char *group[][2] = { {"3041", "1"},
 {"4240", "3"},
 {"1040", "4"},
 {"C290", "4"},
+{"LS1", "5"},
 {"LAST", "0"}
 };
 
@@ -106,7 +114,7 @@ struct img_hdr {
 		struct {
 			u32 srk_table_flag:8;
 			u32 srk_sel:8;
-			u32 num_srk_entries:16;	
+			u32 num_srk_entries:16;
 		}len_kr;	
 	};
 	u32 psign;		/* sign ptr */
@@ -120,7 +128,13 @@ struct img_hdr {
 		u32 img_size;	/* img_size length */
 	};
 	u32 img_start;		/* start ptr */
-	u32 sg_flag;		/* Scatter gather flag */
+	union {
+		u32 sg_flag;
+		struct {
+			u32 mp_flag:16;	/* Mfg Protection flag */
+			u32 sg_flag:16;	/* Scatter gather flag */
+		}mp_n_sg_flag;
+	};
 	union {
 		u32 uid_flag;	/* Flag to indicate uid is present or not */
 		struct {
@@ -133,7 +147,8 @@ struct img_hdr {
 	u32 oem_uid;		/* OEM unique id */
 	u32 hkptr;		/* House keeping area starting address */
 	u32 hksize;		/* House keeping area size */
-	u32 reserved[2];
+	u32 fsl_uid_1;		/* Freescale unique id 1*/
+	u32 oem_uid_1;		/* OEM unique id 1*/
 };
 
 struct sg_input {
@@ -166,8 +181,12 @@ struct global {
 	char *sgfile;
 	uint32_t oemuid_flag;
 	uint32_t fsluid_flag;
+	uint32_t oemuid_1_flag;
+	uint32_t fsluid_1_flag;
 	uint32_t fslid;
 	uint32_t oemid;
+	uint32_t fslid_1;
+	uint32_t oemid_1;
 	uint32_t sg_addr;
 	uint32_t img_addr;
 	uint32_t entry_addr;
@@ -190,6 +209,7 @@ struct global {
 	int esbc_flag;
 	int file_flag;
 	int sec_image;
+	uint32_t mp_flag;
 };
 
 
