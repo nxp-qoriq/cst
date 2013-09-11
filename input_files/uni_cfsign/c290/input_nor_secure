@@ -1,10 +1,10 @@
 ---------------------------------------------------
 # Specify the platform. [Mandatory]
 # Choose Platform - 1010/9131/9132/1040/C290
-PLATFORM=C290 
+PLATFORM=C290
 ---------------------------------------------------
 # Primary Image Header Address - [Mandatory] 
-ESBC_HDRADDR=CE002000
+ESBC_HDRADDR=CC002000
 ---------------------------------------------------
 # Specify the file name of the keys seperated by comma.
 # The number of files and key select should lie between 1 and 4 for 1040 and C290.
@@ -24,12 +24,17 @@ IMAGE_TARGET=NOR_16B
 ---------------------------------------------------
 # Specify Configuration Words (Address Data Pairs), Max 1024 such pairs are supported. 
 # USAGE : CF_WORD = {ADDR, DATA}
-CF_WORD=(0xff700c08 , 0x000ce000)
-CF_WORD=(0xff700c10 , 0x80400018)
+CF_WORD=(0xff700d08 , 0x000cc000)
+CF_WORD=(0xff700d10 , 0x80400019)
+#CF_WORD=(0xff720100 , 0xcb000000)
+#CF_WORD=(0xff720000 , 0xa0010000)
+CF_WORD=(0xff700d28 , 0x000ca000)
+CF_WORD=(0xff700d30 , 0x80a00012)
+
 ---------------------------------------------------
 # Specify the file names of cf header. (Default : cf_hdr.out) - [Optional]
 OUTPUT_HDR_FILENAME=cf_hdr.out 
 ---------------------------------------------------
 # Primary Image Header Address (Required for C290 and 1040 only) - [Mandatory]
-ESBC_HDRADDR_SEC_IMAGE=
+ESBC_HDRADDR_SEC_IMAGE=CFFFFFFC
 ---------------------------------------------------

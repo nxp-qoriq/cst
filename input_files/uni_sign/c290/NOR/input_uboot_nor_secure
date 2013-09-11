@@ -1,7 +1,7 @@
 ---------------------------------------------------
 # Specify the platform. [Mandatory]
 # Choose Platform - 1010/1040/2041/3041/4080/5020/5040/9131/9132/9164/4240/C290
-PLATFORM=C290 
+PLATFORM=C290
 # ESBC Flag. Specify ESBC=0 to sign u-boot and ESBC=1 to sign ESBC images.(default is 0)
 ESBC=0
 ---------------------------------------------------
@@ -58,8 +58,8 @@ OUTPUT_SG_BIN=
 
 # Specify House keeping Area
 # Required for 42409164/1040/C290 only when ESBC flag is not set. [Mandatory]
-HK_AREA_POINTER=
-HK_AREA_SIZE=
+HK_AREA_POINTER=ca000000
+HK_AREA_SIZE=00010000
 ---------------------------------------------------
 # Following two fields are Required for 4240/9164/1040/C290 only
 
