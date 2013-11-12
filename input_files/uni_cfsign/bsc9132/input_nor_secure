@@ -26,6 +26,14 @@ IMAGE_TARGET=NOR_16B
 # USAGE : CF_WORD = {ADDR, DATA}
 CF_WORD=(0xff700c08 , 0x000c8000)
 CF_WORD=(0xff700c10 , 0x8040001A)
+
+/* ACU Programming
+ * Default value in secure mode is 0x0000_C101,
+ * which allows access for core 0, SAP and TPR.
+ * Setting bit 18 and 19 for allowing access to core1.
+ * Setting bit 29 and 30 for allowing access to DSP.
+ */ 
+CF_WORD=(0xff7e8000 , 0x0000f107)
 ---------------------------------------------------
 # Specify the file names of cf header. (Default : cf_hdr.out) - [Optional]
 OUTPUT_HDR_FILENAME=cf_hdr.out 

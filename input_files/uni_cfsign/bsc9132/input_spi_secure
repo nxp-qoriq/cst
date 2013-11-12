@@ -76,6 +76,14 @@ CF_WORD=(0xff702110, 0xC70C0000)
 CF_WORD=(0xff700d68, 0x00000000)
 CF_WORD=(0xff700d70, 0x80f0001d)
 
+/* ACU Programming
+ * Default value in secure mode is 0x0000_C101,
+ * which allows access for core 0, SAP and TPR.
+ * Setting bit 18 and 19 for allowing access to core1.
+ * Setting bit 29 and 30 for allowing access to DSP.
+ */ 
+CF_WORD=(0xff7e8000, 0x0000f107)
+
 /* delay */
 CF_WORD=(0x40000001, 0x00000FFF)
 /* ddr test data */
