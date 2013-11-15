@@ -1,0 +1,27 @@
+---------------------------------------------------
+# Specify the platform. [Mandatory]
+# Choose Platform - 1010/9131/9132/1040/C290
+PLATFORM=1010 
+---------------------------------------------------
+# Entry Point/Image start address field in the header.[Mandatory]
+ENTRY_POINT=0x11000
+---------------------------------------------------
+# Specify the target where image will be loaded. - [Mandatory]
+# Select from - NOR_8B/NOR_16B/NAND_8B_512/NAND_8B_2K/NAND_8B_4K/NAND_16B_512/NAND_16B_2K/NAND_16B_4K/SD/MMC/SPI
+IMAGE_TARGET=NOR_16B
+---------------------------------------------------
+# Specify Configuration Words (Address Data Pairs), Max 1024 such pairs are supported. 
+# USAGE : CF_WORD = {ADDR, DATA}
+CF_WORD=(0xff700c08 , 0x000ce000)
+CF_WORD=(0xff700c10 , 0x80400018)
+---------------------------------------------------
+# Specify image.
+# USAGE : IMAGE_LOC = {IMAGE_NAME, SRC_ADDR, DST_ADDR} - [Mandatory]
+IMAGE_LOC={u-boot.bin,4000,11000}
+---------------------------------------------------
+# Specify the file names of cf header. (Default : cf_hdr.out) - [Optional]
+OUTPUT_HDR_FILENAME=cf_hdr.out 
+---------------------------------------------------
+# Primary Image Header Address (Required for C290 and 1040 only) - [Mandatory]
+ESBC_HDRADDR_SEC_IMAGE=
+---------------------------------------------------
