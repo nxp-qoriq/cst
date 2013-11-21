@@ -1,0 +1,3 @@
+The CST tool is compiled for powerpc by default.
+To compile it for ARM based platforms, define ARCH as arm
+	make ARCH=arm

@@ -3,7 +3,7 @@
 #
 # Set PATH_OPENSSL_DIR to OPENSSL dir on your machine.
 #
-ARCH ?= arm
+ARCH ?= powerpc
 CC=gcc
 LD=gcc
 RM=rm -f
