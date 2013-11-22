@@ -24,8 +24,8 @@ IMAGE_TARGET=NOR_16B
 ---------------------------------------------------
 # Specify Configuration Words (Address Data Pairs), Max 1024 such pairs are supported. 
 # USAGE : CF_WORD = {ADDR, DATA}
-CF_WORD=(0xff700c08 , 0x000c8000)
-CF_WORD=(0xff700c10 , 0x8040001A)
+CF_WORD=(0xff700d68 , 0x000c8000)
+CF_WORD=(0xff700d70 , 0x8040001A)
 
 /* ACU Programming
  * Default value in secure mode is 0x0000_C101,

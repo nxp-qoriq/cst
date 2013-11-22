@@ -24,8 +24,8 @@ IMAGE_TARGET=NOR_16B
 ---------------------------------------------------
 # Specify Configuration Words (Address Data Pairs), Max 1024 such pairs are supported. 
 # USAGE : CF_WORD = {ADDR, DATA}
-CF_WORD=(0xff700c08 , 0x000ce000)
-CF_WORD=(0xff700c10 , 0x80400018)
+CF_WORD=(0xff700d68 , 0x000ce000)
+CF_WORD=(0xff700d70 , 0x80400018)
 ---------------------------------------------------
 # Specify the file names of cf header. (Default : cf_hdr.out) - [Optional]
 OUTPUT_HDR_FILENAME=cf_hdr.out 
