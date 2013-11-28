@@ -44,8 +44,8 @@ IMAGE_8={,,}
 ---------------------------------------------------
 # Specify OEM AND FSL ID to be populated in header. [Optional]
 # e.g FSL_UID=11111111
-FSL_UID=11111111
-OEM_UID=99999999
+FSL_UID=
+OEM_UID=
 ---------------------------------------------------
 # Specify the file names of csf header and sg table. (Default :hdr.out) [Optional] 
 OUTPUT_HDR_FILENAME=hdr_bs.out
