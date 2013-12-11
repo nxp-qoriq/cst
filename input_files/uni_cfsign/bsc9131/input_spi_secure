@@ -1,3 +1,7 @@
+/* Copyright (c) 2013 Freescale Semiconductor, Inc.
+ * All rights reserved.
+ */
+
 ---------------------------------------------------
 # Specify the platform. [Mandatory]
 # Choose Platform - 1010/9131/9132/1040/C290
