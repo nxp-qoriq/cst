@@ -210,6 +210,8 @@ struct global {
 	int file_flag;
 	int sec_image;
 	uint32_t mp_flag;
+	uint32_t sdhc_flag;
+	uint32_t sdhc_bsize;
 };
 
 

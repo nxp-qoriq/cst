@@ -395,14 +395,28 @@ void fill_and_update_sg_tbl(SHA256_CTX *ctx)
 void fill_and_update_sg_tbl_offset(SHA256_CTX *ctx)
 {
 	int i = 0;
+	char buf[120];
 	for (i = 0; i < gd.num_entries; i++) {
-#ifndef BLOCK_ADDRESS_FORMAT
-		gd.osgtbl[i].len = BYTE_ORDER_L(get_size(gd.entries[i].name));
-		gd.osgtbl[i].source = BYTE_ORDER_L(gd.entries[i].addr);
-#else
-		gd.osgtbl[i].len = BYTE_ORDER_L(get_size(gd.entries[i].name)/BLOCK_SIZE);
-		gd.osgtbl[i].source = BYTE_ORDER_L(gd.entries[i].addr/BLOCK_SIZE);
-#endif
+		if (gd.sdhc_flag == 0) {
+			gd.osgtbl[i].len = BYTE_ORDER_L(get_size(gd.entries[i].name));
+			gd.osgtbl[i].source = BYTE_ORDER_L(gd.entries[i].addr);
+		} else {
+			gd.osgtbl[i].len = BYTE_ORDER_L(get_size(gd.entries[i].name));
+			if (gd.osgtbl[i].len % gd.sdhc_bsize != 0) {
+				printf("ERROR : length of image is not "
+				       "blocksize aligned\n");
+				usage();
+				exit(1);
+			}
+			if (gd.entries[i].addr % gd.sdhc_bsize != 0) {
+				printf("ERROR : image source address is not "
+				       "blocksize aligned\n");
+				usage();
+				exit(1);
+			}
+			gd.osgtbl[i].len = BYTE_ORDER_L(get_size(gd.entries[i].name) / gd.sdhc_bsize);
+			gd.osgtbl[i].source = BYTE_ORDER_L(gd.entries[i].addr / gd.sdhc_bsize);
+		}
 		gd.osgtbl[i].target_id = BYTE_ORDER_L(gd.targetid);
 
 		if (gd.group == 3 || gd.group ==5)
@@ -713,7 +727,15 @@ void parse_file(char *file_name)
 		gd.target_name = malloc(strlen(file_field.value[0]));
 		strcpy(gd.target_name, file_field.value[0]);
 		gd.target_flag = 1;
+		if (strcmp(gd.target_name, "SDHC") == 0)
+			gd.sdhc_flag = 1;
 	}
+
+
+	/* Parse blocksize if image target is SDHC*/
+	find_value_from_file("BSIZE", fp);
+	if (file_field.count == 1)
+		gd.sdhc_bsize = strtoul(file_field.value[0], 0, 10);
 
 	/* Parse Images from input file */
 	i = 0;
@@ -1047,6 +1069,8 @@ int main(int argc, char **argv)
 	gd.mp_flag = 0;
 	gd.oemuid_1_flag = 0;
 	gd.fsluid_1_flag = 0;
+	gd.sdhc_bsize = BLOCK_SIZE;
+	gd.sdhc_flag = 0;
 
 	input_pri_key.count = 1;
 	input_pri_key.value[0] = PRI_KEY_FILE;
