@@ -40,7 +40,7 @@ BSIZE=
 ---------------------------------------------------
 # Specify IMAGE, Max 8 images are possible. DST_ADDR is required only for Non-PBL Platform. [Mandatory]
 # USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
-IMAGE_1={u-boot.bin,cff80000,ffffffff}
+IMAGE_1={u-boot.bin,cff40000,ffffffff}
 IMAGE_2={,,}	 
 IMAGE_3={,,}
 IMAGE_4={,,}

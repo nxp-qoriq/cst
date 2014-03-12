@@ -5,7 +5,7 @@
 ---------------------------------------------------
 # Specify the platform. [Mandatory]
 # Choose Platform - 1010/1040/2041/3041/4080/5020/5040/9131/9132/9164/4240/C290
-PLATFORM=4860
+PLATFORM=4240
 # ESBC Flag. Specify ESBC=0 to sign u-boot and ESBC=1 to sign ESBC images.(default is 0)
 ESBC=0
 ---------------------------------------------------
@@ -37,7 +37,7 @@ IMAGE_TARGET=
 ---------------------------------------------------
 # Specify IMAGE, Max 8 images are possible. DST_ADDR is required only for Non-PBL Platform. [Mandatory]
 # USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
-IMAGE_1={uboot.bin,cff80000,ffffffff}
+IMAGE_1={uboot.bin,cff40000,ffffffff}
 IMAGE_2={,,}
 IMAGE_3={,,}
 IMAGE_4={,,}

@@ -11,7 +11,7 @@ ESBC=0
 ---------------------------------------------------
 # Entry Point/Image start address field in the header.[Mandatory]
 # (default=ADDRESS of first file specified in images)
-ENTRY_POINT=0x1107F000
+ENTRY_POINT=0x110BF000
 ---------------------------------------------------
 # Specify the file name of the keys seperated by comma.
 # The number of files and key select should lie between 1 and 4 for 1040 and C290.
