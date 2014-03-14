@@ -156,6 +156,7 @@ void find_value_from_file(char *field_name, FILE * fp)
 		fseek(fp, -line_size, SEEK_CUR);
 		line = realloc(line, line_size + 1);
 	}
+	line = realloc(line, 0);
 	file_field.count = -1;
 exit1:
 	if (((strcmp(field_name, "PLATFORM") == 0) ||

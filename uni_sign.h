@@ -212,6 +212,7 @@ struct global {
 	uint32_t mp_flag;
 	uint32_t sdhc_flag;
 	uint32_t sdhc_bsize;
+	uint32_t help_flag;
 };
 
 
