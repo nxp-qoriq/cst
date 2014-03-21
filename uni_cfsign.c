@@ -127,14 +127,13 @@ void find_cfw_from_file(char *field_name, FILE * fp)
 	fseek(fp, 0, SEEK_SET);
 	line_size = cal_line_size(fp);
 	fseek(fp, -line_size, SEEK_CUR);
-	line = malloc(line_size + 1);
 
-	while (fread(line, 1, line_size, fp)) {
+	while (fread(line_data, 1, line_size, fp)) {
 		i = 0;
-		*(line + line_size) = '\0';
-		remove_whitespace(line);
-		if ((strstr(line, field_name)) && (*line != '#')) {
-			get_field_from_file(line, field_name);
+		*(line_data + line_size) = '\0';
+		remove_whitespace(line_data);
+		if ((strstr(line_data, field_name)) && (*line_data != '#')) {
+			get_field_from_file(line_data, field_name);
 			if (file_field.count == 2) {
 				addr = strtoul(file_field.value[0], 0, 16);
 				data = strtoul(file_field.value[1], 0, 16);
@@ -153,7 +152,6 @@ void find_cfw_from_file(char *field_name, FILE * fp)
 		}
 		line_size = cal_line_size(fp);
 		fseek(fp, -line_size, SEEK_CUR);
-		line = realloc(line, line_size + 1);
 	}
 }
 
@@ -314,7 +312,6 @@ void parse_file(char *file_name)
 	}
 
 	fclose(fp);
-	free(line);
 }
 
 int open_priv_file(void)

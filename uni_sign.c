@@ -52,12 +52,10 @@
 #include "uni_sign.h"
 #include "dump_fields.h"
 
-
 struct size_format size;
 struct global gd;
 struct input_field input_pri_key, input_pub_key;
 extern struct input_field file_field;	/* Required for parsing input file */
-extern char *line;
 
 int check_group(char *platform)
 {
@@ -73,23 +71,6 @@ int check_group(char *platform)
 	return -1;
 }
 
-struct input_field get_field(char *line)
-{
-	struct input_field field = { {NULL, NULL, NULL, NULL}, 0 };
-
-	int i = 0;
-	char delims[] = ",";
-	char *result = NULL;
-	result = strtok(line, delims);
-	while (result != NULL) {
-		field.value[i] = result;
-		result = strtok(NULL, delims);
-		i++;
-	}
-	field.count = i;
-	return field;
-
-}
 /* return the size of the give file */
 static int get_size(const char *c)
 {
@@ -318,7 +299,7 @@ void parse_file(char *file_name)
 {
 	int i, ret;
 	char *image_name;
-	image_name = malloc(strlen("IMAGE_1" + 1));
+	image_name = malloc(strlen("IMAGE_1") + 1);
 
 	FILE *fp;
 	fp = fopen(file_name, "r");
@@ -369,7 +350,7 @@ void parse_file(char *file_name)
 		while (i != input_pri_key.count) {
 
 			input_pri_key.value[i] =
-			    malloc(strlen(file_field.value[i]));
+			    malloc(strlen(file_field.value[i]) + 1);
 			strcpy(input_pri_key.value[i], file_field.value[i]);
 
 			i++;
@@ -387,7 +368,7 @@ void parse_file(char *file_name)
 		while (i != input_pub_key.count) {
 
 			input_pub_key.value[i] =
-			    malloc(strlen(file_field.value[i]));
+			    malloc(strlen(file_field.value[i]) + 1);
 			strcpy(input_pub_key.value[i], file_field.value[i]);
 
 			i++;
@@ -404,7 +385,7 @@ void parse_file(char *file_name)
 	/* Parse Image target from input file */
 	find_value_from_file("IMAGE_TARGET", fp);
 	if (file_field.count == 1) {
-		gd.target_name = malloc(strlen(file_field.value[0]));
+		gd.target_name = malloc(strlen(file_field.value[0]) + 1);
 		strcpy(gd.target_name, file_field.value[0]);
 		gd.target_flag = 1;
 		if (strcmp(gd.target_name, "SDHC") == 0)
@@ -421,7 +402,7 @@ void parse_file(char *file_name)
 	i = 0;
 	gd.num_entries = 0;
 	while (i != NUM_SG_ENTRIES) {
-		sprintf(image_name, "IMAGE_%d", i + 1);
+		sprintf(image_name, "IMAGE_%c", (char)(i + 1 + (int)'0'));
 		find_value_from_file(image_name, fp);
 		if (((gd.group == 1) || (gd.group == 3) || (gd.esbc_flag == 1))
 		&& ((file_field.count != 2) && (file_field.count != 3)
@@ -442,7 +423,7 @@ void parse_file(char *file_name)
 
 		if ((file_field.count != 0) && (file_field.count != -1)) {
 			gd.entries[i].name =
-			    malloc(strlen(file_field.value[0]));
+			    malloc(strlen(file_field.value[0]) + 1);
 			strcpy(gd.entries[i].name, file_field.value[0]);
 			gd.entries[i].addr =
 			    strtoul(file_field.value[1], 0, 16);
@@ -487,16 +468,16 @@ void parse_file(char *file_name)
 
 
 	/* Parse File Names from input file */
-	find_value_from_file("OEM_UID", fp);
 	find_value_from_file("OUTPUT_HDR_FILENAME", fp);
 	if (file_field.count == 1) {
-		gd.hdrfile = malloc(strlen(file_field.value[0]));
+		gd.hdrfile = malloc(strlen(file_field.value[0]) + 1);
 		strcpy(gd.hdrfile, file_field.value[0]);
+		gd.hdrfile_flag = 1;
 	}
 
-	find_value_from_file("OUTPUT_SG_FILE", fp);
+	find_value_from_file("OUTPUT_SG_BIN", fp);
 	if (file_field.count == 1) {
-		gd.sgfile = malloc(strlen(file_field.value[0]));
+		gd.sgfile = malloc(strlen(file_field.value[0]) + 1);
 		strcpy(gd.sgfile, file_field.value[0]);
 		gd.sgfile_flag = 1;
 	}
@@ -546,7 +527,6 @@ void parse_file(char *file_name)
 		gd.verbose_flag = strtoul(file_field.value[0], 0, 16);
 
 	free(image_name);
-	free(line);
 	fclose(fp);
 
 }
@@ -733,28 +713,10 @@ int main(int argc, char **argv)
 	gd.priv_fname[0] = PRI_KEY_FILE;
 	gd.hdrfile = HDR_FILE;
 	gd.sgfile = TBL_FILE;
-	gd.oemuid_flag = 0;
-	gd.fsluid_flag = 0;
-	gd.target_flag = 0;
-	gd.sgfile_flag = 0;
-	gd.hkptr_flag = 0;
-	gd.hksize_flag = 0;
-	gd.hkptr = 0;
-	gd.hksize = 0;
-	gd.oemid = 0;
-	gd.fslid = 0;
 	gd.targetid = 0x0000000f;
 	gd.srk_sel = 1;
-	gd.srk_table_flag = 0;
-	gd.sfp_wp = 0;
-	gd.sec_image = 0;
 	gd.num_srk_entries = 1;
-	gd.file_flag = 0;
-	gd.mp_flag = 0;
-	gd.oemuid_1_flag = 0;
-	gd.fsluid_1_flag = 0;
 	gd.sdhc_bsize = BLOCK_SIZE;
-	gd.sdhc_flag = 0;
 
 	input_pri_key.count = 1;
 	input_pri_key.value[0] = PRI_KEY_FILE;
@@ -1031,5 +993,24 @@ exit1:
 		fclose(gd.fsrk_pri[i]);
 		RSA_free(gd.srk[i]);
 	}
+
+	for (i = 0; i != input_pub_key.count; i++)
+		free(input_pub_key.value[i]);
+
+	for (i = 0; i != input_pri_key.count; i++)
+		free(input_pri_key.value[i]);
+
+	for (i = 0; i != NUM_SG_ENTRIES; i++)
+		free(gd.entries[i].name);
+
+	if (gd.target_flag == 1)
+		free(gd.target_name);
+
+	if (gd.sgfile_flag == 1)
+		free(gd.sgfile);
+
+	if (gd.hdrfile_flag == 1)
+		free(gd.hdrfile);
+
 	exit(0);
 }

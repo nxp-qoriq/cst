@@ -34,14 +34,15 @@
 
 #include <ctype.h>
 
-#define BOOT_SIG        0x424f4f54      /*offset 0x40-43 */
-#define BARKER_LEN 0x4 
-#define SHA256_DIGEST_LENGTH 32
-#define NID_sha256 672
+#define BOOT_SIG		0x424f4f54      /*offset 0x40-43 */
+#define BARKER_LEN		0x4
+#define SHA256_DIGEST_LENGTH	32
+#define NID_sha256		672
 
-#define PRI_KEY_FILE "srk.pri"
-#define PUB_KEY_FILE "srk.pub"
-#define MAX_NUM_KEYS 4
+#define PRI_KEY_FILE		"srk.pri"
+#define PUB_KEY_FILE		"srk.pub"
+#define MAX_NUM_KEYS		4
+#define MAX_LINE_SIZE		256
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
@@ -68,7 +69,7 @@ struct input_field {
 
 
 struct input_field file_field;	
-char *line;
+char line_data[MAX_LINE_SIZE];
 
 int cal_line_size(FILE *fp)
 {
@@ -141,22 +142,19 @@ void find_value_from_file(char *field_name, FILE * fp)
 	fseek(fp, 0, SEEK_SET);
 	line_size = cal_line_size(fp);
 	fseek(fp, -line_size, SEEK_CUR);
-	line = malloc(line_size + 1);
 
-	while (fread(line, 1, line_size, fp)) {
+	while (fread(line_data, 1, line_size, fp)) {
 		i = 0;
-		*(line + line_size) = '\0';
-		remove_whitespace(line);
-		if ((strstr(line, field_name)) && (*line != '#')) {
-			get_field_from_file(line, field_name);
+		*(line_data + line_size) = '\0';
+		remove_whitespace(line_data);
+		if ((strstr(line_data, field_name)) && (*line_data != '#')) {
+			get_field_from_file(line_data, field_name);
 			goto exit1;
 		}
 		line_size = cal_line_size(fp);
 
 		fseek(fp, -line_size, SEEK_CUR);
-		line = realloc(line, line_size + 1);
 	}
-	line = realloc(line, 0);
 	file_field.count = -1;
 exit1:
 	if (((strcmp(field_name, "PLATFORM") == 0) ||

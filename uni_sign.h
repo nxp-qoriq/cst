@@ -202,6 +202,7 @@ struct global {
 	uint32_t sec_image_flag;
 	uint32_t hkptr_flag;
 	uint32_t hksize_flag;
+	uint32_t hdrfile_flag;
 	uint32_t sgfile_flag;
 	uint32_t target_flag;
 	struct srk_table key_table[MAX_NUM_KEYS];
