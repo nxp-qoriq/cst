@@ -96,11 +96,6 @@ struct sg_table_offset {
 	u32 destination;	/* ptr to the data segment */
 };
 
-struct hk_data {
-	u32 hkarea;
-	u32 hksize;
-};
-
 struct img_hdr {
 	u8 barker[BARKER_LEN];	/* barker code */
 
