@@ -43,6 +43,7 @@
 #define SRK_TABLE_OFFSET	0x200
 #define SIGNATURE_OFFSET	0x1400
 #define SG_TABLE_OFFSET		0x1600
+#define IE_TABLE_OFFSET		0x1700
 
 #define OUID_FUID_BOTH		0x1
 #define OUID_ONLY		0x2
@@ -77,6 +78,7 @@ enum blocks_order {
 	SRK_TABLE,
 	SIGNATURE,
 	SG_TABLE,
+	IE_TABLE,
 	BLOCK_END
 };
 
@@ -94,6 +96,11 @@ struct sg_table_offset {
 };
 
 struct srk_table {
+	u32 key_len;
+	u8 pkey[1024];
+};
+
+struct ie_key_table {
 	u32 key_len;
 	u8 pkey[1024];
 };
@@ -170,8 +177,10 @@ struct combined_hdr {
 
 struct global {
 	/* Variables used across functions */
-	FILE * fsrk_pri[MAX_NUM_KEYS];
+	FILE *fsrk_pri[MAX_NUM_KEYS];
 	RSA * srk[MAX_NUM_KEYS];
+	FILE *fie_key[MAX_NUM_KEYS];
+	RSA * ie_key[MAX_NUM_KEYS];
 	struct sg_table hsgtbl[NUM_SG_ENTRIES];	/* SG table */
 	struct combined_hdr *cmbhdrptr[10];
 	/* Options flags*/
@@ -186,6 +195,7 @@ struct global {
 	int num_entries;
 	char *pub_fname[MAX_NUM_KEYS];
 	char *priv_fname[MAX_NUM_KEYS];
+	char *ie_key_fname[MAX_NUM_KEYS];
 	char *hdrfile;
 	char *sgfile;
 	uint32_t oemuid_flag;
@@ -214,12 +224,17 @@ struct global {
 	uint32_t sgfile_flag;
 	uint32_t target_flag;
 	struct srk_table key_table[MAX_NUM_KEYS];
+	struct ie_key_table ie_key_entry[MAX_NUM_KEYS];
 	uint32_t num_srk_entries;
+	uint32_t num_ie_keys;
 	int esbc_flag;
 	int sec_image;
 	uint32_t mp_flag;
 	uint32_t sdhc_flag;
 	uint32_t sdhc_bsize;
+	uint32_t esbc_hdr;
+	uint32_t ie_key_revoc;
+	uint32_t ie_flag;
 };
 
 

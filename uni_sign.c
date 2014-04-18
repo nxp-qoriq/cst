@@ -52,8 +52,10 @@
 #include "uni_sign.h"
 #include "dump_fields.h"
 
+#define ie_dest_addr 0xffffffff
+
 struct global gd;
-struct input_field input_pri_key, input_pub_key;
+struct input_field input_pri_key, input_pub_key, input_ie_key;
 extern struct input_field file_field;	/* Required for parsing input file */
 
 /* Creates new node for combined header*/
@@ -113,6 +115,18 @@ static void initialise_nodes()
 		gd.cmbhdrptr[SG_TABLE]->blk_size = gd.num_entries *
 					 sizeof(struct sg_table_offset);
 	}
+
+	/* Initialise ie_key_table node*/
+	gd.cmbhdrptr[IE_TABLE] = new_node();
+	if (gd.ie_flag == 1 && gd.esbc_flag == 0) {
+		gd.cmbhdrptr[IE_TABLE]->blk_ptr = (struct ie_key_table *)
+			calloc(1,
+			       (gd.num_ie_keys * sizeof(struct ie_key_table)) +
+			       (2 * sizeof(uint32_t)));
+		gd.cmbhdrptr[IE_TABLE]->blk_size =
+			(gd.num_ie_keys * sizeof(struct ie_key_table)) +
+			(2 * sizeof(uint32_t));
+	}
 }
 
 /* This function populates Offsets for all the blocks. */
@@ -132,6 +146,14 @@ static void fill_offset()
 					gd.key_table[gd.srk_sel - 1].key_len;
 	}
 
+	if (gd.ie_flag == 1 && gd.esbc_flag == 0) {
+		i = 0;
+		while (i != gd.num_ie_keys) {
+			gd.ie_key_entry[i].key_len = RSA_size(gd.ie_key[i]);
+			i++;
+		}
+	}
+
 	/* To add padding in the header */
 	gd.cmbhdrptr[CSF_HDR]->blk_offset = 0;
 	gd.cmbhdrptr[EXTENDED_HDR]->blk_offset =
@@ -139,6 +161,7 @@ static void fill_offset()
 	gd.cmbhdrptr[SRK_TABLE]->blk_offset = SRK_TABLE_OFFSET;
 	gd.cmbhdrptr[SIGNATURE]->blk_offset = SIGNATURE_OFFSET;
 	gd.cmbhdrptr[SG_TABLE]->blk_offset = SG_TABLE_OFFSET;
+	gd.cmbhdrptr[IE_TABLE]->blk_offset = IE_TABLE_OFFSET;
 }
 
 /* Deallocates all nodes and memory being allocated*/
@@ -259,6 +282,25 @@ int open_priv_file(void)
 		}
 
 	}
+
+	for (i = 0; i < gd.num_ie_keys; i++) {
+		/* open IE private key file and get the key */
+		gd.fie_key[i] = fopen(gd.ie_key_fname[i], "r");
+		if (gd.fie_key[i] == NULL) {
+			fprintf(stderr, "Error in opening the file: %s\n",
+				gd.ie_key_fname[i]);
+			return -1;
+		}
+
+		gd.ie_key[i] =
+		    PEM_read_RSAPrivateKey(gd.fie_key[i], NULL, NULL, NULL);
+		if (gd.ie_key[i] == NULL) {
+			fprintf(stderr, "Error in reading key from : %s\n",
+				gd.ie_key_fname[i]);
+			fclose(gd.fie_key[i]);
+			return -1;
+		}
+	}
 	return 0;
 }
 
@@ -371,9 +413,20 @@ void fill_and_update_sg_tbl(SHA256_CTX *ctx)
 void fill_and_update_sg_tbl_offset(SHA256_CTX *ctx)
 {
 	int i = 0;
+	int img_index = 0;
 	struct sg_table_offset *osgtbl = (struct sg_table_offset *)
 					 gd.cmbhdrptr[SG_TABLE]->blk_ptr;
-	for (i = 0; i < gd.num_entries; i++) {
+
+	if (gd.ie_flag == 1) {
+		img_index = 1;
+		gd.entries[i].d_addr = 0xffffffff;
+		osgtbl[i].len = BYTE_ORDER_L(gd.cmbhdrptr[IE_TABLE]->blk_size);
+		osgtbl[i].source = BYTE_ORDER_L(gd.entries[i].addr);
+		osgtbl[i].target_id = BYTE_ORDER_L(gd.targetid);
+		osgtbl[i].destination = BYTE_ORDER_L(gd.entries[i].d_addr);
+	}
+
+	for (i = img_index; i < gd.num_entries; i++) {
 		if (gd.sdhc_flag == 0) {
 			osgtbl[i].len = BYTE_ORDER_L
 					(get_size(gd.entries[i].name));
@@ -412,7 +465,6 @@ void fill_and_update_sg_tbl_offset(SHA256_CTX *ctx)
 }
 
 
-
 void parse_file(char *file_name)
 {
 	int i, ret;
@@ -449,6 +501,13 @@ void parse_file(char *file_name)
 				"in input file. Refer usage\n");
 			exit(1);
 		}
+	}
+
+	/* Parsing esbc_hdr address*/
+	if (gd.esbc_flag == 0) {
+		find_value_from_file("ESBC_HDRADDR", fp);
+		if (file_field.count == 1)
+			gd.esbc_hdr = strtoul(file_field.value[0], 0, 16);
 	}
 
 	/* Parse Key Info from input file */
@@ -493,6 +552,32 @@ void parse_file(char *file_name)
 		}
 
 	}
+
+	/*Parsing IE keys*/
+	if (gd.esbc_flag == 0) {
+		find_value_from_file("IE_KEY", fp);
+		if (file_field.count >= 1) {
+			input_ie_key.count = file_field.count;
+			gd.ie_flag = 1;
+
+			i = 0;
+			while (i != input_ie_key.count) {
+				input_ie_key.value[i] =
+				    malloc(strlen(file_field.value[i]) + 1);
+				strcpy(input_ie_key.value[i],
+				       file_field.value[i]);
+				i++;
+			}
+		}
+	}
+
+	/* Parsing IE_revoc field*/
+	if (gd.esbc_flag == 0) {
+		find_value_from_file("IE_REVOC", fp);
+		if (file_field.count == 1)
+			gd.ie_key_revoc = strtoul(file_field.value[0], 0, 16);
+	}
+
 	/* Parse Entry Point from input file */
 	find_value_from_file("ENTRY_POINT", fp);
 	if (file_field.count == 1) {
@@ -510,7 +595,6 @@ void parse_file(char *file_name)
 			gd.sdhc_flag = 1;
 	}
 
-
 	/* Parse blocksize if image target is SDHC*/
 	find_value_from_file("BSIZE", fp);
 	if (file_field.count == 1)
@@ -519,8 +603,17 @@ void parse_file(char *file_name)
 	/* Parse Images from input file */
 	i = 0;
 	gd.num_entries = 0;
+	if (gd.ie_flag == 1 && gd.esbc_flag == 0) {
+		gd.num_entries = 1;
+		i = 1;
+	}
 	while (i != NUM_SG_ENTRIES) {
-		sprintf(image_name, "IMAGE_%c", (char)(i + 1 + (int)'0'));
+		if (gd.ie_flag == 1 && gd.esbc_flag == 0)
+			sprintf(image_name, "IMAGE_%c", (char)(i + (int)'0'));
+		else
+			sprintf(image_name, "IMAGE_%c",
+				(char)(i + 1 + (int)'0'));
+
 		find_value_from_file(image_name, fp);
 		if (((gd.group == 1) || (gd.group == 3) || (gd.esbc_flag == 1))
 		&& ((file_field.count != 2) && (file_field.count != 3)
@@ -778,6 +871,14 @@ void check_error(int argc, char **argv)
 		gd.num_srk_entries = input_pri_key.count;
 	}
 
+	/* error checking for ie key and copying them to gd*/
+	i = 0;
+	while (i != input_ie_key.count) {
+			gd.ie_key_fname[i] = input_ie_key.value[i];
+			i++;
+		}
+	gd.num_ie_keys = input_ie_key.count;
+
 	if (gd.num_entries == 0) {
 		if (gd.hash_flag) {
 			printonlyhash(gd.srk_table_flag, gd.pub_fname,
@@ -803,12 +904,14 @@ int main(int argc, char **argv)
 {
 	int c;
 	int i, n, ret, j = 0;
-	u32 key_len, total_key_len, hdrlen;
+	u32 key_len, total_key_len, hdrlen, ie_revoc, ie_keys;
 	u8 *header;
 	unsigned char hash[SHA256_DIGEST_LENGTH];
 	unsigned char *tmp;
 	unsigned char *sign;
 	unsigned char *key;
+	unsigned char *ie_key_offset;
+	uint32_t img_index;
 
 	SHA256_CTX ctx;
 	FILE *ftbl;
@@ -841,6 +944,7 @@ int main(int argc, char **argv)
 
 	input_pub_key.count = 1;
 	input_pub_key.value[0] = PUB_KEY_FILE;
+	input_ie_key.count = 0;
 
 	while (1) {
 		static struct option long_options[] = {
@@ -918,6 +1022,15 @@ int main(int argc, char **argv)
 	       (u8 *)(gd.cmbhdrptr[EXTENDED_HDR]->blk_ptr),
 	       gd.cmbhdrptr[EXTENDED_HDR]->blk_size);
 
+	/*Add first entry for ie key to sg table*/
+	if (gd.ie_flag == 1 && gd.esbc_flag == 0) {
+		gd.entries[0].name = malloc(strlen("ie_key_table") + 1);
+		strcpy(gd.entries[0].name, "ie_key_table");
+		gd.entries[0].addr = gd.esbc_hdr +
+				gd.cmbhdrptr[IE_TABLE]->blk_offset;
+		gd.entries[0].d_addr = ie_dest_addr;
+	}
+
 	/*pointer to the location of key */
 	key = header + gd.cmbhdrptr[SRK_TABLE]->blk_offset;
 	memset(key, 0, gd.cmbhdrptr[SRK_TABLE]->blk_size);
@@ -991,6 +1104,61 @@ int main(int argc, char **argv)
 
 	}
 
+	/*pointer to the location of IE key */
+	ie_key_offset = header + gd.cmbhdrptr[IE_TABLE]->blk_offset;
+	memset(ie_key_offset, 0, gd.cmbhdrptr[IE_TABLE]->blk_size);
+
+	if (gd.ie_flag == 1 && gd.esbc_flag == 0) {
+		/* ie_key table */
+		ie_revoc = BYTE_ORDER_L(gd.ie_key_revoc);
+		memcpy(ie_key_offset, &ie_revoc, sizeof(u32));
+		ie_key_offset = ie_key_offset + sizeof(u32);
+
+		ie_keys = BYTE_ORDER_L(gd.num_ie_keys);
+		memcpy(ie_key_offset, &ie_keys, sizeof(u32));
+		ie_key_offset = ie_key_offset + sizeof(u32);
+
+		n = 0;
+		while (n != gd.num_ie_keys) {
+			/* copy N and E */
+			key =
+			    ie_key_offset + n * (sizeof(struct ie_key_table));
+
+			/* Copy length */
+			total_key_len = BYTE_ORDER_L
+					(2 * gd.ie_key_entry[n].key_len);
+			memcpy(key, &total_key_len, sizeof(u32));
+			key = key + sizeof(u32);
+
+			/* Copy N component */
+			tmp = (unsigned char *)
+			      (((BIGNUM *)gd.ie_key[n]->n)->d);
+			for (j = gd.ie_key_entry[n].key_len - 1, i = 0;
+			     i < ((BIGNUM *)gd.ie_key[n]->n)->top *
+				 sizeof(BIGNUM *);
+			     i++, j--)
+				key[j] = tmp[i];
+
+			/* Copy E component */
+			key =
+			    ie_key_offset + n * (sizeof(struct ie_key_table)) +
+			    sizeof(u32) + gd.ie_key_entry[n].key_len;
+			tmp = (unsigned char *)
+			      (((BIGNUM *)gd.ie_key[n]->e)->d);
+			for (j = gd.ie_key_entry[n].key_len - 1, i = 0;
+			     i < ((BIGNUM *)gd.ie_key[n]->e)->top *
+				 sizeof(BIGNUM *);
+			     i++, j--)
+				key[j] = tmp[i];
+
+			memcpy(gd.ie_key_entry[n].pkey, ie_key_offset +
+			       n * sizeof(struct ie_key_table) +
+			       4, 2 * gd.ie_key_entry[n].key_len);
+			/*Update for all the keys present in the Key table */
+			n++;
+		}
+	}
+
 	if (gd.hash_flag == 1 || gd.file_flag == 1 || gd.verbose_flag == 1) {
 		printkeyhash(header + gd.cmbhdrptr[SRK_TABLE]->blk_offset,
 			     2 * key_len, gd.srk_table_flag, gd.num_srk_entries);
@@ -1006,10 +1174,25 @@ int main(int argc, char **argv)
 		fill_and_update_sg_tbl(&ctx);
 
 	if (((gd.group == 2) || (gd.group == 3) || (gd.group == 4) ||
-	     (gd.group == 5)) && (gd.esbc_flag == 0))
+	     (gd.group == 5)) && (gd.esbc_flag == 0)) {
 		fill_and_update_sg_tbl_offset(&ctx);
+	}
 
-	if ((gd.group != 2) || (gd.esbc_flag == 1)) {
+	/* Signature generation for SG table images*/
+	if ((gd.group != 2) && (gd.esbc_flag == 0)) {
+		img_index = 0;
+
+		if (gd.ie_flag == 1) {
+			SHA256_Update(&ctx, header +
+				      gd.cmbhdrptr[IE_TABLE]->blk_offset,
+				      gd.cmbhdrptr[IE_TABLE]->blk_size);
+			img_index = 1;
+		}
+		for (i = img_index; i < gd.num_entries; i++)
+			get_size_and_updatehash(gd.entries[i].name, &ctx);
+	}
+
+	if (gd.esbc_flag == 1) {
 		for (i = 0; i < gd.num_entries; i++)
 			get_size_and_updatehash(gd.entries[i].name, &ctx);
 	}
@@ -1091,6 +1274,11 @@ exit1:
 	for (i = 0; i < gd.num_srk_entries; i++) {
 		fclose(gd.fsrk_pri[i]);
 		RSA_free(gd.srk[i]);
+	}
+
+	for (i = 0; i < gd.num_ie_keys; i++) {
+		fclose(gd.fie_key[i]);
+		RSA_free(gd.ie_key[i]);
 	}
 
 	for (i = 0; i != input_pub_key.count; i++)
