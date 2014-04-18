@@ -171,7 +171,9 @@ static void printonlyhash(uint32_t srk_table_flag,
 static void dump_img_hdr1(struct global *gd)
 {
 	int i;
-	struct img_hdr *h = &(gd->himg);
+	struct img_hdr *h = (struct img_hdr *)gd->cmbhdrptr[CSF_HDR]->blk_ptr;
+	struct ext_img_hdr *ext_h = (struct ext_img_hdr *)
+				    gd->cmbhdrptr[EXTENDED_HDR]->blk_ptr;
 
 	printf("barker:0x");
 	for (i = 0; i < BARKER_LEN; i++)
@@ -208,8 +210,8 @@ static void dump_img_hdr1(struct global *gd)
 	printf("FSL UID %x\n", BYTE_ORDER_L(h->fsl_uid));
 	printf("OEM UID %x\n", BYTE_ORDER_L(h->oem_uid));
 	if (gd->group == 5) {
-		printf("FSL UID 1%x\n", BYTE_ORDER_L(h->fsl_uid_1));
-		printf("OEM UID 1%x\n", BYTE_ORDER_L(h->oem_uid_1));
+		printf("FSL UID 1%x\n", BYTE_ORDER_L(ext_h->fsl_uid_1));
+		printf("OEM UID 1%x\n", BYTE_ORDER_L(ext_h->oem_uid_1));
 		printf("Manufacturing Protection Flag %x\n",
 		       BYTE_ORDER_S(h->mp_n_sg_flag.mp_flag));
 		printf("sg_flag %d\n", BYTE_ORDER_S(h->mp_n_sg_flag.sg_flag));
@@ -217,8 +219,8 @@ static void dump_img_hdr1(struct global *gd)
 		printf("sg_flag %d\n", BYTE_ORDER_L(h->sg_flag));
 	}
 	if (gd->hkptr_flag == 1) {
-		printf("hkptr %x\n", BYTE_ORDER_L(h->hkptr));
-		printf("hksize %x\n", BYTE_ORDER_L(h->hksize));
+		printf("hkptr %x\n", BYTE_ORDER_L(ext_h->hkptr));
+		printf("hksize %x\n", BYTE_ORDER_L(ext_h->hksize));
 	}
 }
 

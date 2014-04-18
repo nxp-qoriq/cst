@@ -40,22 +40,26 @@
 #define BYTE_ORDER_S(x)	(x)
 #endif
 
-#define OUID_FUID_BOTH 0x1
-#define OUID_ONLY 0x2
-#define FUID_ONLY 0x4
-#define NO_UID	0x0
+#define SRK_TABLE_OFFSET	0x200
+#define SIGNATURE_OFFSET	0x1400
+#define SG_TABLE_OFFSET		0x1600
 
-#define TBL_FILE "sg_table.out"
-#define HDR_FILE "hdr.out"
+#define OUID_FUID_BOTH		0x1
+#define OUID_ONLY		0x2
+#define FUID_ONLY		0x4
+#define NO_UID			0x0
 
-#define IOBLOCK 128		/* I/O block size used for hashing operations */
-#define NUM_SG_ENTRIES	8
+#define TBL_FILE		"sg_table.out"
+#define HDR_FILE		"hdr.out"
+
+/* I/O block size used for hashing operations */
+#define IOBLOCK			128
+#define NUM_SG_ENTRIES		8
 
 char *group[][2] = { {"3041", "1"},
 {"4080", "1"},
 {"5020", "1"},
 {"5040", "1"},
-{"3041", "1"},
 {"1010", "2"},
 {"9131", "2"},
 {"9132", "2"},
@@ -67,26 +71,19 @@ char *group[][2] = { {"3041", "1"},
 {"LAST", "0"}
 };
 
-/* Header Format */
-struct size_format {
-	u32 header;
-	u32 padd1;
-	u32 key_table;
-	u32 padd2;
-	u32 sign_len;
-	u32 padd3;
-	u32 sg_table;
+enum blocks_order {
+	CSF_HDR = 0,
+	EXTENDED_HDR,
+	SRK_TABLE,
+	SIGNATURE,
+	SG_TABLE,
+	BLOCK_END
 };
 
 
 struct sg_table {
 	u32 len;		/* length of the segment */
 	u32 pdata;		/* ptr to the data segment */
-};
-
-struct srk_table {
-	u32 key_len;
-	u8 pkey[1024];
 };
 
 struct sg_table_offset {
@@ -96,14 +93,28 @@ struct sg_table_offset {
 	u32 destination;	/* ptr to the data segment */
 };
 
+struct srk_table {
+	u32 key_len;
+	u8 pkey[1024];
+};
+
+struct hk {
+	u32 hkptr;		/* House keeping area starting address */
+	u32 hksize;		/* House keeping area size */
+};
+
+struct sg_input {
+	char *name;
+	uint32_t addr;
+	uint32_t d_addr;
+};
+
 struct img_hdr {
 	u8 barker[BARKER_LEN];	/* barker code */
-
 	union {
 		u32 pkey;	/* public key offset */
 		u32 srk_table_offset;
 	};
-
 	union {
 		u32 key_len;	/* pub key length */
 		struct {
@@ -140,21 +151,21 @@ struct img_hdr {
 	};
 	u32 fsl_uid;		/* Freescale unique id */
 	u32 oem_uid;		/* OEM unique id */
+};
+
+/* Extended image header used for group 3,4,5 */
+struct ext_img_hdr {
 	u32 hkptr;		/* House keeping area starting address */
 	u32 hksize;		/* House keeping area size */
 	u32 fsl_uid_1;		/* Freescale unique id 1*/
 	u32 oem_uid_1;		/* OEM unique id 1*/
 };
 
-struct sg_input {
-	char *name;
-	uint32_t addr;
-	uint32_t d_addr;
-};
-
-struct hk {
-	u32 hkptr;		/* House keeping area starting address */
-	u32 hksize;		/* House keeping area size */
+/* Generic structure for linking all individual headers and tables */
+struct combined_hdr {
+	void *blk_ptr;
+	uint32_t blk_size;
+	uint32_t blk_offset;
 };
 
 struct global {
@@ -162,13 +173,16 @@ struct global {
 	FILE * fsrk_pri[MAX_NUM_KEYS];
 	RSA * srk[MAX_NUM_KEYS];
 	struct sg_table hsgtbl[NUM_SG_ENTRIES];	/* SG table */
-	struct sg_table_offset osgtbl[NUM_SG_ENTRIES];	/* offset SG table */
-	struct img_hdr himg;
+	struct combined_hdr *cmbhdrptr[10];
+	/* Options flags*/
+	int verbose_flag;
+	int hash_flag;
+	int file_flag;
+	int help_flag;
 	/* These entries are filled by parsing the arguments */
 	int group;
 	int sg_flag;
 	int entry_flag;
-	int hash_flag;
 	int num_entries;
 	char *pub_fname[MAX_NUM_KEYS];
 	char *priv_fname[MAX_NUM_KEYS];
@@ -185,7 +199,6 @@ struct global {
 	uint32_t sg_addr;
 	uint32_t img_addr;
 	uint32_t entry_addr;
-	int verbose_flag;
 	struct sg_input entries[NUM_SG_ENTRIES];
 	uint32_t targetid;
 	char *target_name;
@@ -203,12 +216,10 @@ struct global {
 	struct srk_table key_table[MAX_NUM_KEYS];
 	uint32_t num_srk_entries;
 	int esbc_flag;
-	int file_flag;
 	int sec_image;
 	uint32_t mp_flag;
 	uint32_t sdhc_flag;
 	uint32_t sdhc_bsize;
-	uint32_t help_flag;
 };
 
 

@@ -116,7 +116,7 @@ int check_group(char *platform)
 
 void find_cfw_from_file(char *field_name, FILE * fp)
 {
-	int line_size = 0, i = 0;
+	int line_size = 0;
 	u32 addr, data;
 	file_field.value[0] = NULL;
 	file_field.value[1] = NULL;
@@ -129,7 +129,6 @@ void find_cfw_from_file(char *field_name, FILE * fp)
 	fseek(fp, -line_size, SEEK_CUR);
 
 	while (fread(line_data, 1, line_size, fp)) {
-		i = 0;
 		*(line_data + line_size) = '\0';
 		remove_whitespace(line_data);
 		if ((strstr(line_data, field_name)) && (*line_data != '#')) {
