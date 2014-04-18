@@ -209,7 +209,7 @@ static void dump_img_hdr1(struct global *gd)
 	printf("img start %x\n", BYTE_ORDER_L(h->img_start));
 	printf("FSL UID %x\n", BYTE_ORDER_L(h->fsl_uid));
 	printf("OEM UID %x\n", BYTE_ORDER_L(h->oem_uid));
-	if (gd->group == 5) {
+	if ((gd->group == 5) && (gd->esbc_flag == 0)) {
 		printf("FSL UID 1%x\n", BYTE_ORDER_L(ext_h->fsl_uid_1));
 		printf("OEM UID 1%x\n", BYTE_ORDER_L(ext_h->oem_uid_1));
 		printf("Manufacturing Protection Flag %x\n",
@@ -218,7 +218,7 @@ static void dump_img_hdr1(struct global *gd)
 	} else {
 		printf("sg_flag %d\n", BYTE_ORDER_L(h->sg_flag));
 	}
-	if (gd->hkptr_flag == 1) {
+	if ((gd->hkptr_flag == 1) && (gd->esbc_flag == 0)) {
 		printf("hkptr %x\n", BYTE_ORDER_L(ext_h->hkptr));
 		printf("hksize %x\n", BYTE_ORDER_L(ext_h->hksize));
 	}

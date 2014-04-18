@@ -81,7 +81,8 @@ static void initialise_nodes()
 
 	/* Initialise ext_img_hdr node*/
 	gd.cmbhdrptr[EXTENDED_HDR] = new_node();
-	if ((gd.group == 3) || (gd.group == 4) || (gd.group == 5)) {
+	if (((gd.group == 3) || (gd.group == 4) || (gd.group == 5)) &&
+	    (gd.esbc_flag == 0)) {
 		gd.cmbhdrptr[EXTENDED_HDR]->blk_ptr = (struct ext_img_hdr *)
 					calloc(1, sizeof(struct ext_img_hdr));
 		gd.cmbhdrptr[EXTENDED_HDR]->blk_size =
@@ -108,7 +109,7 @@ static void initialise_nodes()
 	/* Initialise sg table node*/
 	gd.cmbhdrptr[SG_TABLE] = new_node();
 	if (((gd.group == 2) || (gd.group == 3) || (gd.group == 4) ||
-	     (gd.group == 5)) && (gd.esbc_flag != 1)) {
+	     (gd.group == 5)) && (gd.esbc_flag == 0)) {
 		gd.cmbhdrptr[SG_TABLE]->blk_ptr = (struct sg_table_offset *)
 					calloc(1, gd.num_entries *
 					 sizeof(struct sg_table_offset));
@@ -385,12 +386,12 @@ void fill_header(SHA256_CTX *ctx, u32 key_len, u32 sign_size)
 	}
 
 	/* fill external image header */
-	if (gd.group == 5) {
+	if (gd.group == 5 && gd.esbc_flag == 0) {
 		ext_hdr_ptr->fsl_uid_1 = BYTE_ORDER_L(gd.fslid_1);
 		ext_hdr_ptr->oem_uid_1 = BYTE_ORDER_L(gd.oemid_1);
 	}
 
-	if (gd.group == 3 || gd.group == 4) {
+	if ((gd.group == 3 || gd.group == 4) && (gd.esbc_flag == 0)) {
 		ext_hdr_ptr->hkptr = BYTE_ORDER_L(gd.hkptr);
 		ext_hdr_ptr->hksize = BYTE_ORDER_L(gd.hksize);
 	}
