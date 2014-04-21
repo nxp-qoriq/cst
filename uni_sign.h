@@ -56,6 +56,8 @@
 /* I/O block size used for hashing operations */
 #define IOBLOCK			128
 #define NUM_SG_ENTRIES		8
+#define KEY_SIZE_BYTES		1024
+#define NUM_BLOCKS		7
 
 char *group[][2] = { {"3041", "1"},
 {"4080", "1"},
@@ -75,6 +77,7 @@ char *group[][2] = { {"3041", "1"},
 enum blocks_order {
 	CSF_HDR = 0,
 	EXTENDED_HDR,
+	EXT_ESBC_HDR,
 	SRK_TABLE,
 	SIGNATURE,
 	SG_TABLE,
@@ -97,12 +100,12 @@ struct sg_table_offset {
 
 struct srk_table {
 	u32 key_len;
-	u8 pkey[1024];
+	u8 pkey[KEY_SIZE_BYTES];
 };
 
 struct ie_key_table {
 	u32 key_len;
-	u8 pkey[1024];
+	u8 pkey[KEY_SIZE_BYTES];
 };
 
 struct hk {
@@ -168,6 +171,12 @@ struct ext_img_hdr {
 	u32 oem_uid_1;		/* OEM unique id 1*/
 };
 
+/* Extended image header of IE Key usage for ESBC*/
+struct ext_esbc_ie_hdr {
+	uint32_t ie_flag;	/* IE flag*/
+	uint32_t ie_sel;	/* IE key select*/
+};
+
 /* Generic structure for linking all individual headers and tables */
 struct combined_hdr {
 	void *blk_ptr;
@@ -182,7 +191,7 @@ struct global {
 	FILE *fie_key[MAX_NUM_KEYS];
 	RSA * ie_key[MAX_NUM_KEYS];
 	struct sg_table hsgtbl[NUM_SG_ENTRIES];	/* SG table */
-	struct combined_hdr *cmbhdrptr[10];
+	struct combined_hdr *cmbhdrptr[NUM_BLOCKS];
 	/* Options flags*/
 	int verbose_flag;
 	int hash_flag;
@@ -235,6 +244,7 @@ struct global {
 	uint32_t esbc_hdr;
 	uint32_t ie_key_revoc;
 	uint32_t ie_flag;
+	uint32_t ie_key_sel;
 };
 
 
