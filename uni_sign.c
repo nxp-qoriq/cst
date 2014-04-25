@@ -74,10 +74,17 @@ static struct combined_hdr *new_node()
 static void initialise_nodes()
 {
 	/* Initialise img_hdr node*/
+	gd.cmbhdrptr[CSF_HDR_LS] = new_node();
 	gd.cmbhdrptr[CSF_HDR] = new_node();
-	gd.cmbhdrptr[CSF_HDR]->blk_ptr = (struct img_hdr *)
+	if (gd.group == 6) {
+		gd.cmbhdrptr[CSF_HDR_LS]->blk_ptr = (struct img_hdr_ls2 *)
+					calloc(1, sizeof(struct img_hdr_ls2));
+		gd.cmbhdrptr[CSF_HDR_LS]->blk_size = sizeof(struct img_hdr_ls2);
+	} else {
+		gd.cmbhdrptr[CSF_HDR]->blk_ptr = (struct img_hdr *)
 					calloc(1, sizeof(struct img_hdr));
-	gd.cmbhdrptr[CSF_HDR]->blk_size = sizeof(struct img_hdr);
+		gd.cmbhdrptr[CSF_HDR]->blk_size = sizeof(struct img_hdr);
+	}
 
 	/* Initialise ext_img_hdr node*/
 	gd.cmbhdrptr[EXTENDED_HDR] = new_node();
@@ -120,7 +127,7 @@ static void initialise_nodes()
 	/* Initialise sg table node*/
 	gd.cmbhdrptr[SG_TABLE] = new_node();
 	if (((gd.group == 2) || (gd.group == 3) || (gd.group == 4) ||
-	     (gd.group == 5)) && (gd.esbc_flag == 0)) {
+	     (gd.group == 5) || (gd.group == 6)) && (gd.esbc_flag == 0)) {
 		gd.cmbhdrptr[SG_TABLE]->blk_ptr = (struct sg_table_offset *)
 					calloc(1, gd.num_entries *
 					 sizeof(struct sg_table_offset));
@@ -167,6 +174,7 @@ static void fill_offset()
 	}
 
 	/* To add padding in the header */
+	gd.cmbhdrptr[CSF_HDR_LS]->blk_offset = 0;
 	gd.cmbhdrptr[CSF_HDR]->blk_offset = 0;
 	gd.cmbhdrptr[EXTENDED_HDR]->blk_offset =
 					gd.cmbhdrptr[CSF_HDR]->blk_size;
@@ -182,7 +190,7 @@ static void fill_offset()
 static void free_mem()
 {
 	int i;
-	for (i = CSF_HDR; i != BLOCK_END; i++) {
+	for (i = CSF_HDR_LS; i != BLOCK_END; i++) {
 		free(gd.cmbhdrptr[i]->blk_ptr);
 		free(gd.cmbhdrptr[i]);
 	}
@@ -318,7 +326,81 @@ int open_priv_file(void)
 	return 0;
 }
 
-void fill_header(SHA256_CTX *ctx, u32 key_len, u32 sign_size)
+void fill_header_ls(SHA256_CTX *ctx)
+{
+	u8 uid_flags, misc_flags;
+	u8 uid_bit, misc_bit;
+	int i;
+	struct img_hdr_ls2 *hdr_ptr = (struct img_hdr_ls2 *)
+				  gd.cmbhdrptr[CSF_HDR_LS]->blk_ptr;
+
+	u8 barker[BARKER_LEN] = {0x12, 0x19, 0x20, 0x01};
+	hdr_ptr->barker[0] = barker[0];
+	hdr_ptr->barker[1] = barker[1];
+	hdr_ptr->barker[2] = barker[2];
+	hdr_ptr->barker[3] = barker[3];
+	hdr_ptr->srk_table_offset = BYTE_ORDER_L
+					(gd.cmbhdrptr[SRK_TABLE]->blk_offset);
+
+	hdr_ptr->num_keys = (u8)gd.num_srk_entries;
+	hdr_ptr->key_num_verify = (u8)gd.srk_sel;
+
+	/* Populating misc_flags depending upon which all flags are set*/
+	misc_flags = 0x00;
+	misc_bit = 0x01;
+	if (gd.ie_flag == 1 && gd.esbc_flag == 0)
+		misc_flags = misc_flags | misc_bit;
+
+	misc_bit = misc_bit << 4;
+	if (gd.mp_flag == 1 && gd.esbc_flag == 0)
+		misc_flags = misc_flags | misc_bit;
+
+	misc_bit = misc_bit << 1;
+	if (gd.iss_flag == 1 && gd.esbc_flag == 0)
+		misc_flags = misc_flags | misc_bit;
+
+	misc_bit = misc_bit << 1;
+	if (gd.b01_flag == 1 && gd.esbc_flag == 0)
+		misc_flags = misc_flags | misc_bit;
+
+	misc_bit = misc_bit << 1;
+	if (gd.lw_flag == 1 && gd.esbc_flag == 0)
+		misc_flags = misc_flags | misc_bit;
+
+	hdr_ptr->misc_flags = (u8)misc_flags;
+
+	/* Populating signature and sg_table fields*/
+	hdr_ptr->psign = BYTE_ORDER_L(gd.cmbhdrptr[SIGNATURE]->blk_offset);
+	hdr_ptr->sign_len = BYTE_ORDER_L(gd.cmbhdrptr[SIGNATURE]->blk_size);
+	hdr_ptr->sg_table_addr = BYTE_ORDER_L
+				 (gd.cmbhdrptr[SG_TABLE]->blk_offset);
+	hdr_ptr->sg_entries = BYTE_ORDER_L(gd.num_entries);
+	hdr_ptr->entry_point = BYTE_ORDER_L(gd.entry_addr);
+
+	/* Populating fsl, oem uids and uid_flags*/
+	uid_flags = 0x00;
+	uid_bit = 0x02;
+	for (i = 0; i < 5; i++) {
+		if (gd.oemuid_flag[i] != 0) {
+			uid_bit = uid_bit << 1;
+			uid_flags = uid_flags | uid_bit;
+			hdr_ptr->oem_uid[i] = BYTE_ORDER_L(gd.oemuid[i]);
+		}
+	}
+
+	if (gd.fsluid_flag[0] != 0 || gd.fsluid_flag[1] != 0) {
+		uid_bit = uid_bit << 1;
+		uid_flags = uid_flags | uid_bit;
+	}
+	hdr_ptr->fsl_uid[0] = BYTE_ORDER_L(gd.fsluid[0]);
+	hdr_ptr->fsl_uid[1] = BYTE_ORDER_L(gd.fsluid[1]);
+
+	hdr_ptr->uid_flags = (u8)uid_flags;
+
+	SHA256_Update(ctx, (u8 *)hdr_ptr, gd.cmbhdrptr[CSF_HDR_LS]->blk_size);
+}
+
+void fill_header(SHA256_CTX *ctx, u32 key_len)
 {
 	struct img_hdr *hdr_ptr = (struct img_hdr *)
 				  gd.cmbhdrptr[CSF_HDR]->blk_ptr;
@@ -348,7 +430,6 @@ void fill_header(SHA256_CTX *ctx, u32 key_len, u32 sign_size)
 	if (!(gd.ie_flag == 1 && gd.esbc_flag == 1)) {
 		if (gd.srk_table_flag == 0) {
 			hdr_ptr->key_len = BYTE_ORDER_L(2 * key_len);
-			hdr_ptr->sign_len = BYTE_ORDER_L(sign_size);
 			hdr_ptr->pkey = BYTE_ORDER_L
 					(gd.cmbhdrptr[SRK_TABLE]->blk_offset);
 		} else {
@@ -361,30 +442,30 @@ void fill_header(SHA256_CTX *ctx, u32 key_len, u32 sign_size)
 		}
 	}
 
-	hdr_ptr->sign_len = BYTE_ORDER_L(sign_size);
+	hdr_ptr->sign_len = BYTE_ORDER_L(gd.cmbhdrptr[SIGNATURE]->blk_size);
 	hdr_ptr->psign =
 	    BYTE_ORDER_L(gd.cmbhdrptr[SIGNATURE]->blk_offset);
 	hdr_ptr->img_start = BYTE_ORDER_L(gd.entry_addr);
 
-	hdr_ptr->fsl_uid = BYTE_ORDER_L(gd.fslid);
-	hdr_ptr->oem_uid = BYTE_ORDER_L(gd.oemid);
+	hdr_ptr->fsl_uid = BYTE_ORDER_L(gd.fsluid[0]);
+	hdr_ptr->oem_uid = BYTE_ORDER_L(gd.oemuid[0]);
 
 	if ((gd.group == 1) || (gd.group == 2)) {
-		if (gd.fsluid_flag && gd.oemuid_flag)
+		if (gd.fsluid_flag[0] && gd.oemuid_flag[0])
 			hdr_ptr->uid_flag = BYTE_ORDER_L(OUID_FUID_BOTH);
-		else if (gd.fsluid_flag)
+		else if (gd.fsluid_flag[0])
 			hdr_ptr->uid_flag = BYTE_ORDER_L(FUID_ONLY);
-		else if (gd.oemuid_flag)
+		else if (gd.oemuid_flag[0])
 			hdr_ptr->uid_flag = BYTE_ORDER_L(OUID_ONLY);
 		else
 			hdr_ptr->uid_flag = BYTE_ORDER_L(NO_UID);
 	} else {
-		if (gd.fsluid_flag && gd.oemuid_flag)
+		if (gd.fsluid_flag[0] && gd.oemuid_flag[0])
 			hdr_ptr->uid_n_wp.uid_flag = BYTE_ORDER_S
 						     (OUID_FUID_BOTH);
-		else if (gd.fsluid_flag)
+		else if (gd.fsluid_flag[0])
 			hdr_ptr->uid_n_wp.uid_flag = BYTE_ORDER_S(FUID_ONLY);
-		else if (gd.oemuid_flag)
+		else if (gd.oemuid_flag[0])
 			hdr_ptr->uid_n_wp.uid_flag = BYTE_ORDER_S(OUID_ONLY);
 		else
 			hdr_ptr->uid_n_wp.uid_flag = BYTE_ORDER_S(NO_UID);
@@ -405,8 +486,8 @@ void fill_header(SHA256_CTX *ctx, u32 key_len, u32 sign_size)
 
 	/* fill external image header */
 	if (gd.group == 5 && gd.esbc_flag == 0) {
-		ext_hdr_ptr->fsl_uid_1 = BYTE_ORDER_L(gd.fslid_1);
-		ext_hdr_ptr->oem_uid_1 = BYTE_ORDER_L(gd.oemid_1);
+		ext_hdr_ptr->fsl_uid_1 = BYTE_ORDER_L(gd.fsluid[1]);
+		ext_hdr_ptr->oem_uid_1 = BYTE_ORDER_L(gd.oemuid[1]);
 	}
 
 	if ((gd.group == 3 || gd.group == 4) && (gd.esbc_flag == 0)) {
@@ -685,7 +766,7 @@ void parse_file(char *file_name)
 	find_value_from_file("PRI_KEY", fp);
 	if (file_field.count >= 1) {
 		input_pri_key.count = file_field.count;
-		if (input_pri_key.count > 1)
+		if ((input_pri_key.count > 1) || (gd.group == 6))
 			gd.srk_table_flag = 1;
 
 		i = 0;
@@ -697,13 +778,13 @@ void parse_file(char *file_name)
 
 			i++;
 		}
-
+		gd.num_srk_entries = input_pri_key.count;
 	}
 
 	find_value_from_file("PUB_KEY", fp);
 	if (file_field.count >= 1) {
 		input_pub_key.count = file_field.count;
-		if (input_pub_key.count > 1)
+		if ((input_pub_key.count > 1) || (gd.group == 6))
 			gd.srk_table_flag = 1;
 
 		i = 0;
@@ -797,10 +878,10 @@ void parse_file(char *file_name)
 				"field %s. Refer usage\n", image_name);
 			exit(1);
 		}
-		if (((gd.group == 2) || (gd.group == 4) || (gd.group == 5)) &&
-		    ((file_field.count != 3) && (file_field.count != 0)
-		     && (file_field.count != -1) && (gd.esbc_flag == 0))) {
-
+		if (((gd.group == 2) || (gd.group == 4) || (gd.group == 5) ||
+		     (gd.group == 6)) && ((file_field.count != 3) &&
+		    (file_field.count != 0) && (file_field.count != -1) &&
+		    (gd.esbc_flag == 0))) {
 			printf("Error. Invalid Usage. Please check %s "
 				"in input file. Refer usage\n", image_name);
 			exit(1);
@@ -813,8 +894,8 @@ void parse_file(char *file_name)
 			gd.entries[i].addr =
 			    strtoul(file_field.value[1], 0, 16);
 
-			if (((gd.group == 2) || (gd.group == 4))
-			    && (gd.esbc_flag == 0)) {
+			if (((gd.group == 2) || (gd.group == 4) ||
+			     (gd.group == 6)) && (gd.esbc_flag == 0)) {
 				gd.entries[i].d_addr =
 				    strtoul(file_field.value[2], 0, 16);
 			}
@@ -828,29 +909,49 @@ void parse_file(char *file_name)
 	}
 
 	/* Parse UID from input file */
-	find_value_from_file("OEM_UID", fp);
-	if (file_field.count == 1) {
-		gd.oemid = strtoul(file_field.value[0], 0, 16);
-		gd.oemuid_flag = 1;
-	}
-
 	find_value_from_file("FSL_UID", fp);
 	if (file_field.count == 1) {
-		gd.fslid = strtoul(file_field.value[0], 0, 16);
-		gd.fsluid_flag = 1;
+		gd.fsluid[0] = strtoul(file_field.value[0], 0, 16);
+		gd.fsluid_flag[0] = 1;
+	}
+	find_value_from_file("FSL_UID_1", fp);
+	if (file_field.count == 1) {
+		gd.fsluid[1] = strtoul(file_field.value[0], 0, 16);
+		gd.fsluid_flag[1] = 1;
+	}
+
+	if (gd.group == 6 && gd.esbc_flag == 0) {
+		if (!gd.fsluid_flag[0] || !gd.fsluid_flag[0]) {
+			printf("ERROR. Missing FSL UID in Input File\n");
+			exit(1);
+		}
+	}
+
+	find_value_from_file("OEM_UID", fp);
+	if (file_field.count == 1) {
+		gd.oemuid[0] = strtoul(file_field.value[0], 0, 16);
+		gd.oemuid_flag[0] = 1;
 	}
 	find_value_from_file("OEM_UID_1", fp);
 	if (file_field.count == 1) {
-		gd.oemid_1 = strtoul(file_field.value[0], 0, 16);
-		gd.oemuid_1_flag = 1;
+		gd.oemuid[1] = strtoul(file_field.value[0], 0, 16);
+		gd.oemuid_flag[1] = 1;
 	}
-
-	find_value_from_file("FSL_UID_1", fp);
+	find_value_from_file("OEM_UID_2", fp);
 	if (file_field.count == 1) {
-		gd.fslid_1 = strtoul(file_field.value[0], 0, 16);
-		gd.fsluid_1_flag = 1;
+		gd.oemuid[2] = strtoul(file_field.value[0], 0, 16);
+		gd.oemuid_flag[2] = 1;
 	}
-
+	find_value_from_file("OEM_UID_3", fp);
+	if (file_field.count == 1) {
+		gd.oemuid[3] = strtoul(file_field.value[0], 0, 16);
+		gd.oemuid_flag[3] = 1;
+	}
+	find_value_from_file("OEM_UID_4", fp);
+	if (file_field.count == 1) {
+		gd.oemuid[4] = strtoul(file_field.value[0], 0, 16);
+		gd.oemuid_flag[4] = 1;
+	}
 
 	/* Parse File Names from input file */
 	find_value_from_file("OUTPUT_HDR_FILENAME", fp);
@@ -907,6 +1008,21 @@ void parse_file(char *file_name)
 	if (file_field.count == 1) {
 		gd.mp_flag = strtoul(file_field.value[0], 0, 16);
 	}
+
+	/* Layerscape flags*/
+	find_value_from_file("ISS_FLAG", fp);
+	if (file_field.count == 1)
+		gd.iss_flag = strtoul(file_field.value[0], 0, 16);
+
+	find_value_from_file("BOOT01_FLAG", fp);
+	if (file_field.count == 1)
+		gd.b01_flag = strtoul(file_field.value[0], 0, 16);
+
+	find_value_from_file("LW_FLAG", fp);
+	if (file_field.count == 1)
+		gd.lw_flag = strtoul(file_field.value[0], 0, 16);
+
+
 	find_value_from_file("VERBOSE", fp);
 	if (file_field.count == 1)
 		gd.verbose_flag = strtoul(file_field.value[0], 0, 16);
@@ -934,9 +1050,9 @@ void check_error(int argc, char **argv)
 		usage();
 		exit(1);
 	}
-	if ((gd.hkptr_flag == 1 || gd.hksize_flag == 1)
-	    && ((gd.group == 1) || (gd.group == 2) || (gd.group == 5)
-		|| (gd.esbc_flag == 1))) {
+	if ((gd.hkptr_flag == 1 || gd.hksize_flag == 1) &&
+	    ((gd.group == 1) || (gd.group == 2) || (gd.group == 5) ||
+	     (gd.group == 6) || (gd.esbc_flag == 1))) {
 		printf("Error. hkptr/hksize not required for "
 			"the given Platform.\n");
 		usage();
@@ -1042,7 +1158,6 @@ void check_error(int argc, char **argv)
 			gd.pub_fname[i] = input_pub_key.value[i];
 			i++;
 		}
-		gd.num_srk_entries = input_pri_key.count;
 	}
 
 	/* error checking for ie key and copying them to gd*/
@@ -1183,11 +1298,18 @@ int main(int argc, char **argv)
 
 	SHA256_Init(&ctx);
 	/* Update the headers contents in SHA */
-	/* Also update `the image contents in SHA if sg = 0 */
-	fill_header(&ctx, key_len, gd.cmbhdrptr[SIGNATURE]->blk_size);
+	if (gd.group == 6)
+		fill_header_ls(&ctx);
+	else
+		fill_header(&ctx, key_len);
 #ifdef DEBUG
 	dump_gd(&gd);
 #endif
+
+	memcpy(header,
+	       (u8 *)(gd.cmbhdrptr[CSF_HDR_LS]->blk_ptr),
+	       gd.cmbhdrptr[CSF_HDR_LS]->blk_size);
+
 	memcpy(header,
 	       (u8 *)(gd.cmbhdrptr[CSF_HDR]->blk_ptr),
 	       gd.cmbhdrptr[CSF_HDR]->blk_size);
@@ -1231,7 +1353,7 @@ int main(int argc, char **argv)
 		fill_and_update_sg_tbl(&ctx);
 
 	if (((gd.group == 2) || (gd.group == 3) || (gd.group == 4) ||
-	     (gd.group == 5)) && (gd.esbc_flag == 0)) {
+	     (gd.group == 5) || (gd.group == 6)) && (gd.esbc_flag == 0)) {
 		fill_and_update_sg_tbl_offset(&ctx);
 	}
 
@@ -1293,8 +1415,8 @@ int main(int argc, char **argv)
 	}
 
 	/* Copy SG Table in the header at the offset */
-	if (((gd.group == 2) || (gd.group == 3) || (gd.group == 4) || (gd.group == 5))
-	    && (gd.esbc_flag == 0)) {
+	if (((gd.group == 2) || (gd.group == 3) || (gd.group == 4) ||
+	     (gd.group == 5) || (gd.group == 6)) && (gd.esbc_flag == 0)) {
 		memcpy(header + gd.cmbhdrptr[SG_TABLE]->blk_offset,
 		       gd.cmbhdrptr[SG_TABLE]->blk_ptr,
 		       gd.cmbhdrptr[SG_TABLE]->blk_size);
@@ -1321,7 +1443,6 @@ int main(int argc, char **argv)
 		fclose(ftbl);
 		printf("SG Table file %s created\n", gd.sgfile);
 	}
-
 	printf("\n");
 exit3:
 	fclose(fhdr);

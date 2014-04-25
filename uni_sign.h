@@ -57,7 +57,7 @@
 #define IOBLOCK			128
 #define NUM_SG_ENTRIES		8
 #define KEY_SIZE_BYTES		1024
-#define NUM_BLOCKS		7
+#define NUM_BLOCKS		8
 
 char *group[][2] = { {"3041", "1"},
 {"4080", "1"},
@@ -71,11 +71,13 @@ char *group[][2] = { {"3041", "1"},
 {"1040", "4"},
 {"C290", "4"},
 {"LS1", "5"},
+{"LS2", "6"},
 {"LAST", "0"}
 };
 
 enum blocks_order {
-	CSF_HDR = 0,
+	CSF_HDR_LS = 0,
+	CSF_HDR,
 	EXTENDED_HDR,
 	EXT_ESBC_HDR,
 	SRK_TABLE,
@@ -117,6 +119,30 @@ struct sg_input {
 	char *name;
 	uint32_t addr;
 	uint32_t d_addr;
+};
+
+struct img_hdr_ls2 {
+	u8 barker[BARKER_LEN];		/* 0x00 Barker code */
+	u32 srk_table_offset;		/* 0x04 SRK Table Offset */
+
+	u8 num_keys;			/* 0x08 No. of keys */
+	u8 key_num_verify;		/* 0x09 Key no. to be used*/
+	u8 reserve;			/* 0x0a Reserved */
+	u8 misc_flags;			/* 0x0b Misc. Flags*/
+
+	u8 res[3];			/* 0x0c 0x0d 0x0e */
+	u8 uid_flags;			/* 0x0f UID Flags */
+
+	u32 psign;			/* 0x10 signature offset */
+	u32 sign_len;			/* 0x14 length of signature */
+	u32 sg_table_addr;		/* 0x18 ptr to SG table */
+	u32 sg_entries;			/* 0x1c no. of entries in SG */
+	u32 entry_point;		/* 0x20 ESBC entry point */
+
+	u32 fsl_uid[2];			/* 0x24-0x28 Freescale unique id's*/
+	u32 oem_uid[5];			/* 0x2c-0x3c OEM unique id's*/
+
+	u32 reserved[4];		/* 0x40 - 0x4f */
 };
 
 struct img_hdr {
@@ -207,14 +233,10 @@ struct global {
 	char *ie_key_fname[MAX_NUM_KEYS];
 	char *hdrfile;
 	char *sgfile;
-	uint32_t oemuid_flag;
-	uint32_t fsluid_flag;
-	uint32_t oemuid_1_flag;
-	uint32_t fsluid_1_flag;
-	uint32_t fslid;
-	uint32_t oemid;
-	uint32_t fslid_1;
-	uint32_t oemid_1;
+	uint32_t oemuid_flag[5];
+	uint32_t fsluid_flag[2];
+	uint32_t oemuid[5];
+	uint32_t fsluid[2];
 	uint32_t sg_addr;
 	uint32_t img_addr;
 	uint32_t entry_addr;
@@ -239,6 +261,9 @@ struct global {
 	int esbc_flag;
 	int sec_image;
 	uint32_t mp_flag;
+	uint32_t iss_flag;
+	uint32_t b01_flag;
+	uint32_t lw_flag;
 	uint32_t sdhc_flag;
 	uint32_t sdhc_bsize;
 	uint32_t esbc_hdr;

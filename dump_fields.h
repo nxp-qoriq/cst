@@ -240,8 +240,8 @@ static void dump_gd(struct global *gd)
 		printf("pub_fname %d	: %s\n", i + 1, gd->pub_fname[i]);
 		printf("priv_fname %d	: %s\n", i + 1, gd->priv_fname[i]);
 	}
-	printf("fslid		: %x\n", gd->fslid);
-	printf("oemid		: %x\n", gd->oemid);
+	printf("fslid		: %x\n", gd->fsluid[0]);
+	printf("oemid		: %x\n", gd->oemuid[0]);
 	printf("sg_addr		: %x\n", gd->sg_addr);
 	printf("entry_addr	: %x\n", gd->entry_addr);
 	printf("img_addr	: %x\n", gd->img_addr);
@@ -253,8 +253,8 @@ static void dump_gd(struct global *gd)
 		printf("hkptr		: %x\n", gd->hkptr);
 		printf("hksize		: %x\n", gd->hksize);
 	} else if (gd->group == 5) {
-		printf("fslid_1		: %x\n", gd->fslid_1);
-		printf("oemid_1		: %x\n", gd->oemid_1);
+		printf("fslid_1		: %x\n", gd->fsluid[1]);
+		printf("oemid_1		: %x\n", gd->oemuid[1]);
 		printf("mp_flag		: %x\n", gd->mp_flag);
 	}
 	if (gd->group == 3 || gd->group == 4 || gd->group == 5) {
