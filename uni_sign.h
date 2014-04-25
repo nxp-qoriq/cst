@@ -40,6 +40,7 @@
 #define BYTE_ORDER_S(x)	(x)
 #endif
 
+#define CSF_HDR_OFFSET		0x0
 #define SRK_TABLE_OFFSET	0x200
 #define SIGNATURE_OFFSET	0x1400
 #define SG_TABLE_OFFSET		0x1600
@@ -52,6 +53,7 @@
 
 #define TBL_FILE		"sg_table.out"
 #define HDR_FILE		"hdr.out"
+#define DESTINATION_ADDR	0xffffffff
 
 /* I/O block size used for hashing operations */
 #define IOBLOCK			128
@@ -231,6 +233,9 @@ struct global {
 	char *pub_fname[MAX_NUM_KEYS];
 	char *priv_fname[MAX_NUM_KEYS];
 	char *ie_key_fname[MAX_NUM_KEYS];
+	uint32_t pub_fname_count;
+	uint32_t priv_fname_count;
+	uint32_t ie_key_fname_count;
 	char *hdrfile;
 	char *sgfile;
 	uint32_t oemuid_flag[5];

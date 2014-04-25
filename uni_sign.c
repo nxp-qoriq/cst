@@ -52,10 +52,7 @@
 #include "uni_sign.h"
 #include "dump_fields.h"
 
-#define ie_dest_addr 0xffffffff
-
 struct global gd;
-struct input_field input_pri_key, input_pub_key, input_ie_key;
 extern struct input_field file_field;	/* Required for parsing input file */
 
 /* Creates new node for combined header*/
@@ -174,8 +171,8 @@ static void fill_offset()
 	}
 
 	/* To add padding in the header */
-	gd.cmbhdrptr[CSF_HDR_LS]->blk_offset = 0;
-	gd.cmbhdrptr[CSF_HDR]->blk_offset = 0;
+	gd.cmbhdrptr[CSF_HDR_LS]->blk_offset = CSF_HDR_OFFSET;
+	gd.cmbhdrptr[CSF_HDR]->blk_offset = CSF_HDR_OFFSET;
 	gd.cmbhdrptr[EXTENDED_HDR]->blk_offset =
 					gd.cmbhdrptr[CSF_HDR]->blk_size;
 	gd.cmbhdrptr[EXT_ESBC_HDR]->blk_offset =
@@ -190,6 +187,37 @@ static void fill_offset()
 static void free_mem()
 {
 	int i;
+	for (i = 0; i < gd.num_srk_entries; i++) {
+		fclose(gd.fsrk_pri[i]);
+		RSA_free(gd.srk[i]);
+	}
+
+	for (i = 0; i < gd.num_ie_keys; i++) {
+		fclose(gd.fie_key[i]);
+		RSA_free(gd.ie_key[i]);
+	}
+
+	for (i = 0; i != gd.pub_fname_count; i++)
+		free(gd.pub_fname[i]);
+
+	for (i = 0; i != gd.priv_fname_count; i++)
+		free(gd.priv_fname[i]);
+
+	for (i = 0; i != gd.ie_key_fname_count; i++)
+		free(gd.ie_key_fname[i]);
+
+	for (i = 0; i != NUM_SG_ENTRIES; i++)
+		free(gd.entries[i].name);
+
+	if (gd.target_flag == 1)
+		free(gd.target_name);
+
+	if (gd.sgfile_flag == 1)
+		free(gd.sgfile);
+
+	if (gd.hdrfile_flag == 1)
+		free(gd.hdrfile);
+
 	for (i = CSF_HDR_LS; i != BLOCK_END; i++) {
 		free(gd.cmbhdrptr[i]->blk_ptr);
 		free(gd.cmbhdrptr[i]);
@@ -665,7 +693,7 @@ void fill_and_update_sg_tbl_offset(SHA256_CTX *ctx)
 
 	if (gd.ie_flag == 1) {
 		img_index = 1;
-		gd.entries[i].d_addr = 0xffffffff;
+		gd.entries[i].d_addr = DESTINATION_ADDR;
 		osgtbl[i].len = BYTE_ORDER_L(gd.cmbhdrptr[IE_TABLE]->blk_size);
 		osgtbl[i].source = BYTE_ORDER_L(gd.entries[i].addr);
 		osgtbl[i].target_id = BYTE_ORDER_L(gd.targetid);
@@ -702,7 +730,7 @@ void fill_and_update_sg_tbl_offset(SHA256_CTX *ctx)
 		osgtbl[i].target_id = BYTE_ORDER_L(gd.targetid);
 
 		if (gd.group == 3 || gd.group ==5)
-			gd.entries[i].d_addr = 0xffffffff;
+			gd.entries[i].d_addr = DESTINATION_ADDR;
 
 		osgtbl[i].destination = BYTE_ORDER_L(gd.entries[i].d_addr);
 	}
@@ -765,34 +793,34 @@ void parse_file(char *file_name)
 
 	find_value_from_file("PRI_KEY", fp);
 	if (file_field.count >= 1) {
-		input_pri_key.count = file_field.count;
-		if ((input_pri_key.count > 1) || (gd.group == 6))
+		gd.priv_fname_count = file_field.count;
+		if ((gd.priv_fname_count > 1) || (gd.group == 6))
 			gd.srk_table_flag = 1;
 
 		i = 0;
-		while (i != input_pri_key.count) {
+		while (i != gd.priv_fname_count) {
 
-			input_pri_key.value[i] =
+			gd.priv_fname[i] =
 			    malloc(strlen(file_field.value[i]) + 1);
-			strcpy(input_pri_key.value[i], file_field.value[i]);
+			strcpy(gd.priv_fname[i], file_field.value[i]);
 
 			i++;
 		}
-		gd.num_srk_entries = input_pri_key.count;
+		gd.num_srk_entries = gd.priv_fname_count;
 	}
 
 	find_value_from_file("PUB_KEY", fp);
 	if (file_field.count >= 1) {
-		input_pub_key.count = file_field.count;
-		if ((input_pub_key.count > 1) || (gd.group == 6))
+		gd.pub_fname_count = file_field.count;
+		if ((gd.pub_fname_count > 1) || (gd.group == 6))
 			gd.srk_table_flag = 1;
 
 		i = 0;
-		while (i != input_pub_key.count) {
+		while (i != gd.pub_fname_count) {
 
-			input_pub_key.value[i] =
+			gd.pub_fname[i] =
 			    malloc(strlen(file_field.value[i]) + 1);
-			strcpy(input_pub_key.value[i], file_field.value[i]);
+			strcpy(gd.pub_fname[i], file_field.value[i]);
 
 			i++;
 		}
@@ -803,18 +831,19 @@ void parse_file(char *file_name)
 	if (gd.esbc_flag == 0) {
 		find_value_from_file("IE_KEY", fp);
 		if (file_field.count >= 1) {
-			input_ie_key.count = file_field.count;
+			gd.ie_key_fname_count = file_field.count;
 			gd.ie_flag = 1;
 
 			i = 0;
-			while (i != input_ie_key.count) {
-				input_ie_key.value[i] =
+			while (i != gd.ie_key_fname_count) {
+				gd.ie_key_fname[i] =
 				    malloc(strlen(file_field.value[i]) + 1);
-				strcpy(input_ie_key.value[i],
+				strcpy(gd.ie_key_fname[i],
 				       file_field.value[i]);
 				i++;
 			}
 		}
+	gd.num_ie_keys = gd.ie_key_fname_count;
 	}
 
 	/* Parsing IE_revoc field*/
@@ -1034,7 +1063,7 @@ void parse_file(char *file_name)
 
 void check_error(int argc, char **argv)
 {
-	int i, ret;
+	int ret;
 
 	if ((gd.sg_flag == 1)
 	    && ((gd.group != 1) || (gd.esbc_flag == 1))) {
@@ -1104,7 +1133,7 @@ void check_error(int argc, char **argv)
 			"number from 1 to 4.\n");
 		usage();
 		exit(1);
-	} else if ((gd.srk_table_flag == 1) && (input_pri_key.count > 4)) {
+	} else if ((gd.srk_table_flag == 1) && (gd.priv_fname_count > 4)) {
 		printf("Error. No. of key files should not be more than 4.\n");
 		usage();
 		exit(1);
@@ -1118,7 +1147,7 @@ void check_error(int argc, char **argv)
 			exit(1);
 		}
 	}
-	if (gd.srk_sel > input_pri_key.count) {
+	if (gd.srk_sel > gd.priv_fname_count) {
 		printf("Error. Invalid keyselect Option.\n");
 		usage();
 		exit(1);
@@ -1139,39 +1168,26 @@ void check_error(int argc, char **argv)
 		usage();
 		exit(1);
 	}
-	i = 0;
-	if ((input_pri_key.count > 1) && (gd.group == 1 || gd.group == 2)) {
+
+	if ((gd.priv_fname_count > 1) && (gd.group == 1 || gd.group == 2)) {
 		printf("Error. More than 1 key is not required"
 			" for the given platform.\n");
 		usage();
 		exit(1);
+	}
 
-	} else if (input_pri_key.count != input_pub_key.count) {
+	if (gd.priv_fname_count != gd.pub_fname_count) {
 		printf("Error. Public Key Count is not equal "
 			"to Private Key Count.\n");
 		usage();
 		exit(1);
 
-	} else {
-		while (i != input_pri_key.count) {
-			gd.priv_fname[i] = input_pri_key.value[i];
-			gd.pub_fname[i] = input_pub_key.value[i];
-			i++;
-		}
 	}
-
-	/* error checking for ie key and copying them to gd*/
-	i = 0;
-	while (i != input_ie_key.count) {
-			gd.ie_key_fname[i] = input_ie_key.value[i];
-			i++;
-		}
-	gd.num_ie_keys = input_ie_key.count;
 
 	if (gd.num_entries == 0) {
 		if (gd.hash_flag) {
 			printonlyhash(gd.srk_table_flag, gd.pub_fname,
-				      input_pub_key);
+				      gd.pub_fname_count);
 			exit(0);
 		} else if (gd.help_flag) {
 			usage();
@@ -1218,19 +1234,16 @@ int main(int argc, char **argv)
 	memset(&gd, 0, sizeof(struct global));
 	gd.pub_fname[0] = PUB_KEY_FILE;
 	gd.priv_fname[0] = PRI_KEY_FILE;
+	gd.pub_fname_count = 1;
+	gd.priv_fname_count = 1;
+	gd.ie_key_fname_count = 0;
+
 	gd.hdrfile = HDR_FILE;
 	gd.sgfile = TBL_FILE;
 	gd.targetid = 0x0000000f;
 	gd.srk_sel = 1;
 	gd.num_srk_entries = 1;
 	gd.sdhc_bsize = BLOCK_SIZE;
-
-	input_pri_key.count = 1;
-	input_pri_key.value[0] = PRI_KEY_FILE;
-
-	input_pub_key.count = 1;
-	input_pub_key.value[0] = PUB_KEY_FILE;
-	input_ie_key.count = 0;
 
 	while (1) {
 		static struct option long_options[] = {
@@ -1330,7 +1343,7 @@ int main(int argc, char **argv)
 		strcpy(gd.entries[0].name, "ie_key_table");
 		gd.entries[0].addr = gd.esbc_hdr +
 				gd.cmbhdrptr[IE_TABLE]->blk_offset;
-		gd.entries[0].d_addr = ie_dest_addr;
+		gd.entries[0].d_addr = DESTINATION_ADDR;
 	}
 
 	/* Insert key, srk table and ie_key table*/
@@ -1378,13 +1391,6 @@ int main(int argc, char **argv)
 
 	SHA256_Final(hash, &ctx);
 
-	if (gd.verbose_flag) {
-		printf("\n");
-		printf("Image Hash :");
-		for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
-			printf("%02x", hash[i]);
-		printf("\n");
-	}
 	/* copy Sign */
 
 	sign = header + gd.cmbhdrptr[SIGNATURE]->blk_offset;
@@ -1395,6 +1401,22 @@ int main(int argc, char **argv)
 	    != 1) {
 		printf("Error in generating signature\n");
 		goto exit2;
+	}
+
+	/* Copy SG Table in the header at the offset */
+	if (((gd.group == 2) || (gd.group == 3) || (gd.group == 4) ||
+	     (gd.group == 5) || (gd.group == 6)) && (gd.esbc_flag == 0)) {
+		memcpy(header + gd.cmbhdrptr[SG_TABLE]->blk_offset,
+		       gd.cmbhdrptr[SG_TABLE]->blk_ptr,
+		       gd.cmbhdrptr[SG_TABLE]->blk_size);
+	}
+
+	if (gd.verbose_flag) {
+		printf("\n");
+		printf("Image Hash :");
+		for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
+			printf("%02x", hash[i]);
+		printf("\n");
 	}
 
 	if (gd.verbose_flag) {
@@ -1414,13 +1436,6 @@ int main(int argc, char **argv)
 		}
 	}
 
-	/* Copy SG Table in the header at the offset */
-	if (((gd.group == 2) || (gd.group == 3) || (gd.group == 4) ||
-	     (gd.group == 5) || (gd.group == 6)) && (gd.esbc_flag == 0)) {
-		memcpy(header + gd.cmbhdrptr[SG_TABLE]->blk_offset,
-		       gd.cmbhdrptr[SG_TABLE]->blk_ptr,
-		       gd.cmbhdrptr[SG_TABLE]->blk_size);
-	}
 	/* Create the header file */
 	fhdr = fopen(gd.hdrfile, "wb");
 	if (fhdr == NULL) {
@@ -1449,36 +1464,6 @@ exit3:
 exit2:
 	free(header);
 exit1:
-	for (i = 0; i < gd.num_srk_entries; i++) {
-		fclose(gd.fsrk_pri[i]);
-		RSA_free(gd.srk[i]);
-	}
-
-	for (i = 0; i < gd.num_ie_keys; i++) {
-		fclose(gd.fie_key[i]);
-		RSA_free(gd.ie_key[i]);
-	}
-
-	for (i = 0; i != input_pub_key.count; i++)
-		free(input_pub_key.value[i]);
-
-	for (i = 0; i != input_pri_key.count; i++)
-		free(input_pri_key.value[i]);
-
-	for (i = 0; i != input_ie_key.count; i++)
-		free(input_ie_key.value[i]);
-
-	for (i = 0; i != NUM_SG_ENTRIES; i++)
-		free(gd.entries[i].name);
-
-	if (gd.target_flag == 1)
-		free(gd.target_name);
-
-	if (gd.sgfile_flag == 1)
-		free(gd.sgfile);
-
-	if (gd.hdrfile_flag == 1)
-		free(gd.hdrfile);
 
 	free_mem();
 

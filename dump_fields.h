@@ -86,7 +86,7 @@ static void printkeyhash(u8 *addr, uint32_t key_len,
 
 static void printonlyhash(uint32_t srk_table_flag,
 			  char *pub_fname[MAX_NUM_KEYS],
-			  struct input_field input_pub_key)
+			  uint32_t pub_fname_count)
 {
 	int i, j, n;
 	SHA256_CTX key_ctx;
@@ -99,12 +99,12 @@ static void printonlyhash(uint32_t srk_table_flag,
 	unsigned char *key_len_ptr;
 	u32 key_len = 0, total_key_len;
 	n = 0;
-	if (input_pub_key.count > 1)
+	if (pub_fname_count > 1)
 		srk_table_flag = 1;
 
 	SHA256_Init(&key_ctx);
 	/* open SRK public key file and get the key */
-	while (n != input_pub_key.count) {
+	while (n != pub_fname_count) {
 		fsrk_pub[n] = fopen(pub_fname[n], "r");
 		if (fsrk_pub[n] == NULL) {
 			fprintf(stderr, "Error in opening the file: %s\n",
@@ -161,7 +161,7 @@ static void printonlyhash(uint32_t srk_table_flag,
 		printf("%02x", hash[i]);
 	printf("\n\n");
 	n = 0;
-	while (n != input_pub_key.count) {
+	while (n != pub_fname_count) {
 		fclose(fsrk_pub[n]);
 		RSA_free(srk_pub[n]);
 		n++;
@@ -278,7 +278,7 @@ static void usage(void)
 		printf("For format of header generated refer to the "
 			"User Document.\n");
 		printf("\nUsage :\n");
-		printf("./uni_sign [options] [INPUT_FILE]" "\n");
+		printf("./uni_sign [options]\n");
 
 		printf("--file INPUT_FILE\t");
 		printf("Generate output header as specified in input file.\n");
@@ -287,7 +287,7 @@ static void usage(void)
 		printf("Generate output header alongwith displays the"
 		       " headerinfo.\n");
 
-		printf("--hash\t\t\t");
+		printf("--hash INPUT_FILE\t\t\t");
 		printf("Print the hash of the SRK.PUB public key.\n");
 
 		printf("-h,--help\t\t");
