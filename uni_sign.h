@@ -222,10 +222,11 @@ struct global {
 	struct sg_table hsgtbl[NUM_SG_ENTRIES];	/* SG table */
 	struct combined_hdr *cmbhdrptr[NUM_BLOCKS];
 	/* Options flags*/
+	int file_flag;
 	int verbose_flag;
 	int hash_flag;
 	int img_hash_flag;
-	int file_flag;
+	int sign_app_flag;
 	int help_flag;
 	/* These entries are filled by parsing the arguments */
 	int group;

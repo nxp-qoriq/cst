@@ -295,6 +295,10 @@ static void usage(void)
 		       " Header file is generated without signature"
 		       " embedded in it.\n");
 
+		printf("--sign_app INPUT_FILE HASH_FILE SIGN_FILE\n\t\t\t");
+		printf("Compare the hash value, add given signature and"
+		       " generate the header.\n");
+
 		printf("-h,--help\t\t");
 		printf("Show this help message and exit.\n");
 
