@@ -188,7 +188,7 @@ static void free_mem()
 {
 	int i;
 	for (i = 0; i < gd.num_srk_entries; i++) {
-		fclose(gd.fsrk_pri[i]);
+		fclose(gd.fsrk[i]);
 		RSA_free(gd.srk[i]);
 	}
 
@@ -307,27 +307,40 @@ int get_size_and_updatehash(const char *fname, SHA256_CTX * ctx)
 	return len;
 }
 
-
-
-int open_priv_file(void)
+/*
+ * Reads public key when compiled with img_hash option otherwise
+ * reads private key.
+ * */
+int open_key_file(void)
 {
 	int i = 0;
+	char *fname;
 
 	for (i = 0; i < gd.num_srk_entries; i++) {
-		/* open SRK private key file and get the key */
-		gd.fsrk_pri[i] = fopen(gd.priv_fname[i], "r");
-		if (gd.fsrk_pri[i] == NULL) {
+		/* open SRK key file and get the key */
+		if (gd.img_hash_flag == 1)
+			fname = gd.pub_fname[i];
+		else
+			fname = gd.priv_fname[i];
+
+		gd.fsrk[i] = fopen(fname, "r");
+		if (gd.fsrk[i] == NULL) {
 			fprintf(stderr, "Error in opening the file: %s\n",
-				gd.priv_fname[i]);
+				fname);
 			return -1;
 		}
 
-		gd.srk[i] =
-		    PEM_read_RSAPrivateKey(gd.fsrk_pri[i], NULL, NULL, NULL);
+		if (gd.img_hash_flag == 1)
+			gd.srk[i] = PEM_read_RSAPublicKey
+				    (gd.fsrk[i], NULL, NULL, NULL);
+		else
+			gd.srk[i] = PEM_read_RSAPrivateKey
+				    (gd.fsrk[i], NULL, NULL, NULL);
+
 		if (gd.srk[i] == NULL) {
 			fprintf(stderr, "Error in reading key from : %s\n",
-				gd.priv_fname[i]);
-			fclose(gd.fsrk_pri[i]);
+				fname);
+			fclose(gd.fsrk[i]);
 			return -1;
 		}
 
@@ -826,6 +839,10 @@ void parse_file(char *file_name)
 		}
 
 	}
+	if (gd.img_hash_flag == 1) {
+		gd.priv_fname_count = 0;
+		gd.num_srk_entries = gd.pub_fname_count;
+	}
 
 	/*Parsing IE keys*/
 	if (gd.esbc_flag == 0) {
@@ -1147,7 +1164,7 @@ void check_error(int argc, char **argv)
 			exit(1);
 		}
 	}
-	if (gd.srk_sel > gd.priv_fname_count) {
+	if ((gd.srk_sel > gd.priv_fname_count) && gd.img_hash_flag != 1) {
 		printf("Error. Invalid keyselect Option.\n");
 		usage();
 		exit(1);
@@ -1176,7 +1193,8 @@ void check_error(int argc, char **argv)
 		exit(1);
 	}
 
-	if (gd.priv_fname_count != gd.pub_fname_count) {
+	if (gd.priv_fname_count != gd.pub_fname_count &&
+	    gd.img_hash_flag != 1) {
 		printf("Error. Public Key Count is not equal "
 			"to Private Key Count.\n");
 		usage();
@@ -1218,6 +1236,7 @@ int main(int argc, char **argv)
 	SHA256_CTX ctx;
 	FILE *ftbl;
 	FILE *fhdr;
+	FILE *fhash;
 
 	printf("\n");
 	printf("============================================================"
@@ -1239,6 +1258,7 @@ int main(int argc, char **argv)
 	gd.ie_key_fname_count = 0;
 
 	gd.hdrfile = HDR_FILE;
+	gd.hash_file = HASH_FILE;
 	gd.sgfile = TBL_FILE;
 	gd.targetid = 0x0000000f;
 	gd.srk_sel = 1;
@@ -1249,6 +1269,7 @@ int main(int argc, char **argv)
 		static struct option long_options[] = {
 			{"verbose", no_argument, &gd.verbose_flag, 1},
 			{"hash", no_argument, &gd.hash_flag, 1},
+			{"img_hash", no_argument, &gd.img_hash_flag, 1},
 			{"file", no_argument, &gd.file_flag, 1},
 			{"help", no_argument, &gd.help_flag, 1},
 			{0, 0, 0, 0}
@@ -1271,7 +1292,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (gd.file_flag || gd.verbose_flag) {
+	if (gd.file_flag || gd.verbose_flag || gd.img_hash_flag) {
 		/* Parse input file for the fields */
 		parse_file(argv[2]);
 	}
@@ -1282,8 +1303,8 @@ int main(int argc, char **argv)
 		gd.entry_addr = gd.entries[0].addr;
 	printf("\n");
 
-	ret = open_priv_file();
-	if (ret < 0)
+	ret = open_key_file();
+	if (ret < 0 && gd.img_hash_flag == 0)
 		exit(1);
 
 	/* Initialise nodes for all components of header */
@@ -1351,7 +1372,8 @@ int main(int argc, char **argv)
 		fill_and_update_keys(&ctx, header, key_len);
 
 	/* Print key hash*/
-	if (gd.hash_flag == 1 || gd.file_flag == 1 || gd.verbose_flag == 1) {
+	if (gd.hash_flag == 1 || gd.file_flag == 1 || gd.verbose_flag == 1 ||
+	    gd.img_hash_flag == 1) {
 		printkeyhash(header + gd.cmbhdrptr[SRK_TABLE]->blk_offset,
 			     2 * key_len, gd.srk_table_flag, gd.num_srk_entries);
 	}
@@ -1391,16 +1413,30 @@ int main(int argc, char **argv)
 
 	SHA256_Final(hash, &ctx);
 
+	/* Hash is exported by populating in hash_file*/
+	if (gd.img_hash_flag) {
+		fhash = fopen(gd.hash_file, "wb");
+		if (fhash == NULL) {
+			fprintf(stderr, "Error in opening the"
+				" file: %s\n", gd.hash_file);
+			goto exit2;
+		}
+		ret = fwrite((unsigned char *)hash, 1, SHA256_DIGEST_LENGTH,
+			     fhash);
+		printf("HASH file %s created\n", gd.hash_file);
+	}
+
 	/* copy Sign */
 
 	sign = header + gd.cmbhdrptr[SIGNATURE]->blk_offset;
 
-	if (RSA_sign(NID_sha256, hash, SHA256_DIGEST_LENGTH, sign,
-		     &gd.cmbhdrptr[SIGNATURE]->blk_size,
-		     gd.srk[gd.srk_sel - 1])
-	    != 1) {
-		printf("Error in generating signature\n");
-		goto exit2;
+	if (gd.img_hash_flag == 0) {
+		if (RSA_sign(NID_sha256, hash, SHA256_DIGEST_LENGTH, sign,
+			     &gd.cmbhdrptr[SIGNATURE]->blk_size,
+			     gd.srk[gd.srk_sel - 1]) != 1) {
+			printf("Error in generating signature\n");
+			goto exit2;
+		}
 	}
 
 	/* Copy SG Table in the header at the offset */
@@ -1461,6 +1497,7 @@ int main(int argc, char **argv)
 	printf("\n");
 exit3:
 	fclose(fhdr);
+	fclose(fhash);
 exit2:
 	free(header);
 exit1:

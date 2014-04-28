@@ -53,6 +53,7 @@
 
 #define TBL_FILE		"sg_table.out"
 #define HDR_FILE		"hdr.out"
+#define HASH_FILE		"img_hash.out"
 #define DESTINATION_ADDR	0xffffffff
 
 /* I/O block size used for hashing operations */
@@ -214,7 +215,7 @@ struct combined_hdr {
 
 struct global {
 	/* Variables used across functions */
-	FILE *fsrk_pri[MAX_NUM_KEYS];
+	FILE *fsrk[MAX_NUM_KEYS];
 	RSA * srk[MAX_NUM_KEYS];
 	FILE *fie_key[MAX_NUM_KEYS];
 	RSA * ie_key[MAX_NUM_KEYS];
@@ -223,6 +224,7 @@ struct global {
 	/* Options flags*/
 	int verbose_flag;
 	int hash_flag;
+	int img_hash_flag;
 	int file_flag;
 	int help_flag;
 	/* These entries are filled by parsing the arguments */
@@ -237,6 +239,7 @@ struct global {
 	uint32_t priv_fname_count;
 	uint32_t ie_key_fname_count;
 	char *hdrfile;
+	char *hash_file;
 	char *sgfile;
 	uint32_t oemuid_flag[5];
 	uint32_t fsluid_flag[2];

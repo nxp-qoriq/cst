@@ -287,8 +287,13 @@ static void usage(void)
 		printf("Generate output header alongwith displays the"
 		       " headerinfo.\n");
 
-		printf("--hash INPUT_FILE\t\t\t");
+		printf("--hash INPUT_FILE\t");
 		printf("Print the hash of the SRK.PUB public key.\n");
+
+		printf("--img_hash INPUT_FILE\t");
+		printf("Dump the complete image hash in the img_hash.out file."
+		       " Header file is generated without signature"
+		       " embedded in it.\n");
 
 		printf("-h,--help\t\t");
 		printf("Show this help message and exit.\n");
