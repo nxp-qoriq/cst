@@ -42,9 +42,8 @@
 
 #define CSF_HDR_OFFSET		0x0
 #define SRK_TABLE_OFFSET	0x200
-#define SIGNATURE_OFFSET	0x1400
-#define SG_TABLE_OFFSET		0x1600
-#define IE_TABLE_OFFSET		0x1700
+#define SG_TABLE_OFFSET		0x1400
+#define IE_TABLE_OFFSET		0x1500
 
 #define OUID_FUID_BOTH		0x1
 #define OUID_ONLY		0x2
@@ -54,7 +53,10 @@
 #define TBL_FILE		"sg_table.out"
 #define HDR_FILE		"hdr.out"
 #define HASH_FILE		"img_hash.out"
-#define DESTINATION_ADDR	0xffffffff
+#define DESTINATION_ADDR	0xFFFFFFFF
+#define SIGNATURE_MASK		0x0000000F
+#define SIGNATURE_OFFSET	0x00000010
+
 
 /* I/O block size used for hashing operations */
 #define IOBLOCK			128
@@ -84,9 +86,9 @@ enum blocks_order {
 	EXTENDED_HDR,
 	EXT_ESBC_HDR,
 	SRK_TABLE,
-	SIGNATURE,
 	SG_TABLE,
 	IE_TABLE,
+	SIGNATURE,
 	BLOCK_END
 };
 

@@ -118,9 +118,6 @@ static void initialise_nodes()
 					 sizeof(struct srk_table);
 	}
 
-	/* Initialise signature node*/
-	gd.cmbhdrptr[SIGNATURE] = new_node();
-
 	/* Initialise sg table node*/
 	gd.cmbhdrptr[SG_TABLE] = new_node();
 	if (((gd.group == 2) || (gd.group == 3) || (gd.group == 4) ||
@@ -143,6 +140,9 @@ static void initialise_nodes()
 			(gd.num_ie_keys * sizeof(struct ie_key_table)) +
 			(2 * sizeof(uint32_t));
 	}
+
+	/* Initialise signature node*/
+	gd.cmbhdrptr[SIGNATURE] = new_node();
 }
 
 /* This function populates Offsets for all the blocks. */
@@ -178,7 +178,6 @@ static void fill_offset()
 	gd.cmbhdrptr[EXT_ESBC_HDR]->blk_offset =
 					gd.cmbhdrptr[CSF_HDR]->blk_size;
 	gd.cmbhdrptr[SRK_TABLE]->blk_offset = SRK_TABLE_OFFSET;
-	gd.cmbhdrptr[SIGNATURE]->blk_offset = SIGNATURE_OFFSET;
 	gd.cmbhdrptr[SG_TABLE]->blk_offset = SG_TABLE_OFFSET;
 	gd.cmbhdrptr[IE_TABLE]->blk_offset = IE_TABLE_OFFSET;
 }
@@ -1321,11 +1320,23 @@ int main(int argc, char **argv)
 	key_len = RSA_size(gd.srk[0]);
 
 	/* Hdrlen - size of header, key, sign and padding */
-	hdrlen = gd.cmbhdrptr[SG_TABLE]->blk_offset +
-		 gd.cmbhdrptr[SG_TABLE]->blk_size;
+	gd.cmbhdrptr[SIGNATURE]->blk_offset =
+					gd.cmbhdrptr[SG_TABLE]->blk_offset +
+					gd.cmbhdrptr[SG_TABLE]->blk_size;
 	if (gd.ie_flag == 1 && gd.esbc_flag == 0)
-		hdrlen = gd.cmbhdrptr[IE_TABLE]->blk_offset +
-			 gd.cmbhdrptr[IE_TABLE]->blk_size;
+		gd.cmbhdrptr[SIGNATURE]->blk_offset =
+					gd.cmbhdrptr[IE_TABLE]->blk_offset +
+					gd.cmbhdrptr[IE_TABLE]->blk_size;
+
+	if (gd.cmbhdrptr[SIGNATURE]->blk_offset & SIGNATURE_MASK) {
+		gd.cmbhdrptr[SIGNATURE]->blk_offset =
+					(gd.cmbhdrptr[SIGNATURE]->blk_offset &
+					 (~SIGNATURE_MASK)) + SIGNATURE_OFFSET;
+	}
+
+	hdrlen = gd.cmbhdrptr[SIGNATURE]->blk_offset;
+	if (gd.img_hash_flag != 1)
+		hdrlen = hdrlen + gd.cmbhdrptr[SIGNATURE]->blk_size;
 
 	header = malloc(hdrlen);
 	if (header == NULL) {
