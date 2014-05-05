@@ -42,7 +42,8 @@
 #define PRI_KEY_FILE		"srk.pri"
 #define PUB_KEY_FILE		"srk.pub"
 #define MAX_NUM_KEYS		4
-#define MAX_LINE_SIZE		256
+#define MAX_IE_KEYS		32
+#define MAX_LINE_SIZE		1024
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
@@ -63,7 +64,7 @@ char *tar[][2] = { {"NOR_8B", "b"},
 };
 
 struct input_field {
-	char *value[4];
+	char *value[64];
 	int count;
 };
 
@@ -96,7 +97,7 @@ void get_field_from_file(char *line, char *field_name)
 
 	result = strtok(line, delims);
 	while (result != NULL) {
-		if (i == 5) {
+		if (i == 5 && strcmp(field_name, "IE_KEY") != 0) {
 
 			printf
 			    ("Error. Invalid no. of entries found in input "
@@ -132,11 +133,11 @@ void remove_whitespace(char *line)
 void find_value_from_file(char *field_name, FILE * fp)
 {
 	int line_size = 0;
+	int i = 0;
 
-	file_field.value[0] = NULL;
-	file_field.value[1] = NULL;
-	file_field.value[2] = NULL;
-	file_field.value[3] = NULL;
+	for (i = 0; i < 64; i++)
+		file_field.value[i] = NULL;
+
 	file_field.count = 0;
 
 	fseek(fp, 0, SEEK_SET);

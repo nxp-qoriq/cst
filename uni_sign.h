@@ -219,8 +219,8 @@ struct global {
 	/* Variables used across functions */
 	FILE *fsrk[MAX_NUM_KEYS];
 	RSA * srk[MAX_NUM_KEYS];
-	FILE *fie_key[MAX_NUM_KEYS];
-	RSA * ie_key[MAX_NUM_KEYS];
+	FILE *fie_key[MAX_IE_KEYS];
+	RSA * ie_key[MAX_IE_KEYS];
 	struct sg_table hsgtbl[NUM_SG_ENTRIES];	/* SG table */
 	struct combined_hdr *cmbhdrptr[NUM_BLOCKS];
 	/* Options flags*/
@@ -238,7 +238,7 @@ struct global {
 	int num_entries;
 	char *pub_fname[MAX_NUM_KEYS];
 	char *priv_fname[MAX_NUM_KEYS];
-	char *ie_key_fname[MAX_NUM_KEYS];
+	char *ie_key_fname[MAX_IE_KEYS];
 	uint32_t pub_fname_count;
 	uint32_t priv_fname_count;
 	uint32_t ie_key_fname_count;
@@ -271,7 +271,7 @@ struct global {
 	uint32_t target_flag;
 	uint32_t key_check_flag;
 	struct srk_table key_table[MAX_NUM_KEYS];
-	struct ie_key_table ie_key_entry[MAX_NUM_KEYS];
+	struct ie_key_table ie_key_entry[MAX_IE_KEYS];
 	uint32_t num_srk_entries;
 	uint32_t num_ie_keys;
 	int esbc_flag;

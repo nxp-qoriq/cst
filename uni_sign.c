@@ -832,6 +832,8 @@ void parse_file(char *file_name)
 			i++;
 		}
 		gd.num_srk_entries = gd.priv_fname_count;
+	} else {
+		gd.key_check_flag = 0;
 	}
 
 	find_value_from_file("PUB_KEY", fp);
@@ -850,11 +852,28 @@ void parse_file(char *file_name)
 			i++;
 		}
 
+	} else if (!(gd.key_ext_flag == 1 && gd.esbc_flag == 1) &&
+		   (gd.img_hash_flag == 1 || gd.sign_app_flag == 1)) {
+		printf("ERROR. Missing PUB_KEY field in Input File\n");
+		exit(1);
+	} else if (!(gd.key_ext_flag == 1 && gd.esbc_flag == 1)) {
+		gd.key_check_flag = 0;
 	}
+
 	if (gd.img_hash_flag == 1 || gd.sign_app_flag == 1) {
 		gd.priv_fname_count = 0;
 		gd.key_check_flag = 0;
 		gd.num_srk_entries = gd.pub_fname_count;
+	} else if (gd.key_check_flag == 0) {
+		printf("PRI_KEY, PUB_KEY fields are not provided in"
+		       " correct pairs in Input File.Default keys are used\n");
+		gd.pub_fname[0] = PUB_KEY_FILE;
+		gd.priv_fname[0] = PRI_KEY_FILE;
+		gd.priv_fname_count = 0;
+		gd.pub_fname_count = 0;
+		gd.num_srk_entries = 1;
+		gd.srk_table_flag = 0;
+		gd.srk_sel = 1;
 	}
 
 	/*Parsing IE keys*/
@@ -1042,12 +1061,12 @@ void parse_file(char *file_name)
 		gd.hdrfile_flag = 1;
 	}
 
-	find_value_from_file("INPUT_HASH_FILENAME", fp);
+	find_value_from_file("HASH_FILENAME", fp);
 	if (file_field.count == 1) {
 		gd.hash_file = malloc(strlen(file_field.value[0]) + 1);
 		strcpy(gd.hash_file, file_field.value[0]);
 	} else if (gd.sign_app_flag == 1) {
-		printf("ERROR. Missing INPUT_HASH_FILENAME in Input File\n");
+		printf("ERROR. Missing HASH_FILENAME in Input File\n");
 		exit(1);
 	}
 
@@ -1307,8 +1326,6 @@ int main(int argc, char **argv)
 	printf("\n\n");
 
 	memset(&gd, 0, sizeof(struct global));
-	gd.pub_fname[0] = PUB_KEY_FILE;
-	gd.priv_fname[0] = PRI_KEY_FILE;
 	gd.pub_fname_count = 1;
 	gd.priv_fname_count = 1;
 	gd.ie_key_fname_count = 0;
@@ -1324,7 +1341,6 @@ int main(int argc, char **argv)
 
 	while (1) {
 		static struct option long_options[] = {
-			{"file", no_argument, &gd.file_flag, 1},
 			{"verbose", no_argument, &gd.verbose_flag, 1},
 			{"key_ext", no_argument, &gd.key_ext_flag, 1},
 			{"hash", no_argument, &gd.hash_flag, 1},
@@ -1343,7 +1359,10 @@ int main(int argc, char **argv)
 			break;
 	}
 
-	if ((argc != 3) && gd.help_flag != 1 &&
+	if (argc == 2 && gd.help_flag != 1)
+		gd.file_flag = 1;
+
+	if ((argc != 3) && gd.help_flag != 1 && gd.file_flag != 1 &&
 	    !(gd.key_ext_flag == 1 &&  gd.img_hash_flag == 1) &&
 	    !(gd.key_ext_flag == 1 &&  gd.sign_app_flag == 1)) {
 		printf

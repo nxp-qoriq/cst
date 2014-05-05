@@ -278,37 +278,34 @@ static void usage(void)
 		printf("For format of header generated refer to the "
 			"User Document.\n");
 		printf("\nUsage :\n");
-		printf("./uni_sign [options]\n");
+		printf("./uni_sign [options] INPUT_FILE\n");
 
-		printf("--file INPUT_FILE\t");
-		printf("Generate output header as specified in input file.\n");
-
-		printf("--verbose INPUT_FILE\t");
+		printf("--verbose \t");
 		printf("Generate output header alongwith displays the"
-		       " headerinfo.\n");
+		       " headerinfo.Generates sign.out for signature.\n");
 
-		printf("--key_ext INPUT_FILE\t");
+		printf("--key_ext \t");
 		printf("Generate ISBC/ESBC output header with IE_KEY"
 		       " usage feature.\n");
 
-		printf("--hash INPUT_FILE\t");
+		printf("--hash \t\t");
 		printf("Print the hash of the SRK.PUB public key.\n");
 
-		printf("--img_hash INPUT_FILE\t");
+		printf("--img_hash \t");
 		printf("Dump the complete image hash in the img_hash.out file."
 		       " Header file is generated without signature"
 		       " embedded in it.\n");
 
-		printf("--sign_app_verify INPUT_FILE\n\t\t\t");
+		printf("--sign_app_verify\n\t\t");
 		printf("Verify the hash value present in hash file, add"
 		       " signature present in sign file and generates the"
-		       " header.\n\t\t\thash file and sign file names should be"
+		       " header.\n\t\thash file and sign file names should be"
 		       " defined in input file passed.\n");
 
-		printf("-h,--help\t\t");
+		printf("--help\t");
 		printf("Show this help message and exit.\n");
 
-		printf("INPUT_FILE\t\tRefer Default input_file and provide all"
+		printf("INPUT_FILE\tRefer Default input_file and provide all"
 		       " the input in the file for header generation .\n");
 }
 #endif
