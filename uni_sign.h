@@ -226,6 +226,7 @@ struct global {
 	/* Options flags*/
 	int file_flag;
 	int verbose_flag;
+	int key_ext_flag;
 	int hash_flag;
 	int img_hash_flag;
 	int sign_app_flag;
@@ -243,6 +244,7 @@ struct global {
 	uint32_t ie_key_fname_count;
 	char *hdrfile;
 	char *hash_file;
+	char *sign_file;
 	char *sgfile;
 	uint32_t oemuid_flag[5];
 	uint32_t fsluid_flag[2];
@@ -256,8 +258,10 @@ struct global {
 	char *target_name;
 	uint32_t hkptr;
 	uint32_t hksize;
+	uint32_t sign_size;
 	uint32_t srk_sel;
 	uint32_t srk_table_flag;
+	uint32_t no_key_flag;
 	int sfp_wp;
 	uint32_t sec_image_flag;
 	uint32_t hkptr_flag;
@@ -265,6 +269,7 @@ struct global {
 	uint32_t hdrfile_flag;
 	uint32_t sgfile_flag;
 	uint32_t target_flag;
+	uint32_t key_check_flag;
 	struct srk_table key_table[MAX_NUM_KEYS];
 	struct ie_key_table ie_key_entry[MAX_NUM_KEYS];
 	uint32_t num_srk_entries;

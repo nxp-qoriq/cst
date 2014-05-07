@@ -287,6 +287,10 @@ static void usage(void)
 		printf("Generate output header alongwith displays the"
 		       " headerinfo.\n");
 
+		printf("--key_ext INPUT_FILE\t");
+		printf("Generate ISBC/ESBC output header with IE_KEY"
+		       " usage feature.\n");
+
 		printf("--hash INPUT_FILE\t");
 		printf("Print the hash of the SRK.PUB public key.\n");
 
@@ -295,9 +299,11 @@ static void usage(void)
 		       " Header file is generated without signature"
 		       " embedded in it.\n");
 
-		printf("--sign_app INPUT_FILE HASH_FILE SIGN_FILE\n\t\t\t");
-		printf("Compare the hash value, add given signature and"
-		       " generate the header.\n");
+		printf("--sign_app_verify INPUT_FILE\n\t\t\t");
+		printf("Verify the hash value present in hash file, add"
+		       " signature present in sign file and generates the"
+		       " header.\n\t\t\thash file and sign file names should be"
+		       " defined in input file passed.\n");
 
 		printf("-h,--help\t\t");
 		printf("Show this help message and exit.\n");

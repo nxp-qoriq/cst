@@ -106,16 +106,20 @@ static void initialise_nodes()
 
 	/* Initialise srk_table node*/
 	gd.cmbhdrptr[SRK_TABLE] = new_node();
-	if (gd.srk_table_flag == 0) {
-		gd.cmbhdrptr[SRK_TABLE]->blk_ptr = (void *)
+	if (gd.no_key_flag == 0) {
+		if (gd.srk_table_flag == 0) {
+			gd.cmbhdrptr[SRK_TABLE]->blk_ptr = (void *)
 					calloc(1, 2 * RSA_size(gd.srk[0]));
-		gd.cmbhdrptr[SRK_TABLE]->blk_size = 2 * RSA_size(gd.srk[0]);
-	} else {
-		gd.cmbhdrptr[SRK_TABLE]->blk_ptr = (struct srk_table *)
+			gd.cmbhdrptr[SRK_TABLE]->blk_size = 2 *
+					RSA_size(gd.srk[0]);
+		} else {
+			gd.cmbhdrptr[SRK_TABLE]->blk_ptr = (struct srk_table *)
 					calloc(1, gd.num_srk_entries *
-					 sizeof(struct srk_table));
-		gd.cmbhdrptr[SRK_TABLE]->blk_size = gd.num_srk_entries *
-					 sizeof(struct srk_table);
+					sizeof(struct srk_table));
+			gd.cmbhdrptr[SRK_TABLE]->blk_size =
+					gd.num_srk_entries *
+					sizeof(struct srk_table);
+		}
 	}
 
 	/* Initialise sg table node*/
@@ -150,16 +154,21 @@ static void fill_offset()
 {
 	int i;
 
-	if (gd.srk_table_flag == 0) {
-		gd.cmbhdrptr[SIGNATURE]->blk_size = RSA_size(gd.srk[0]);
-	} else {
-		i = 0;
-		while (i != gd.num_srk_entries) {
-			gd.key_table[i].key_len = RSA_size(gd.srk[i]);
-			i++;
-		}
-		gd.cmbhdrptr[SIGNATURE]->blk_size =
+	if (gd.no_key_flag == 0) {
+		if (gd.srk_table_flag == 0) {
+			gd.cmbhdrptr[SIGNATURE]->blk_size =
+					RSA_size(gd.srk[0]);
+		} else {
+			i = 0;
+			while (i != gd.num_srk_entries) {
+				gd.key_table[i].key_len = RSA_size(gd.srk[i]);
+				i++;
+			}
+			gd.cmbhdrptr[SIGNATURE]->blk_size =
 					gd.key_table[gd.srk_sel - 1].key_len;
+		}
+	} else {
+		gd.cmbhdrptr[SIGNATURE]->blk_size = gd.sign_size;
 	}
 
 	if (gd.ie_flag == 1 && gd.esbc_flag == 0) {
@@ -355,7 +364,7 @@ int open_key_file(void)
 		}
 
 		gd.ie_key[i] =
-		    PEM_read_RSAPrivateKey(gd.fie_key[i], NULL, NULL, NULL);
+		    PEM_read_RSAPublicKey(gd.fie_key[i], NULL, NULL, NULL);
 		if (gd.ie_key[i] == NULL) {
 			fprintf(stderr, "Error in reading key from : %s\n",
 				gd.ie_key_fname[i]);
@@ -790,10 +799,14 @@ void parse_file(char *file_name)
 	}
 
 	/* Parsing esbc_hdr address*/
-	if (gd.esbc_flag == 0) {
+	if (gd.esbc_flag == 0 && gd.key_ext_flag == 1) {
 		find_value_from_file("ESBC_HDRADDR", fp);
-		if (file_field.count == 1)
+		if (file_field.count == 1) {
 			gd.esbc_hdr = strtoul(file_field.value[0], 0, 16);
+		} else {
+			printf("ERROR. Missing ESBC_HDRADDR in Input File\n");
+			exit(1);
+		}
 	}
 
 	/* Parse Key Info from input file */
@@ -840,11 +853,12 @@ void parse_file(char *file_name)
 	}
 	if (gd.img_hash_flag == 1 || gd.sign_app_flag == 1) {
 		gd.priv_fname_count = 0;
+		gd.key_check_flag = 0;
 		gd.num_srk_entries = gd.pub_fname_count;
 	}
 
 	/*Parsing IE keys*/
-	if (gd.esbc_flag == 0) {
+	if (gd.esbc_flag == 0 && gd.key_ext_flag == 1) {
 		find_value_from_file("IE_KEY", fp);
 		if (file_field.count >= 1) {
 			gd.ie_key_fname_count = file_field.count;
@@ -858,24 +872,37 @@ void parse_file(char *file_name)
 				       file_field.value[i]);
 				i++;
 			}
+		} else {
+			printf("ERROR. Missing IE_KEY field in Input File\n");
+			exit(1);
 		}
-	gd.num_ie_keys = gd.ie_key_fname_count;
+		gd.num_ie_keys = gd.ie_key_fname_count;
 	}
 
 	/* Parsing IE_revoc field*/
-	if (gd.esbc_flag == 0) {
+	if (gd.esbc_flag == 0 && gd.key_ext_flag == 1) {
 		find_value_from_file("IE_REVOC", fp);
-		if (file_field.count == 1)
+		if (file_field.count == 1) {
 			gd.ie_key_revoc = strtoul(file_field.value[0], 0, 16);
+		} else {
+			printf("ERROR.Missing IE_REVOC field in Input File\n");
+			exit(1);
+		}
 	}
 
 	/* Parsing IE key select*/
-	if (gd.esbc_flag == 1) {
+	if (gd.esbc_flag == 1 && gd.key_ext_flag == 1) {
 		find_value_from_file("IE_KEY_SEL", fp);
 		if (file_field.count == 1) {
 			gd.ie_key_sel = strtoul(file_field.value[0], 0, 16);
 			gd.ie_flag = 1;
+		} else {
+			printf("ERROR. Missing IE_KEY_SEL field in"
+			       " Input File\n");
+			exit(1);
 		}
+		gd.pub_fname_count = 0;
+		gd.key_check_flag = 0;
 	}
 
 	/* Parse Entry Point from input file */
@@ -998,12 +1025,39 @@ void parse_file(char *file_name)
 		gd.oemuid_flag[4] = 1;
 	}
 
+	/* Parsing sign_size address*/
+	find_value_from_file("SIGN_SIZE", fp);
+	if (file_field.count == 1) {
+		gd.sign_size = strtoul(file_field.value[0], 0, 16);
+	} else if (gd.no_key_flag == 1) {
+		printf("ERROR. Missing SIGN_SIZE in Input File\n");
+		exit(1);
+	}
+
 	/* Parse File Names from input file */
 	find_value_from_file("OUTPUT_HDR_FILENAME", fp);
 	if (file_field.count == 1) {
 		gd.hdrfile = malloc(strlen(file_field.value[0]) + 1);
 		strcpy(gd.hdrfile, file_field.value[0]);
 		gd.hdrfile_flag = 1;
+	}
+
+	find_value_from_file("INPUT_HASH_FILENAME", fp);
+	if (file_field.count == 1) {
+		gd.hash_file = malloc(strlen(file_field.value[0]) + 1);
+		strcpy(gd.hash_file, file_field.value[0]);
+	} else if (gd.sign_app_flag == 1) {
+		printf("ERROR. Missing INPUT_HASH_FILENAME in Input File\n");
+		exit(1);
+	}
+
+	find_value_from_file("INPUT_SIGN_FILENAME", fp);
+	if (file_field.count == 1) {
+		gd.sign_file = malloc(strlen(file_field.value[0]) + 1);
+		strcpy(gd.sign_file, file_field.value[0]);
+	} else if (gd.sign_app_flag == 1) {
+		printf("ERROR. Missing INPUT_SIGN_FILENAME in Input File\n");
+		exit(1);
 	}
 
 	find_value_from_file("OUTPUT_SG_BIN", fp);
@@ -1163,8 +1217,7 @@ void check_error(int argc, char **argv)
 			exit(1);
 		}
 	}
-	if ((gd.srk_sel > gd.priv_fname_count) && (gd.img_hash_flag != 1) &&
-	    (gd.sign_app_flag != 1)) {
+	if ((gd.srk_sel > gd.priv_fname_count) && (gd.key_check_flag == 1)) {
 		printf("Error. Invalid keyselect Option.\n");
 		usage();
 		exit(1);
@@ -1194,7 +1247,7 @@ void check_error(int argc, char **argv)
 	}
 
 	if (gd.priv_fname_count != gd.pub_fname_count &&
-	    (gd.img_hash_flag != 1) && (gd.sign_app_flag != 1)) {
+	    gd.key_check_flag == 1) {
 		printf("Error. Public Key Count is not equal "
 			"to Private Key Count.\n");
 		usage();
@@ -1230,9 +1283,10 @@ int main(int argc, char **argv)
 	u32 key_len, hdrlen;
 	u8 *header;
 	unsigned char hash[SHA256_DIGEST_LENGTH];
-	unsigned char hash_file[SHA256_DIGEST_LENGTH];
+	unsigned char hash_fval[SHA256_DIGEST_LENGTH];
 	unsigned char *sign;
 	uint32_t img_index;
+	uint32_t fsize;
 
 	SHA256_CTX ctx;
 	FILE *ftbl;
@@ -1266,14 +1320,16 @@ int main(int argc, char **argv)
 	gd.srk_sel = 1;
 	gd.num_srk_entries = 1;
 	gd.sdhc_bsize = BLOCK_SIZE;
+	gd.key_check_flag = 1;
 
 	while (1) {
 		static struct option long_options[] = {
 			{"file", no_argument, &gd.file_flag, 1},
 			{"verbose", no_argument, &gd.verbose_flag, 1},
+			{"key_ext", no_argument, &gd.key_ext_flag, 1},
 			{"hash", no_argument, &gd.hash_flag, 1},
 			{"img_hash", no_argument, &gd.img_hash_flag, 1},
-			{"sign_app", no_argument, &gd.sign_app_flag, 1},
+			{"sign_app_verify", no_argument, &gd.sign_app_flag, 1},
 			{"help", no_argument, &gd.help_flag, 1},
 			{0, 0, 0, 0}
 		};
@@ -1287,7 +1343,9 @@ int main(int argc, char **argv)
 			break;
 	}
 
-	if ((argc != 3) && ((gd.file_flag) || (gd.verbose_flag))) {
+	if ((argc != 3) && gd.help_flag != 1 &&
+	    !(gd.key_ext_flag == 1 &&  gd.img_hash_flag == 1) &&
+	    !(gd.key_ext_flag == 1 &&  gd.sign_app_flag == 1)) {
 		printf
 		    ("Error.Invalid Usage. With this --option only filename is"
 			" required. Refer usage\n");
@@ -1296,9 +1354,9 @@ int main(int argc, char **argv)
 	}
 
 	if (gd.file_flag || gd.verbose_flag || gd.img_hash_flag ||
-	    gd.sign_app_flag) {
+	    gd.sign_app_flag || gd.key_ext_flag) {
 		/* Parse input file for the fields */
-		parse_file(argv[2]);
+		parse_file(argv[argc-1]);
 	}
 
 	check_error(argc, argv);
@@ -1307,8 +1365,15 @@ int main(int argc, char **argv)
 		gd.entry_addr = gd.entries[0].addr;
 	printf("\n");
 
-	ret = open_key_file();
-	if (ret < 0 && gd.img_hash_flag == 0)
+	if ((gd.img_hash_flag == 1 || gd.sign_app_flag == 1) &&
+	    gd.key_ext_flag == 1 && gd.esbc_flag == 1) {
+		gd.no_key_flag = 1;
+		gd.num_srk_entries = 0;
+	}
+
+	if (gd.no_key_flag == 0)
+		ret = open_key_file();
+	if (ret < 0)
 		exit(1);
 
 	/* Initialise nodes for all components of header */
@@ -1317,7 +1382,8 @@ int main(int argc, char **argv)
 	/* Calculate blocks offsets for the combined header*/
 	fill_offset();
 
-	key_len = RSA_size(gd.srk[0]);
+	if (gd.no_key_flag == 0)
+		key_len = RSA_size(gd.srk[0]);
 
 	/* Hdrlen - size of header, key, sign and padding */
 	gd.cmbhdrptr[SIGNATURE]->blk_offset =
@@ -1388,8 +1454,7 @@ int main(int argc, char **argv)
 		fill_and_update_keys(&ctx, header, key_len);
 
 	/* Print key hash*/
-	if (gd.hash_flag == 1 || gd.file_flag == 1 || gd.verbose_flag == 1 ||
-	    gd.img_hash_flag == 1 || gd.sign_app_flag == 1) {
+	if (!(gd.key_ext_flag == 1 && gd.esbc_flag == 1)) {
 		printkeyhash(header + gd.cmbhdrptr[SRK_TABLE]->blk_offset,
 			     2 * key_len, gd.srk_table_flag, gd.num_srk_entries);
 	}
@@ -1445,23 +1510,31 @@ int main(int argc, char **argv)
 
 	/* Compare hash with hash present in file, if sign_app flag is ON*/
 	if (gd.sign_app_flag == 1) {
-		fhash = fopen(argv[3], "rb");
+		fhash = fopen(gd.hash_file, "rb");
 		if (fhash == NULL) {
 			fprintf(stderr, "Error in opening the"
-				" file: %s\n", argv[3]);
+				" file: %s\n", gd.hash_file);
 			goto exit2;
 		}
-		ret = fread((unsigned char *)hash_file, 1, SHA256_DIGEST_LENGTH,
+		fseek(fhash, 0, SEEK_END);
+		fsize = ftell(fhash);
+		fseek(fhash, 0, SEEK_SET);
+		if (fsize != gd.sign_size) {
+			printf("Signature length is not equal to"
+			       " sign_size provided in Input File\n");
+			exit(1);
+		}
+		ret = fread((unsigned char *)hash_fval, 1, fsize,
 			     fhash);
 		fclose(fhash);
 
 		i = 0;
-		while ((i < SHA256_DIGEST_LENGTH) && (hash_file[i] == hash[i]))
+		while ((i < SHA256_DIGEST_LENGTH) && (hash_fval[i] == hash[i]))
 			i++;
 
 		if (i < SHA256_DIGEST_LENGTH) {
 			printf("HASH file %s value is not consistent with"
-			       " input file\n", argv[3]);
+			       " input file\n", gd.hash_file);
 			goto exit2;
 		}
 	}
@@ -1470,10 +1543,10 @@ int main(int argc, char **argv)
 	sign = header + gd.cmbhdrptr[SIGNATURE]->blk_offset;
 
 	if (gd.sign_app_flag == 1) {
-		fsign = fopen(argv[4], "rb");
+		fsign = fopen(gd.sign_file, "rb");
 		if (fsign == NULL) {
 			fprintf(stderr, "Error in opening the"
-				" file: %s\n", argv[4]);
+				" file: %s\n", gd.sign_file);
 			goto exit2;
 		}
 		ret = fread((unsigned char *)sign, 1,
