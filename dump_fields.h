@@ -282,27 +282,29 @@ static void usage(void)
 
 		printf("--verbose \t");
 		printf("Generate output header alongwith displays the"
-		       " headerinfo.Generates sign.out for signature.\n");
+		       " headerinfo. Dumps signature in sign.out file.\n");
 
 		printf("--key_ext \t");
 		printf("Generate ISBC/ESBC output header with IE_KEY"
 		       " usage feature.\n");
 
 		printf("--hash \t\t");
-		printf("Print the hash of the SRK.PUB public key.\n");
+		printf("Print the hash of public key(srk table) as specified"
+		       " in input file.\n");
 
 		printf("--img_hash \t");
-		printf("Dump the complete image hash in the img_hash.out file."
-		       " Header file is generated without signature"
-		       " embedded in it.\n");
+		printf("Dump the complete SHA256 hash in a separate file("
+		       "Default filename: hash.out). Header file is generated"
+		       " without\n\t\tsignature embedded in it.\n");
 
 		printf("--sign_app_verify\n\t\t");
-		printf("Verify the hash value present in hash file, add"
-		       " signature present in sign file and generates the"
-		       " header.\n\t\thash file and sign file names should be"
-		       " defined in input file passed.\n");
+		printf("Generates the header based on input file provided."
+		       " Verifies the SHA256hash value with the HASH FILE. The"
+		       " signature\n\t\tprovided as input in SIGN FILE is appended"
+		       " in the output header file.\n\t\tHASH FILE and SIGN"
+		       " FILE name should be defined in input file passed.\n");
 
-		printf("--help\t");
+		printf("--help\t\t");
 		printf("Show this help message and exit.\n");
 
 		printf("INPUT_FILE\tRefer Default input_file and provide all"

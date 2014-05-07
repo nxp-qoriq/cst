@@ -242,6 +242,7 @@ struct global {
 	uint32_t pub_fname_count;
 	uint32_t priv_fname_count;
 	uint32_t ie_key_fname_count;
+	uint32_t ie_key_num_revoc;
 	char *hdrfile;
 	char *hash_file;
 	char *sign_file;

@@ -525,8 +525,11 @@ void fill_header(SHA256_CTX *ctx, u32 key_len)
         }
 
 	if (gd.group == 5) {
-		hdr_ptr->mp_n_sg_flag.mp_flag = BYTE_ORDER_S(gd.mp_flag);
-		hdr_ptr->mp_n_sg_flag.sg_flag = BYTE_ORDER_S(1);
+		if (gd.esbc_flag == 0) {
+			hdr_ptr->mp_n_sg_flag.mp_flag = BYTE_ORDER_S
+							(gd.mp_flag);
+			hdr_ptr->mp_n_sg_flag.sg_flag = BYTE_ORDER_S(1);
+		}
 	} else if ((gd.group != 1) && (gd.esbc_flag == 0)) {
 		hdr_ptr->sg_flag = BYTE_ORDER_L(1);
 	} else {
@@ -763,6 +766,7 @@ void fill_and_update_sg_tbl_offset(SHA256_CTX *ctx)
 void parse_file(char *file_name)
 {
 	int i, ret;
+	uint32_t val, bit;
 	char *image_name;
 	image_name = malloc(strlen("IMAGE_1") + 1);
 
@@ -901,11 +905,23 @@ void parse_file(char *file_name)
 	/* Parsing IE_revoc field*/
 	if (gd.esbc_flag == 0 && gd.key_ext_flag == 1) {
 		find_value_from_file("IE_REVOC", fp);
-		if (file_field.count == 1) {
-			gd.ie_key_revoc = strtoul(file_field.value[0], 0, 16);
-		} else {
-			printf("ERROR.Missing IE_REVOC field in Input File\n");
-			exit(1);
+		if (file_field.count >= 1) {
+			gd.ie_key_num_revoc = file_field.count;
+			if (gd.ie_key_num_revoc >= gd.ie_key_fname_count ||
+			    gd.ie_key_num_revoc >= MAX_IE_KEYS) {
+				printf("ERROR.Keys revoked are greater than"
+				       " possible\n");
+				exit(1);
+			}
+
+			i = 0; val = 0; bit = 1;
+			while (i != gd.ie_key_num_revoc) {
+				val = strtoul(file_field.value[i], 0, 16);
+				bit = bit << (val - 1);
+				gd.ie_key_revoc = gd.ie_key_revoc | bit;
+				bit = 1;
+				i++;
+			}
 		}
 	}
 
@@ -1274,12 +1290,14 @@ void check_error(int argc, char **argv)
 
 	}
 
+	if (gd.hash_flag) {
+		printonlyhash(gd.srk_table_flag, gd.pub_fname,
+			      gd.pub_fname_count);
+		exit(0);
+	}
+
 	if (gd.num_entries == 0) {
-		if (gd.hash_flag) {
-			printonlyhash(gd.srk_table_flag, gd.pub_fname,
-				      gd.pub_fname_count);
-			exit(0);
-		} else if (gd.help_flag) {
+		if (gd.help_flag) {
 			usage();
 			exit(0);
 		} else {
@@ -1326,6 +1344,8 @@ int main(int argc, char **argv)
 	printf("\n\n");
 
 	memset(&gd, 0, sizeof(struct global));
+	gd.pub_fname[0] = PUB_KEY_FILE;
+	gd.priv_fname[0] = PRI_KEY_FILE;
 	gd.pub_fname_count = 1;
 	gd.priv_fname_count = 1;
 	gd.ie_key_fname_count = 0;
@@ -1372,11 +1392,9 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (gd.file_flag || gd.verbose_flag || gd.img_hash_flag ||
-	    gd.sign_app_flag || gd.key_ext_flag) {
-		/* Parse input file for the fields */
+	/* Parse input file for the fields */
+	if (!gd.help_flag)
 		parse_file(argv[argc-1]);
-	}
 
 	check_error(argc, argv);
 
@@ -1538,11 +1556,6 @@ int main(int argc, char **argv)
 		fseek(fhash, 0, SEEK_END);
 		fsize = ftell(fhash);
 		fseek(fhash, 0, SEEK_SET);
-		if (fsize != gd.sign_size) {
-			printf("Signature length is not equal to"
-			       " sign_size provided in Input File\n");
-			exit(1);
-		}
 		ret = fread((unsigned char *)hash_fval, 1, fsize,
 			     fhash);
 		fclose(fhash);
@@ -1554,7 +1567,7 @@ int main(int argc, char **argv)
 		if (i < SHA256_DIGEST_LENGTH) {
 			printf("HASH file %s value is not consistent with"
 			       " input file\n", gd.hash_file);
-			goto exit2;
+			exit(1);
 		}
 	}
 
@@ -1567,6 +1580,15 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Error in opening the"
 				" file: %s\n", gd.sign_file);
 			goto exit2;
+		}
+		fseek(fsign, 0, SEEK_END);
+		fsize = ftell(fsign);
+		fseek(fsign, 0, SEEK_SET);
+		if (fsize != gd.cmbhdrptr[SIGNATURE]->blk_size) {
+			printf("Signature length in signnature file is not"
+			       " consistent with the signature length provided"
+			       " through keys and fields in Input File\n");
+			exit(1);
 		}
 		ret = fread((unsigned char *)sign, 1,
 			     gd.cmbhdrptr[SIGNATURE]->blk_size, fsign);
@@ -1596,6 +1618,18 @@ int main(int argc, char **argv)
 		for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
 			printf("%02x", hash[i]);
 		printf("\n");
+
+		/* Dumping signature to sign.out file*/
+		sign = header + gd.cmbhdrptr[SIGNATURE]->blk_offset;
+		fsign = fopen("sign.out", "wb");
+		if (fsign == NULL) {
+			fprintf(stderr, "Error in opening the"
+				" file: %s\n", "sign.out");
+			goto exit2;
+		}
+		ret = fwrite((unsigned char *)sign, 1,
+			     gd.cmbhdrptr[SIGNATURE]->blk_size, fsign);
+		printf("HEADER file %s created\n", "sign.out");
 	}
 
 	if (gd.verbose_flag) {
