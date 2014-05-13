@@ -4,7 +4,7 @@
 
 ---------------------------------------------------
 # Specify the platform. [Mandatory]
-# Choose Platform - 1010/1040/2041/3041/4080/5020/5040/9131/9132/9164/4240/C290
+# Choose Platform - 1010/1040/2080/2041/3041/4080/5020/5040/9131/9132/9164/4240/C290
 PLATFORM=1040
 # ESBC Flag. Specify ESBC=0 to sign u-boot and ESBC=1 to sign ESBC images.(default is 0)
 ESBC=1
@@ -14,17 +14,17 @@ ESBC=1
 ENTRY_POINT=e8a00000
 ---------------------------------------------------
 # Specify the file name of the keys seperated by comma.
-# The number of files and key select should lie between 1 and 4 for 1040 and C290.
+# The number of files and key select should lie between 1 and 4 for 1040/2080 and C290.
 # For rest of the platforms only one key is required and key select should not be provided.
 
 # USAGE (for 4080/5020/5040/3041/2041/1010/913x): PRI_KEY = key1.pri
-# USAGE (for 1040/C290/9164/4240): PRI_KEY = key1.pri, key2.pri, key3.pri, key4.pri
+# USAGE (for 1040/2080/C290/9164/4240): PRI_KEY = key1.pri, key2.pri, key3.pri, key4.pri
 
 # PRI_KEY (Default private key :srk.pri) - [Optional]
 PRI_KEY=iekey2.pri
 # PUB_KEY (Default public key :srk.pub) - [Optional]
 PUB_KEY=key1.pub
-# Please provide KEY_SELECT(between 1 to 4) (Required for 1040/C290/9164/4240 only) - [Optional]
+# Please provide KEY_SELECT(between 1 to 4) (Required for 1040/2080/C290/9164/4240 only) - [Optional]
 KEY_SELECT=
 ---------------------------------------------------
 # Specify SG table address, only for (2041/3041/4080/5020/5040) with esbc flag not set - [Optional]
@@ -34,7 +34,7 @@ SG_TABLE_ADDR=
 IE_KEY_SEL=2
 ---------------------------------------------------
 # Specify the target where image will be loaded. (Default is NOR_16B) - [Optional]
-# Only required for Non-PBL Devices (1010/1040/9131/9132i/C290)
+# Only required for Non-PBL Devices (1010/9131/9132/C290)
 # Select from - NOR_8B/NOR_16B/NAND_8B_512/NAND_8B_2K/NAND_8B_4K/NAND_16B_512/NAND_16B_2K/NAND_16B_4K/SD/MMC/SPI
 IMAGE_TARGET=
 ---------------------------------------------------
@@ -70,14 +70,14 @@ SIGN_SIZE=
 OUTPUT_SG_BIN=
 
 ---------------------------------------------------
-# Following fields are Required for 4240/9164/1040/C290 only
+# Following fields are Required for 4240/9164/1040/2080/C290 only
 
 # Specify House keeping Area
-# Required for 42409164/1040/C290 only when ESBC flag is not set. [Mandatory]
+# Required for 42409164/1040/2080/C290 only when ESBC flag is not set. [Mandatory]
 HK_AREA_POINTER=
 HK_AREA_SIZE=
 ---------------------------------------------------
-# Following two fields are Required for 4240/9164/1040/C290 only
+# Following two fields are Required for 4240/9164/1040/2080/C290 only
 
 # Specify SFP Write Protect Bit. (0 or 1) - [Optional]
 # (Default is 0)

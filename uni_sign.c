@@ -1383,6 +1383,7 @@ int main(int argc, char **argv)
 		gd.file_flag = 1;
 
 	if ((argc != 3) && gd.help_flag != 1 && gd.file_flag != 1 &&
+	    !(gd.key_ext_flag == 1 &&  gd.verbose_flag == 1) &&
 	    !(gd.key_ext_flag == 1 &&  gd.img_hash_flag == 1) &&
 	    !(gd.key_ext_flag == 1 &&  gd.sign_app_flag == 1)) {
 		printf
