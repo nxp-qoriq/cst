@@ -27,7 +27,7 @@ PRI_KEY=srk.pri
 PUB_KEY=srk.pub
 #PUB_KEY=srk.pub, srk1.pub
 # Please provide KEY_SELECT(between 1 to 4) (Required for 1040/C290/9164/4240/LS1 only) - [Optional]
-KEY_SELECT=1
+KEY_SELECT=
 ---------------------------------------------------
 # Specify SG table address, only for (2041/3041/4080/5020/5040) with esbc flag not set - [Optional]
 SG_TABLE_ADDR=
