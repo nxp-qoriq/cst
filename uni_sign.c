@@ -187,8 +187,24 @@ static void fill_offset()
 	gd.cmbhdrptr[EXT_ESBC_HDR]->blk_offset =
 					gd.cmbhdrptr[CSF_HDR]->blk_size;
 	gd.cmbhdrptr[SRK_TABLE]->blk_offset = SRK_TABLE_OFFSET;
-	gd.cmbhdrptr[SG_TABLE]->blk_offset = SG_TABLE_OFFSET;
-	gd.cmbhdrptr[IE_TABLE]->blk_offset = IE_TABLE_OFFSET;
+
+	gd.cmbhdrptr[SG_TABLE]->blk_offset =
+					gd.cmbhdrptr[SRK_TABLE]->blk_offset +
+					gd.cmbhdrptr[SRK_TABLE]->blk_size;
+	if (gd.cmbhdrptr[SG_TABLE]->blk_offset & ADDR_ALIGN_MASK) {
+		gd.cmbhdrptr[SG_TABLE]->blk_offset =
+					(gd.cmbhdrptr[SG_TABLE]->blk_offset &
+					(~ADDR_ALIGN_MASK)) + ADDR_ALIGN_OFFSET;
+	}
+
+	gd.cmbhdrptr[IE_TABLE]->blk_offset =
+					gd.cmbhdrptr[SG_TABLE]->blk_offset +
+					gd.cmbhdrptr[SG_TABLE]->blk_size;
+	if (gd.cmbhdrptr[IE_TABLE]->blk_offset & ADDR_ALIGN_MASK) {
+		gd.cmbhdrptr[IE_TABLE]->blk_offset =
+					(gd.cmbhdrptr[IE_TABLE]->blk_offset &
+					(~ADDR_ALIGN_MASK)) + ADDR_ALIGN_OFFSET;
+	}
 }
 
 /* Deallocates all nodes and memory being allocated*/
@@ -1028,7 +1044,7 @@ void parse_file(char *file_name)
 	}
 
 	if (gd.group == 6 && gd.esbc_flag == 0) {
-		if (!gd.fsluid_flag[0] || !gd.fsluid_flag[0]) {
+		if (gd.fsluid_flag[0] ^ gd.fsluid_flag[1]) {
 			printf("ERROR. Missing FSL UID in Input File\n");
 			exit(1);
 		}
@@ -1232,16 +1248,32 @@ void check_error(int argc, char **argv)
 			" required for the given Platform.\n");
 		usage();
 		exit(1);
-	} else if ((gd.srk_table_flag == 1)
-		   && (gd.srk_sel < 1 || gd.srk_sel > 4)) {
-		printf("Error. Key select number should be any "
-			"number from 1 to 4.\n");
-		usage();
-		exit(1);
-	} else if ((gd.srk_table_flag == 1) && (gd.priv_fname_count > 4)) {
-		printf("Error. No. of key files should not be more than 4.\n");
-		usage();
-		exit(1);
+	} else if ((gd.srk_table_flag == 1) && (gd.group != 6)) {
+		if ((gd.srk_sel < 1 || gd.srk_sel > 4)) {
+			printf("Error. Key select number should be any "
+			       "number from 1 to 4.\n");
+			usage();
+			exit(1);
+		}
+		if (gd.priv_fname_count > 4) {
+			printf("Error. No. of key files should not be more"
+			       " than 4.\n");
+			usage();
+			exit(1);
+		}
+	} else if ((gd.srk_table_flag == 1) && (gd.group == 6)) {
+		if ((gd.srk_sel < 1 || gd.srk_sel > 8)) {
+			printf("Error. Key select number should be any "
+			       "number from 1 to 8.\n");
+			usage();
+			exit(1);
+		}
+		if (gd.priv_fname_count > 8) {
+			printf("Error. No. of key files should not be more"
+			       " than 8.\n");
+			usage();
+			exit(1);
+		}
 	}
 
 	if (gd.target_flag == 1) {
@@ -1358,6 +1390,7 @@ int main(int argc, char **argv)
 	gd.num_srk_entries = 1;
 	gd.sdhc_bsize = BLOCK_SIZE;
 	gd.key_check_flag = 1;
+	gd.b01_flag = 1;
 
 	while (1) {
 		static struct option long_options[] = {
@@ -1432,10 +1465,10 @@ int main(int argc, char **argv)
 					gd.cmbhdrptr[IE_TABLE]->blk_offset +
 					gd.cmbhdrptr[IE_TABLE]->blk_size;
 
-	if (gd.cmbhdrptr[SIGNATURE]->blk_offset & SIGNATURE_MASK) {
+	if (gd.cmbhdrptr[SIGNATURE]->blk_offset & ADDR_ALIGN_MASK) {
 		gd.cmbhdrptr[SIGNATURE]->blk_offset =
 					(gd.cmbhdrptr[SIGNATURE]->blk_offset &
-					 (~SIGNATURE_MASK)) + SIGNATURE_OFFSET;
+					(~ADDR_ALIGN_MASK)) + ADDR_ALIGN_OFFSET;
 	}
 
 	hdrlen = gd.cmbhdrptr[SIGNATURE]->blk_offset;

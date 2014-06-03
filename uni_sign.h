@@ -42,8 +42,6 @@
 
 #define CSF_HDR_OFFSET		0x0
 #define SRK_TABLE_OFFSET	0x200
-#define SG_TABLE_OFFSET		0x1400
-#define IE_TABLE_OFFSET		0x1500
 
 #define OUID_FUID_BOTH		0x1
 #define OUID_ONLY		0x2
@@ -54,9 +52,8 @@
 #define HDR_FILE		"hdr.out"
 #define HASH_FILE		"img_hash.out"
 #define DESTINATION_ADDR	0xFFFFFFFF
-#define SIGNATURE_MASK		0x0000000F
-#define SIGNATURE_OFFSET	0x00000010
-
+#define ADDR_ALIGN_MASK		0x000000FF
+#define ADDR_ALIGN_OFFSET	0x00000100
 
 /* I/O block size used for hashing operations */
 #define IOBLOCK			128

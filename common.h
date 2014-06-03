@@ -41,7 +41,7 @@
 
 #define PRI_KEY_FILE		"srk.pri"
 #define PUB_KEY_FILE		"srk.pub"
-#define MAX_NUM_KEYS		4
+#define MAX_NUM_KEYS		8
 #define MAX_IE_KEYS		32
 #define MAX_LINE_SIZE		1024
 typedef unsigned char u8;
@@ -97,7 +97,7 @@ void get_field_from_file(char *line, char *field_name)
 
 	result = strtok(line, delims);
 	while (result != NULL) {
-		if (i == 5 && strcmp(field_name, "IE_KEY") != 0) {
+		if (i == 9 && strcmp(field_name, "IE_KEY") != 0) {
 
 			printf
 			    ("Error. Invalid no. of entries found in input "
