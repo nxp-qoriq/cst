@@ -94,6 +94,8 @@ static int get_size(const char *c)
 			break;
 	}
 
+	printf("size of file %s is %x - %d\n", c, bytes, bytes);
+
 	fclose(fp);
 	return bytes;
 }

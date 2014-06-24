@@ -11,8 +11,8 @@ ESBC=1
 ---------------------------------------------------
 # Entry Point/Image start address field in the header.[Mandatory]
 # (default=ADDRESS of first file specified in images)
-#ENTRY_POINT=60920000
-ENTRY_POINT=88000000
+ENTRY_POINT=60920000
+#ENTRY_POINT=88000000
 ---------------------------------------------------
 # Specify the file name of the keys seperated by comma.
 # The number of files and key select should lie between 1 and 4 for 1040 and C290.
@@ -38,8 +38,8 @@ IMAGE_TARGET=
 ---------------------------------------------------
 # Specify IMAGE, Max 8 images are possible. DST_ADDR is required only for Non-PBL Platform. [Mandatory]
 # USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
-#IMAGE_1={rootfs,60920000,ffffffff}
-IMAGE_1={rootfs,88000000,ffffffff}
+IMAGE_1={rootfs ,60920000,ffffffff}
+#IMAGE_1={fsl-image-x11-ls1021aqds-20140424073555.rootfs.ext2.gz.u-boot ,88000000,ffffffff}
 IMAGE_2={,,}
 IMAGE_3={,,}
 IMAGE_4={,,}
