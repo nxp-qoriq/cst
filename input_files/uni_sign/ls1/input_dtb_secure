@@ -38,8 +38,9 @@ IMAGE_TARGET=
 ---------------------------------------------------
 # Specify IMAGE, Max 8 images are possible. DST_ADDR is required only for Non-PBL Platform. [Mandatory]
 # USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
-IMAGE_1={uImage.dtb,60020000,ffffffff}
-#IMAGE_1={ls1021a-qds.dtb,8f000000,ffffffff}
+# Modify name for qds or twr dtb
+IMAGE_1={ls1021a.dtb,60020000,ffffffff}
+#IMAGE_1={ls1021a.dtb,8f000000,ffffffff}
 IMAGE_2={,,}
 IMAGE_3={,,}
 IMAGE_4={,,}
