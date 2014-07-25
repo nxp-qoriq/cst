@@ -447,15 +447,13 @@ void fill_header_ls(SHA256_CTX *ctx)
 	uid_bit = 0x02;
 	for (i = 0; i < 5; i++) {
 		if (gd.oemuid_flag[i] != 0) {
-			uid_bit = uid_bit << 1;
-			uid_flags = uid_flags | uid_bit;
+			uid_flags = uid_flags | (uid_bit << (5 - i));
 			hdr_ptr->oem_uid[i] = BYTE_ORDER_L(gd.oemuid[i]);
 		}
 	}
 
 	if (gd.fsluid_flag[0] != 0 || gd.fsluid_flag[1] != 0) {
-		uid_bit = uid_bit << 1;
-		uid_flags = uid_flags | uid_bit;
+		uid_flags = uid_flags | 0x80;
 	}
 	hdr_ptr->fsl_uid[0] = BYTE_ORDER_L(gd.fsluid[0]);
 	hdr_ptr->fsl_uid[1] = BYTE_ORDER_L(gd.fsluid[1]);
@@ -1416,7 +1414,6 @@ int main(int argc, char **argv)
 		gd.file_flag = 1;
 
 	if ((argc != 3) && gd.help_flag != 1 && gd.file_flag != 1 &&
-	    !(gd.key_ext_flag == 1 &&  gd.verbose_flag == 1) &&
 	    !(gd.key_ext_flag == 1 &&  gd.img_hash_flag == 1) &&
 	    !(gd.key_ext_flag == 1 &&  gd.sign_app_flag == 1)) {
 		printf
