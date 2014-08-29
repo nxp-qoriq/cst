@@ -76,7 +76,7 @@ HK_AREA_SIZE=
 SFP_WP=1
 # Specify Secondary Image Flagi. (0 or 1) - [Optional]
 # (Default is 0)
-SEC_IMAGE=1
+SEC_IMAGE=0
 # Specify Manufacturing Protection Flag. (0 or 1) - [Optional]
 # Required only for LS1(Default is 0)
 MP_FLAG=1
