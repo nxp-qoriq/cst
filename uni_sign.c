@@ -205,12 +205,10 @@ void fill_header(SHA256_CTX *ctx, u32 key_len, u32 sign_len)
 	gd.himg.img_start = BYTE_ORDER_L(gd.entry_addr);
 
 	if (gd.group == 5) {
-		if (gd.esbc_flag == 0) {
-			gd.himg.mp_n_sg_flag.mp_flag = BYTE_ORDER_S(gd.mp_flag);
-			gd.himg.mp_n_sg_flag.sg_flag = BYTE_ORDER_S(1);
+		gd.himg.mp_n_sg_flag.mp_flag = BYTE_ORDER_S(gd.mp_flag);
+		gd.himg.mp_n_sg_flag.sg_flag = BYTE_ORDER_S(1);
 		gd.himg.fsl_uid_1 = BYTE_ORDER_L(gd.fslid_1);
 		gd.himg.oem_uid_1 = BYTE_ORDER_L(gd.oemid_1);
-		}
 	}
 	else if ((gd.group != 1) && (gd.esbc_flag == 0))
 		gd.himg.sg_flag = BYTE_ORDER_L(1);
@@ -247,7 +245,6 @@ void fill_header(SHA256_CTX *ctx, u32 key_len, u32 sign_len)
 		gd.himg.hkptr = BYTE_ORDER_L(gd.hkptr);
 		gd.himg.hksize = BYTE_ORDER_L(gd.hksize);
 	}
-	printf("Header size is %x\n", size.header);
 	SHA256_Update(ctx, &gd.himg, size.header);
 }
 
