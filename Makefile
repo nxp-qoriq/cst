@@ -22,14 +22,13 @@ LIBS += -lssl -lcrypto -ldl
 genkeys_OBJS = gen_keys.o
 uni_cfsign_OBJS = uni_cfsign.o
 uni_sign_OBJS = uni_sign.o
-uni_pbi_OBJS = uni_pbi.o
 genotpmk_OBJS = gen_otpmk.o
 
 # targets that are not files
 .PHONY: all clean
 
 # make targets
-all: uni_sign uni_cfsign uni_pbi gen_otpmk gen_keys
+all: uni_sign uni_cfsign gen_otpmk gen_keys
 
 gen_keys: ${genkeys_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
@@ -43,13 +42,11 @@ uni_cfsign: ${uni_cfsign_OBJS}
 uni_sign: ${uni_sign_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
-uni_pbi: ${uni_pbi_OBJS}
-	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 %.o: %.c
 	${CC} -c ${CCFLAGS} $< 
 
 clean:
-	${RM} *.o gen_keys *.out uni_sign uni_cfsign uni_pbi gen_otpmk
+	${RM} *.o gen_keys *.out uni_sign uni_cfsign gen_otpmk
 
 distclean:	clean
 	rm -rf srk.pub srk.pri
