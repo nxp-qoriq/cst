@@ -33,6 +33,9 @@
 #define __COMMON_H__
 
 #include <ctype.h>
+#include <limits.h>
+#include <errno.h>
+#include <stdlib.h>
 
 #define BOOT_SIG		0x424f4f54      /*offset 0x40-43 */
 #define BARKER_LEN		0x4
@@ -192,6 +195,45 @@ int check_target(char *target_name, uint32_t *targetid)
 		i++;
 	}
 	return -1;
+}
+
+/* Parse input field value for error checking*/
+unsigned long STR_TO_UL(char *str, int ptr, int base)
+{
+	unsigned long val;
+	char *endptr;
+	char *neg;
+
+	/* To distinguish success/failure for strtoul*/
+	errno = 0;
+
+	/* Checking for negative values*/
+	neg = str;
+	if (strchr(neg, '-') != NULL) {
+		printf("Field is populated incorrectly with negative value\n");
+		exit(EXIT_FAILURE);
+	}
+
+	/* Convert string to unsigned long*/
+	val = strtoul(str, &endptr, base);
+	/* Some invalid character is there in the field value */
+	if (*endptr != '\0') {
+		printf("Field is populated incorrectly with"
+		       " value %s in %s\n", endptr, str);
+		exit(EXIT_FAILURE);
+	}
+
+	/* Check for various possible errors */
+	if (((errno == ERANGE) && (val == ULONG_MAX || val == LONG_MIN)) ||
+	    (errno != 0 && val == 0)) {
+		printf("Field is populated incorrectly with value %s\n", endptr);
+		exit(EXIT_FAILURE);
+	}
+
+	if (*endptr == '\0')
+		return val;
+
+	exit(EXIT_FAILURE);
 }
 
 #endif

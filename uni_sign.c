@@ -254,7 +254,7 @@ int check_group(char *platform)
 	int i = 0;
 	while (strcmp(group[i][0], "LAST")) {
 		if (strcmp(group[i][0], platform) == 0) {
-			gd.group = strtoul(group[i][1], 0, 10);
+			gd.group = STR_TO_UL(group[i][1], 0, 10);
 			return 0;
 		}
 		i++;
@@ -808,7 +808,7 @@ void parse_file(char *file_name)
 
 	find_value_from_file("ESBC", fp);
 	if (file_field.count == 1) {
-		gd.esbc_flag = strtoul(file_field.value[0], 0, 10);
+		gd.esbc_flag = STR_TO_UL(file_field.value[0], 0, 10);
 		if (gd.esbc_flag != 1 && gd.esbc_flag != 0) {
 			printf("Error. Invalid Usage of ESBC Flag "
 				"in input file. Refer usage\n");
@@ -820,7 +820,7 @@ void parse_file(char *file_name)
 	if (gd.esbc_flag == 0 && gd.key_ext_flag == 1) {
 		find_value_from_file("ESBC_HDRADDR", fp);
 		if (file_field.count == 1) {
-			gd.esbc_hdr = strtoul(file_field.value[0], 0, 16);
+			gd.esbc_hdr = STR_TO_UL(file_field.value[0], 0, 16);
 		} else {
 			printf("ERROR. Missing ESBC_HDRADDR in Input File\n");
 			exit(1);
@@ -830,7 +830,7 @@ void parse_file(char *file_name)
 	/* Parse Key Info from input file */
 	find_value_from_file("KEY_SELECT", fp);
 	if (file_field.count == 1) {
-		gd.srk_sel = strtoul(file_field.value[0], 0, 10);
+		gd.srk_sel = STR_TO_UL(file_field.value[0], 0, 10);
 		gd.srk_table_flag = 1;
 	}
 
@@ -930,7 +930,7 @@ void parse_file(char *file_name)
 
 			i = 0; val = 0; bit = 1;
 			while (i != gd.ie_key_num_revoc) {
-				val = strtoul(file_field.value[i], 0, 16);
+				val = STR_TO_UL(file_field.value[i], 0, 16);
 				bit = bit << (val - 1);
 				gd.ie_key_revoc = gd.ie_key_revoc | bit;
 				bit = 1;
@@ -943,7 +943,7 @@ void parse_file(char *file_name)
 	if (gd.esbc_flag == 1 && gd.key_ext_flag == 1) {
 		find_value_from_file("IE_KEY_SEL", fp);
 		if (file_field.count == 1) {
-			gd.ie_key_sel = strtoul(file_field.value[0], 0, 16);
+			gd.ie_key_sel = STR_TO_UL(file_field.value[0], 0, 16);
 			gd.ie_flag = 1;
 		} else {
 			printf("ERROR. Missing IE_KEY_SEL field in"
@@ -957,7 +957,7 @@ void parse_file(char *file_name)
 	/* Parse Entry Point from input file */
 	find_value_from_file("ENTRY_POINT", fp);
 	if (file_field.count == 1) {
-		gd.entry_addr = strtoul(file_field.value[0], 0, 16);
+		gd.entry_addr = STR_TO_UL(file_field.value[0], 0, 16);
 		gd.entry_flag = 1;
 	}
 
@@ -974,7 +974,7 @@ void parse_file(char *file_name)
 	/* Parse blocksize if image target is SDHC*/
 	find_value_from_file("BSIZE", fp);
 	if (file_field.count == 1)
-		gd.sdhc_bsize = strtoul(file_field.value[0], 0, 10);
+		gd.sdhc_bsize = STR_TO_UL(file_field.value[0], 0, 10);
 
 	/* Parse Images from input file */
 	i = 0;
@@ -1013,12 +1013,12 @@ void parse_file(char *file_name)
 			    malloc(strlen(file_field.value[0]) + 1);
 			strcpy(gd.entries[i].name, file_field.value[0]);
 			gd.entries[i].addr =
-			    strtoul(file_field.value[1], 0, 16);
+			    STR_TO_UL(file_field.value[1], 0, 16);
 
 			if (((gd.group == 2) || (gd.group == 4) ||
 			     (gd.group == 6)) && (gd.esbc_flag == 0)) {
 				gd.entries[i].d_addr =
-				    strtoul(file_field.value[2], 0, 16);
+				    STR_TO_UL(file_field.value[2], 0, 16);
 			}
 			gd.num_entries++;
 		}
@@ -1032,12 +1032,12 @@ void parse_file(char *file_name)
 	/* Parse UID from input file */
 	find_value_from_file("FSL_UID", fp);
 	if (file_field.count == 1) {
-		gd.fsluid[0] = strtoul(file_field.value[0], 0, 16);
+		gd.fsluid[0] = STR_TO_UL(file_field.value[0], 0, 16);
 		gd.fsluid_flag[0] = 1;
 	}
 	find_value_from_file("FSL_UID_1", fp);
 	if (file_field.count == 1) {
-		gd.fsluid[1] = strtoul(file_field.value[0], 0, 16);
+		gd.fsluid[1] = STR_TO_UL(file_field.value[0], 0, 16);
 		gd.fsluid_flag[1] = 1;
 	}
 
@@ -1050,34 +1050,34 @@ void parse_file(char *file_name)
 
 	find_value_from_file("OEM_UID", fp);
 	if (file_field.count == 1) {
-		gd.oemuid[0] = strtoul(file_field.value[0], 0, 16);
+		gd.oemuid[0] = STR_TO_UL(file_field.value[0], 0, 16);
 		gd.oemuid_flag[0] = 1;
 	}
 	find_value_from_file("OEM_UID_1", fp);
 	if (file_field.count == 1) {
-		gd.oemuid[1] = strtoul(file_field.value[0], 0, 16);
+		gd.oemuid[1] = STR_TO_UL(file_field.value[0], 0, 16);
 		gd.oemuid_flag[1] = 1;
 	}
 	find_value_from_file("OEM_UID_2", fp);
 	if (file_field.count == 1) {
-		gd.oemuid[2] = strtoul(file_field.value[0], 0, 16);
+		gd.oemuid[2] = STR_TO_UL(file_field.value[0], 0, 16);
 		gd.oemuid_flag[2] = 1;
 	}
 	find_value_from_file("OEM_UID_3", fp);
 	if (file_field.count == 1) {
-		gd.oemuid[3] = strtoul(file_field.value[0], 0, 16);
+		gd.oemuid[3] = STR_TO_UL(file_field.value[0], 0, 16);
 		gd.oemuid_flag[3] = 1;
 	}
 	find_value_from_file("OEM_UID_4", fp);
 	if (file_field.count == 1) {
-		gd.oemuid[4] = strtoul(file_field.value[0], 0, 16);
+		gd.oemuid[4] = STR_TO_UL(file_field.value[0], 0, 16);
 		gd.oemuid_flag[4] = 1;
 	}
 
 	/* Parsing sign_size address*/
 	find_value_from_file("SIGN_SIZE", fp);
 	if (file_field.count == 1) {
-		gd.sign_size = strtoul(file_field.value[0], 0, 16);
+		gd.sign_size = STR_TO_UL(file_field.value[0], 0, 16);
 	} else if (gd.no_key_flag == 1) {
 		printf("ERROR. Missing SIGN_SIZE in Input File\n");
 		exit(1);
@@ -1119,7 +1119,7 @@ void parse_file(char *file_name)
 	/* Parse SG Table Address from input file */
 	find_value_from_file("SG_TABLE_ADDR", fp);
 	if (file_field.count == 1) {
-		gd.sg_addr = strtoul(file_field.value[0], 0, 16);
+		gd.sg_addr = STR_TO_UL(file_field.value[0], 0, 16);
 		gd.sg_flag = 1;
 	}
 	if (gd.num_entries > 1 && gd.sg_flag == 0 && gd.group == 1
@@ -1131,49 +1131,49 @@ void parse_file(char *file_name)
 	/* Parse HK Area Info from input file */
 	find_value_from_file("HK_AREA_POINTER", fp);
 	if (file_field.count == 1) {
-		gd.hkptr = strtoul(file_field.value[0], 0, 16);
+		gd.hkptr = STR_TO_UL(file_field.value[0], 0, 16);
 		gd.hkptr_flag = 1;
 	}
 	find_value_from_file("HK_AREA_SIZE", fp);
 	if (file_field.count == 1) {
-		gd.hksize = strtoul(file_field.value[0], 0, 16);
+		gd.hksize = STR_TO_UL(file_field.value[0], 0, 16);
 		gd.hksize_flag = 1;
 	}
 
 	/* Parse SFP Write Protect from input file */
 	find_value_from_file("SFP_WP", fp);
 	if (file_field.count == 1) {
-		gd.sfp_wp = strtoul(file_field.value[0], 0, 16);
+		gd.sfp_wp = STR_TO_UL(file_field.value[0], 0, 16);
 	}
 	/* Parse SFP Write Protect from input file */
 	find_value_from_file("SEC_IMAGE", fp);
 	if (file_field.count == 1) {
-		gd.sec_image = strtoul(file_field.value[0], 0, 16);
+		gd.sec_image = STR_TO_UL(file_field.value[0], 0, 16);
 	}
 
 	/* Parse Manufacturing Protection Flag from input file */
 	find_value_from_file("MP_FLAG", fp);
 	if (file_field.count == 1) {
-		gd.mp_flag = strtoul(file_field.value[0], 0, 16);
+		gd.mp_flag = STR_TO_UL(file_field.value[0], 0, 16);
 	}
 
 	/* Layerscape flags*/
 	find_value_from_file("ISS_FLAG", fp);
 	if (file_field.count == 1)
-		gd.iss_flag = strtoul(file_field.value[0], 0, 16);
+		gd.iss_flag = STR_TO_UL(file_field.value[0], 0, 16);
 
 	find_value_from_file("BOOT01_FLAG", fp);
 	if (file_field.count == 1)
-		gd.b01_flag = strtoul(file_field.value[0], 0, 16);
+		gd.b01_flag = STR_TO_UL(file_field.value[0], 0, 16);
 
 	find_value_from_file("LW_FLAG", fp);
 	if (file_field.count == 1)
-		gd.lw_flag = strtoul(file_field.value[0], 0, 16);
+		gd.lw_flag = STR_TO_UL(file_field.value[0], 0, 16);
 
 
 	find_value_from_file("VERBOSE", fp);
 	if (file_field.count == 1)
-		gd.verbose_flag = strtoul(file_field.value[0], 0, 16);
+		gd.verbose_flag = STR_TO_UL(file_field.value[0], 0, 16);
 
 	free(image_name);
 	fclose(fp);
