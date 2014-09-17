@@ -47,6 +47,8 @@
 #define MAX_NUM_KEYS		8
 #define MAX_IE_KEYS		32
 #define MAX_LINE_SIZE		1024
+#define MAX_U32			0xFFFFFFFF
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
@@ -216,6 +218,7 @@ unsigned long STR_TO_UL(char *str, int ptr, int base)
 
 	/* Convert string to unsigned long*/
 	val = strtoul(str, &endptr, base);
+
 	/* Some invalid character is there in the field value */
 	if (*endptr != '\0') {
 		printf("Field is populated incorrectly with"
@@ -226,8 +229,15 @@ unsigned long STR_TO_UL(char *str, int ptr, int base)
 	/* Check for various possible errors */
 	if (((errno == ERANGE) && (val == ULONG_MAX || val == LONG_MIN)) ||
 	    (errno != 0 && val == 0)) {
-		printf("Field is populated incorrectly with value %s\n", endptr);
+		printf("Field populated incorrectly with value %s\n", endptr);
 		exit(EXIT_FAILURE);
+	}
+
+	/* Check for value greater than max 32 bit value */
+	if (val > MAX_U32) {
+			printf("Field is populated incorrectly with value"
+			       " greater than max 32 bit value\n");
+			exit(1);
 	}
 
 	if (*endptr == '\0')
