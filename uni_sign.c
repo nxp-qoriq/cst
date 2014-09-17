@@ -574,34 +574,42 @@ void fill_header(SHA256_CTX *ctx, u32 key_len)
 		      gd.cmbhdrptr[EXT_ESBC_HDR]->blk_size);
 }
 
+void extract_key(u8 *key_ptr, u32 key_len, u32 key_number, RSA * key_type[])
+{
+	unsigned char *tmp;
+	int i, j = 0;
+
+	/* copy N and E */
+
+	/* Copy N component */
+	tmp = (unsigned char *)(((BIGNUM *)key_type[key_number]->n)->d);
+	for (j = key_len - 1, i = 0;
+	     i < ((BIGNUM *)key_type[key_number]->n)->top * sizeof(BIGNUM *);
+	     i++, j--)
+		key_ptr[j] = tmp[i];
+
+	/* Copy E component */
+	key_ptr = key_ptr + key_len;
+	tmp = (unsigned char *)(((BIGNUM *)key_type[key_number]->e)->d);
+	for (j = key_len - 1, i = 0;
+	     i < ((BIGNUM *)key_type[key_number]->e)->top * sizeof(BIGNUM *);
+	     i++, j--)
+		key_ptr[j] = tmp[i];
+}
+
 void fill_and_update_keys(SHA256_CTX *ctx, u8 *header, u32 key_len)
 {
 	unsigned char *key;
-	unsigned char *tmp;
 	unsigned char *ie_key_offset;
-	int i, n, j = 0;
+	int n = 0;
 	u32 total_key_len, ie_revoc, ie_keys;
 	/*pointer to the location of key */
 	key = header + gd.cmbhdrptr[SRK_TABLE]->blk_offset;
 	memset(key, 0, gd.cmbhdrptr[SRK_TABLE]->blk_size);
 
 	if (gd.srk_table_flag == 0) {
-		/* copy N and E */
-
-		/* Copy N component */
-		tmp = (unsigned char *)(((BIGNUM *)gd.srk[0]->n)->d);
-		for (j = key_len - 1, i = 0;
-		     i < ((BIGNUM *)gd.srk[0]->n)->top * sizeof(BIGNUM *);
-		     i++, j--)
-			key[j] = tmp[i];
-
-		/* Copy E component */
-		key = header + gd.cmbhdrptr[SRK_TABLE]->blk_offset + key_len;
-		tmp = (unsigned char *)(((BIGNUM *)gd.srk[0]->e)->d);
-		for (j = key_len - 1, i = 0;
-		     i < ((BIGNUM *)gd.srk[0]->e)->top * sizeof(BIGNUM *);
-		     i++, j--)
-			key[j] = tmp[i];
+		/* Copy N component and E component*/
+		extract_key(key, key_len, 0, gd.srk);
 
 		SHA256_Update(ctx,
 			      header + gd.cmbhdrptr[SRK_TABLE]->blk_offset,
@@ -611,7 +619,6 @@ void fill_and_update_keys(SHA256_CTX *ctx, u8 *header, u32 key_len)
 		/* SRK table */
 		n = 0;
 		while (n != gd.num_srk_entries) {
-			/* copy N and E */
 			key =
 			    header + gd.cmbhdrptr[SRK_TABLE]->blk_offset +
 			    (n) * (sizeof(struct srk_table));
@@ -622,30 +629,9 @@ void fill_and_update_keys(SHA256_CTX *ctx, u8 *header, u32 key_len)
 			memcpy(key, &total_key_len, sizeof(u32));
 			key = key + sizeof(u32);
 
-			/* Copy N component */
-			tmp = (unsigned char *)(((BIGNUM *)gd.srk[n]->n)->d);
-			for (j = gd.key_table[n].key_len - 1, i = 0;
-			     i <
-			     ((BIGNUM *)gd.srk[n]->n)->top * sizeof(BIGNUM *);
-			     i++, j--)
-				key[j] = tmp[i];
+			/* Copy N component and E component*/
+			extract_key(key, gd.key_table[n].key_len, n, gd.srk);
 
-			/* Copy E component */
-			key =
-			    header + gd.cmbhdrptr[SRK_TABLE]->blk_offset +
-			    (n) * (sizeof(struct srk_table)) + sizeof(u32) +
-			    gd.key_table[n].key_len;
-			tmp = (unsigned char *)(((BIGNUM *)gd.srk[n]->e)->d);
-			for (j = gd.key_table[n].key_len - 1, i = 0;
-			     i <
-			     ((BIGNUM *)gd.srk[n]->e)->top * sizeof(BIGNUM *);
-			     i++, j--)
-				key[j] = tmp[i];
-
-			memcpy(gd.key_table[n].pkey,
-			       header + gd.cmbhdrptr[SRK_TABLE]->blk_offset +
-			       n * sizeof(struct srk_table) + 4,
-			       2 * gd.key_table[n].key_len);
 			/*Update for all the keys present in the Key table */
 			n++;
 		}
@@ -653,6 +639,7 @@ void fill_and_update_keys(SHA256_CTX *ctx, u8 *header, u32 key_len)
 			      header + gd.cmbhdrptr[SRK_TABLE]->blk_offset,
 			      gd.num_srk_entries * sizeof(struct srk_table));
 	}
+
 
 	/*pointer to the location of IE key */
 	ie_key_offset = header + gd.cmbhdrptr[IE_TABLE]->blk_offset;
@@ -670,7 +657,6 @@ void fill_and_update_keys(SHA256_CTX *ctx, u8 *header, u32 key_len)
 
 		n = 0;
 		while (n != gd.num_ie_keys) {
-			/* copy N and E */
 			key =
 			    ie_key_offset + n * (sizeof(struct ie_key_table));
 
@@ -680,35 +666,14 @@ void fill_and_update_keys(SHA256_CTX *ctx, u8 *header, u32 key_len)
 			memcpy(key, &total_key_len, sizeof(u32));
 			key = key + sizeof(u32);
 
-			/* Copy N component */
-			tmp = (unsigned char *)
-			      (((BIGNUM *)gd.ie_key[n]->n)->d);
-			for (j = gd.ie_key_entry[n].key_len - 1, i = 0;
-			     i < ((BIGNUM *)gd.ie_key[n]->n)->top *
-				 sizeof(BIGNUM *);
-			     i++, j--)
-				key[j] = tmp[i];
+			/* Copy N component and E component*/
+			extract_key(key, gd.ie_key_entry[n].key_len, n,
+				    gd.ie_key);
 
-			/* Copy E component */
-			key =
-			    ie_key_offset + n * (sizeof(struct ie_key_table)) +
-			    sizeof(u32) + gd.ie_key_entry[n].key_len;
-			tmp = (unsigned char *)
-			      (((BIGNUM *)gd.ie_key[n]->e)->d);
-			for (j = gd.ie_key_entry[n].key_len - 1, i = 0;
-			     i < ((BIGNUM *)gd.ie_key[n]->e)->top *
-				 sizeof(BIGNUM *);
-			     i++, j--)
-				key[j] = tmp[i];
-
-			memcpy(gd.ie_key_entry[n].pkey, ie_key_offset +
-			       n * sizeof(struct ie_key_table) +
-			       4, 2 * gd.ie_key_entry[n].key_len);
 			/*Update for all the keys present in the Key table */
 			n++;
 		}
 	}
-
 }
 
 void fill_and_update_sg_tbl(SHA256_CTX *ctx)

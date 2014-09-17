@@ -88,14 +88,13 @@ static void printonlyhash(uint32_t srk_table_flag,
 			  char *pub_fname[MAX_NUM_KEYS],
 			  uint32_t pub_fname_count)
 {
-	int i, j, n;
+	int i, n;
 	SHA256_CTX key_ctx;
 	unsigned char hash[SHA256_DIGEST_LENGTH];
 	FILE * fsrk_pub[MAX_NUM_KEYS];
 	RSA * srk_pub[MAX_NUM_KEYS];
-	unsigned char *tmp;
-	unsigned char *exponent;
-	u8 key[1024];
+	unsigned char *key;
+	u8 key_store[1024];
 	unsigned char *key_len_ptr;
 	u32 key_len = 0, total_key_len;
 	n = 0;
@@ -122,19 +121,11 @@ static void printonlyhash(uint32_t srk_table_flag,
 		}
 
 		key_len = RSA_size(srk_pub[n]);
-		memset(key, 0, 1024);
-		tmp = (unsigned char *)(((BIGNUM *)srk_pub[n]->n)->d);
-		for (j = key_len - 1, i = 0;
-		     i < ((BIGNUM *)srk_pub[n]->n)->top * sizeof(BIGNUM *);
-		     i++, j--)
-			key[j] = tmp[i];
+		memset(key_store, 0, 1024);
 
-		exponent = key + key_len;
-		tmp = (unsigned char *)(((BIGNUM *)srk_pub[n]->e)->d);
-		for (j = key_len - 1, i = 0;
-		     i < ((BIGNUM *)srk_pub[n]->e)->top * sizeof(BIGNUM *);
-		     i++, j--)
-			exponent[j] = tmp[i];
+		/* Copy N component and E component*/
+		key = key_store;
+		extract_key(key, key_len, n, srk_pub);
 
 		if (srk_table_flag == 1) {
 			total_key_len = BYTE_ORDER_L(2 * key_len);
@@ -149,9 +140,9 @@ static void printonlyhash(uint32_t srk_table_flag,
 		}
 #ifdef DEBUG
 		for (ctr = 0; ctr < 2 * key_len; ctr++)
-			printf("0x%0.2x ", *(key + ctr));
+			printf("0x%0.2x ", *(key_store + ctr));
 #endif
-		SHA256_Update(&key_ctx, (u8 *)key, 2 * key_len);
+		SHA256_Update(&key_ctx, (u8 *)key_store, 2 * key_len);
 		n++;
 	}
 	SHA256_Final(hash, &key_ctx);

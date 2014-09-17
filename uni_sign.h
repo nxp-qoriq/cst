@@ -61,6 +61,8 @@
 #define KEY_SIZE_BYTES		1024
 #define NUM_BLOCKS		8
 
+void extract_key(u8 *key_ptr, u32 key_len, u32 key_number, RSA * type_key[]);
+
 char *group[][2] = { {"3041", "1"},
 {"4080", "1"},
 {"5020", "1"},
