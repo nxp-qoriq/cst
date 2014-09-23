@@ -789,6 +789,26 @@ void fill_and_update_sg_tbl_offset(SHA256_CTX *ctx)
 		      sizeof(struct sg_table_offset) * gd.num_entries);
 }
 
+void check_set_esbc_flag(char *file_name)
+{
+	FILE *fp;
+	fp = fopen(file_name, "r");
+	if (fp == NULL) {
+		fprintf(stderr, "Error in opening the file: %s\n", file_name);
+		exit(1);
+	}
+
+	find_value_from_file("ESBC", fp);
+	if (file_field.count == 1) {
+		gd.esbc_flag = STR_TO_UL(file_field.value[0], 0, 10);
+		if (gd.esbc_flag != 1 && gd.esbc_flag != 0) {
+			printf("Error. Invalid Usage of ESBC Flag "
+				"in input file. Refer usage\n");
+			exit(1);
+		}
+	}
+	fclose(fp);
+}
 
 void parse_file(char *file_name)
 {
@@ -817,16 +837,6 @@ void parse_file(char *file_name)
 			"input file. Refer usage\n");
 		exit(1);
 
-	}
-
-	find_value_from_file("ESBC", fp);
-	if (file_field.count == 1) {
-		gd.esbc_flag = STR_TO_UL(file_field.value[0], 0, 10);
-		if (gd.esbc_flag != 1 && gd.esbc_flag != 0) {
-			printf("Error. Invalid Usage of ESBC Flag "
-				"in input file. Refer usage\n");
-			exit(1);
-		}
 	}
 
 	/* Parsing esbc_hdr address*/
@@ -1423,6 +1433,7 @@ int main(int argc, char **argv)
 			break;
 	}
 
+	/*Error checking for options used*/
 	if (argc == 2 && gd.help_flag != 1)
 		gd.file_flag = 1;
 
@@ -1436,15 +1447,9 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	/* Parse input file for the fields */
-	if (!gd.help_flag)
-		parse_file(argv[argc-1]);
+	/* Check and set ESBC flag if provided as input*/
+	check_set_esbc_flag(argv[argc-1]);
 
-	check_error(argc, argv);
-
-	if (gd.entry_flag == 0)
-		gd.entry_addr = gd.entries[0].addr;
-	printf("\n");
 
 	/* Flags would be set as per the option enabled and keys needed.
 	 * If img_hash or sign_app option is used only public keys are needed.
@@ -1468,6 +1473,16 @@ int main(int argc, char **argv)
 		gd.key_type_req = BOTH_KEY;
 
 	}
+
+	/* Parse input file for the fields */
+	if (!gd.help_flag)
+		parse_file(argv[argc-1]);
+
+	check_error(argc, argv);
+
+	if (gd.entry_flag == 0)
+		gd.entry_addr = gd.entries[0].addr;
+	printf("\n");
 
 	/* Open RSA keys*/
 	if (gd.key_type_req != NO_KEY)
