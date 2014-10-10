@@ -106,7 +106,7 @@ static void initialise_nodes()
 
 	/* Initialise srk_table node*/
 	gd.cmbhdrptr[SRK_TABLE] = new_node();
-	if (gd.no_key_flag == 0) {
+	if (gd.key_type_req != NO_KEY) {
 		if (gd.srk_table_flag == 0) {
 			gd.cmbhdrptr[SRK_TABLE]->blk_ptr = (void *)
 					calloc(1, 2 * RSA_size(gd.srk[0]));
@@ -154,7 +154,7 @@ static void fill_offset()
 {
 	int i;
 
-	if (gd.no_key_flag == 0) {
+	if (gd.key_type_req != NO_KEY) {
 		if (gd.srk_table_flag == 0) {
 			gd.cmbhdrptr[SIGNATURE]->blk_size =
 					RSA_size(gd.srk[0]);
@@ -212,8 +212,13 @@ static void free_mem()
 {
 	int i;
 	for (i = 0; i < gd.num_srk_entries; i++) {
-		fclose(gd.fsrk[i]);
-		RSA_free(gd.srk[i]);
+		if (gd.key_type_req == PRIV_KEY_ONLY ||
+		    gd.key_type_req == BOTH_KEY)
+			RSA_free(gd.srk_pri[i]);
+
+		if (gd.key_type_req == PUB_KEY_ONLY ||
+		    gd.key_type_req == BOTH_KEY)
+			RSA_free(gd.srk_pub[i]);
 	}
 
 	for (i = 0; i < gd.num_ie_keys; i++) {
@@ -245,6 +250,32 @@ static void free_mem()
 	for (i = CSF_HDR_LS; i != BLOCK_END; i++) {
 		free(gd.cmbhdrptr[i]->blk_ptr);
 		free(gd.cmbhdrptr[i]);
+	}
+}
+
+void compare_key_pairs()
+{
+	int n = 0;
+	int ret;
+	u8 key_pri[KEY_SIZE_BYTES];
+	u8 key_pub[KEY_SIZE_BYTES];
+
+	n = 0;
+	while (n != gd.num_srk_entries) {
+		/* extract_key function would return only the N and E
+		 * components of the RSA key passed.
+		 * Passing Public and Private keys to the function and doing
+		 * their byte wise comparison conforms validity of pair.
+		 * */
+		extract_key(key_pri, RSA_size(gd.srk_pri[n]), n, gd.srk_pri);
+		extract_key(key_pub, RSA_size(gd.srk_pub[n]), n, gd.srk_pub);
+
+		ret = memcmp(key_pri, key_pub, RSA_size(gd.srk_pri[n]));
+		if (ret != 0) {
+			printf("Public Private Key Pair is not matching\n");
+			exit(EXIT_FAILURE);
+		}
+		n++;
 	}
 }
 
@@ -338,36 +369,52 @@ int get_size_and_updatehash(const char *fname, SHA256_CTX * ctx)
 int open_key_file(void)
 {
 	int i = 0;
-	char *fname;
+	char *fname_pub, *fname_pri;
 
 	for (i = 0; i < gd.num_srk_entries; i++) {
-		/* open SRK key file and get the key */
-		if (gd.img_hash_flag == 1 || gd.sign_app_flag == 1)
-			fname = gd.pub_fname[i];
-		else
-			fname = gd.priv_fname[i];
+		/* open public key file and get the key */
+		if (gd.key_type_req == PUB_KEY_ONLY ||
+		    gd.key_type_req == BOTH_KEY) {
+			fname_pub = gd.pub_fname[i];
+			gd.fsrk_pub[i] = fopen(fname_pub, "r");
+			if (gd.fsrk_pub[i] == NULL) {
+				fprintf(stderr, "Error in file opening:\n");
+				return -1;
+			}
 
-		gd.fsrk[i] = fopen(fname, "r");
-		if (gd.fsrk[i] == NULL) {
-			fprintf(stderr, "Error in opening the file: %s\n",
-				fname);
-			return -1;
+			/* read the public key using RSA API*/
+			gd.srk_pub[i] = PEM_read_RSAPublicKey
+				    (gd.fsrk_pub[i], NULL, NULL, NULL);
+			if (gd.srk_pub[i] == NULL) {
+				fprintf(stderr, "Error in key reading:\n");
+				return -1;
+			}
+
+			gd.srk[i] = gd.srk_pub[i];
+			fclose(gd.fsrk_pub[i]);
 		}
 
-		if (gd.img_hash_flag == 1 || gd.sign_app_flag == 1)
-			gd.srk[i] = PEM_read_RSAPublicKey
-				    (gd.fsrk[i], NULL, NULL, NULL);
-		else
-			gd.srk[i] = PEM_read_RSAPrivateKey
-				    (gd.fsrk[i], NULL, NULL, NULL);
+		/* open private key file and get the key */
+		if (gd.key_type_req == PRIV_KEY_ONLY ||
+		    gd.key_type_req == BOTH_KEY) {
+			fname_pri = gd.priv_fname[i];
+			gd.fsrk_pri[i] = fopen(fname_pri, "r");
+			if (gd.fsrk_pri[i] == NULL) {
+				fprintf(stderr, "Error in file opening:\n");
+				return -1;
+			}
 
-		if (gd.srk[i] == NULL) {
-			fprintf(stderr, "Error in reading key from : %s\n",
-				fname);
-			fclose(gd.fsrk[i]);
-			return -1;
+			/* read the private key using RSA API*/
+			gd.srk_pri[i] = PEM_read_RSAPrivateKey
+				    (gd.fsrk_pri[i], NULL, NULL, NULL);
+			if (gd.srk_pri[i] == NULL) {
+				fprintf(stderr, "Error in key reading:\n");
+				return -1;
+			}
+
+			gd.srk[i] = gd.srk_pri[i];
+			fclose(gd.fsrk_pri[i]);
 		}
-
 	}
 
 	for (i = 0; i < gd.num_ie_keys; i++) {
@@ -603,6 +650,7 @@ void fill_and_update_keys(SHA256_CTX *ctx, u8 *header, u32 key_len)
 	unsigned char *ie_key_offset;
 	int n = 0;
 	u32 total_key_len, ie_revoc, ie_keys;
+
 	/*pointer to the location of key */
 	key = header + gd.cmbhdrptr[SRK_TABLE]->blk_offset;
 	memset(key, 0, gd.cmbhdrptr[SRK_TABLE]->blk_size);
@@ -1043,7 +1091,7 @@ void parse_file(char *file_name)
 	find_value_from_file("SIGN_SIZE", fp);
 	if (file_field.count == 1) {
 		gd.sign_size = STR_TO_UL(file_field.value[0], 0, 16);
-	} else if (gd.no_key_flag == 1) {
+	} else if (gd.key_type_req == NO_KEY) {
 		printf("ERROR. Missing SIGN_SIZE in Input File\n");
 		exit(1);
 	}
@@ -1398,16 +1446,38 @@ int main(int argc, char **argv)
 		gd.entry_addr = gd.entries[0].addr;
 	printf("\n");
 
+	/* Flags would be set as per the option enabled and keys needed.
+	 * If img_hash or sign_app option is used only public keys are needed.
+	 * If key_ext option with esbc image is used only private keys are
+	 * needed.
+	 * If both of above option are used simultaneously no key is needed.
+	 * Otherwise both keys are needed.And hence corresponding flag is set.
+	 * */
 	if ((gd.img_hash_flag == 1 || gd.sign_app_flag == 1) &&
-	    gd.key_ext_flag == 1 && gd.esbc_flag == 1) {
-		gd.no_key_flag = 1;
+	    (gd.key_ext_flag == 1 && gd.esbc_flag == 1)) {
+		gd.key_type_req = NO_KEY;
 		gd.num_srk_entries = 0;
+
+	} else	if (gd.img_hash_flag == 1 || gd.sign_app_flag == 1) {
+		gd.key_type_req = PUB_KEY_ONLY;
+
+	} else	if (gd.key_ext_flag == 1 && gd.esbc_flag == 1) {
+		gd.key_type_req = PRIV_KEY_ONLY;
+
+	} else {
+		gd.key_type_req = BOTH_KEY;
+
 	}
 
-	if (gd.no_key_flag == 0)
+	/* Open RSA keys*/
+	if (gd.key_type_req != NO_KEY)
 		ret = open_key_file();
 	if (ret < 0)
 		exit(1);
+
+	/* Compare RSA private and public key pairs*/
+	if (gd.key_type_req == BOTH_KEY)
+		compare_key_pairs();
 
 	/* Initialise nodes for all components of header */
 	initialise_nodes();
@@ -1415,7 +1485,7 @@ int main(int argc, char **argv)
 	/* Calculate blocks offsets for the combined header*/
 	fill_offset();
 
-	if (gd.no_key_flag == 0)
+	if (gd.key_type_req != NO_KEY)
 		key_len = RSA_size(gd.srk[0]);
 
 	/* Hdrlen - size of header, key, sign and padding */

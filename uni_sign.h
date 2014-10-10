@@ -61,6 +61,12 @@
 #define KEY_SIZE_BYTES		1024
 #define NUM_BLOCKS		8
 
+/* Number of keys required*/
+#define NO_KEY			0
+#define PRIV_KEY_ONLY		1
+#define PUB_KEY_ONLY		2
+#define BOTH_KEY		3
+
 void extract_key(u8 *key_ptr, u32 key_len, u32 key_number, RSA * type_key[]);
 
 char *group[][2] = { {"3041", "1"},
@@ -217,8 +223,11 @@ struct combined_hdr {
 
 struct global {
 	/* Variables used across functions */
-	FILE *fsrk[MAX_NUM_KEYS];
+	FILE * fsrk_pri[MAX_NUM_KEYS];
+	FILE * fsrk_pub[MAX_NUM_KEYS];
 	RSA * srk[MAX_NUM_KEYS];
+	RSA * srk_pri[MAX_NUM_KEYS];
+	RSA * srk_pub[MAX_NUM_KEYS];
 	FILE *fie_key[MAX_IE_KEYS];
 	RSA * ie_key[MAX_IE_KEYS];
 	struct sg_table hsgtbl[NUM_SG_ENTRIES];	/* SG table */
@@ -262,7 +271,7 @@ struct global {
 	uint32_t sign_size;
 	uint32_t srk_sel;
 	uint32_t srk_table_flag;
-	uint32_t no_key_flag;
+	uint32_t key_type_req;
 	int sfp_wp;
 	uint32_t sec_image_flag;
 	uint32_t hkptr_flag;
