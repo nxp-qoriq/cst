@@ -24,12 +24,13 @@ uni_cfsign_OBJS = uni_cfsign.o
 uni_sign_OBJS = uni_sign.o
 genotpmk_OBJS = gen_otpmk.o
 gendrv_OBJS = gen_drv.o
+gensign_OBJS = gen_sign.o
 
 # targets that are not files
 .PHONY: all clean
 
 # make targets
-all: uni_sign uni_cfsign gen_otpmk gen_keys gen_drv
+all: uni_sign uni_cfsign gen_otpmk gen_keys gen_drv gen_sign
 
 gen_keys: ${genkeys_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
@@ -38,6 +39,9 @@ gen_otpmk: ${genotpmk_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
 gen_drv: ${gendrv_OBJS}
+	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
+
+gen_sign: ${gensign_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
 uni_cfsign: ${uni_cfsign_OBJS}
@@ -50,7 +54,7 @@ uni_sign: ${uni_sign_OBJS}
 	${CC} -c ${CCFLAGS} $< 
 
 clean:
-	${RM} *.o gen_keys *.out uni_sign uni_cfsign gen_otpmk gen_drv
+	${RM} *.o gen_keys *.out uni_sign uni_cfsign gen_otpmk gen_drv gen_sign
 
 distclean:	clean
 	rm -rf srk.pub srk.pri
