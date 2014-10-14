@@ -11,7 +11,7 @@ ESBC=1
 ---------------------------------------------------
 # Entry Point/Image start address field in the header.[Mandatory]
 # (default=ADDRESS of first file specified in images)
-ENTRY_POINT=e8800000
+ENTRY_POINT=e8a00000
 ---------------------------------------------------
 # Specify the file name of the keys seperated by comma.
 # The number of files and key select should lie between 1 and 4 for 1040/2080 and C290.
@@ -21,9 +21,9 @@ ENTRY_POINT=e8800000
 # USAGE (for 1040/2080/C290/9164/4240): PRI_KEY = key1.pri, key2.pri, key3.pri, key4.pri
 
 # PRI_KEY (Default private key :srk.pri) - [Optional]
-PRI_KEY=iekey3.pri
+PRI_KEY=iekey4k_2.pri
 # PUB_KEY (Default public key :srk.pub) - [Optional]
-PUB_KEY=key1.pub
+PUB_KEY=
 # Please provide KEY_SELECT(between 1 to 4) (Required for 1040/2080/C290/9164/4240 only) - [Optional]
 KEY_SELECT=
 ---------------------------------------------------
@@ -31,7 +31,7 @@ KEY_SELECT=
 SG_TABLE_ADDR=
 ---------------------------------------------------
 # Specify IE_KEY to be used for signature verification. [Mandatory]
-IE_KEY_SEL=3
+IE_KEY_SEL=8
 ---------------------------------------------------
 # Specify the target where image will be loaded. (Default is NOR_16B) - [Optional]
 # Only required for Non-PBL Devices (1010/9131/9132/C290)
@@ -41,7 +41,7 @@ IMAGE_TARGET=
 # Specify IMAGE, Max 8 images are possible. DST_ADDR is required only for Non-PBL Platform. [Mandatory]
 # In case using IE_KEY, Max 1 image is possible. [Mandatory]
 # USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
-IMAGE_1={uImage.dtb,e8800000,ffffffff}
+IMAGE_1={bootscript,e8a00000,ffffffff}
 IMAGE_2={,,}
 IMAGE_3={,,}
 IMAGE_4={,,}
@@ -56,7 +56,7 @@ FSL_UID=11111111
 OEM_UID=99999999
 ---------------------------------------------------
 # Specify the file names of csf header. (Default :hdr.out) [Optional]
-OUTPUT_HDR_FILENAME=hdr_dtb.out
+OUTPUT_HDR_FILENAME=hdr_bs.out
 
 # Specify the file names of hash file and sign file.
 HASH_FILENAME=hash.out
