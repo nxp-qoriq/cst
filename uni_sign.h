@@ -211,6 +211,7 @@ struct ext_img_hdr {
 
 /* Extended image header of IE Key usage for ESBC*/
 struct ext_esbc_ie_hdr {
+	uint32_t reserved[6];	/* Reserved fields*/
 	uint32_t ie_flag;	/* IE flag*/
 	uint32_t ie_sel;	/* IE key select*/
 };

@@ -95,7 +95,7 @@ static void initialise_nodes()
 
 	/* Initialise ext_esbc_ie_hdr node*/
 	gd.cmbhdrptr[EXT_ESBC_HDR] = new_node();
-	if (gd.ie_flag == 1 && gd.esbc_flag == 1) {
+	if (gd.esbc_flag == 1) {
 		gd.cmbhdrptr[EXT_ESBC_HDR]->blk_ptr =
 					(struct ext_esbc_ie_hdr *)
 					calloc(1,
@@ -725,7 +725,16 @@ void fill_and_update_keys(SHA256_CTX *ctx, u8 *header, u32 key_len)
 void fill_and_update_sg_tbl(SHA256_CTX *ctx)
 {
 	int i = 0;
-	for (i = 0; i < gd.num_entries; i++) {
+	int img_index = 0;
+
+	if (gd.ie_flag == 1) {
+		img_index = 1;
+		gd.hsgtbl[i].len = BYTE_ORDER_L
+				(gd.cmbhdrptr[IE_TABLE]->blk_size);
+		gd.hsgtbl[i].pdata = BYTE_ORDER_L(gd.entries[i].addr);
+	}
+
+	for (i = img_index; i < gd.num_entries; i++) {
 		gd.hsgtbl[i].len = BYTE_ORDER_L(get_size(gd.entries[i].name));
 		gd.hsgtbl[i].pdata = BYTE_ORDER_L(gd.entries[i].addr);
 	}
@@ -851,7 +860,15 @@ void parse_file(char *file_name)
 	/* Parse Key Info from input file */
 	find_value_from_file("KEY_SELECT", fp);
 	if (file_field.count == 1) {
-		gd.srk_sel = STR_TO_UL(file_field.value[0], 0, 10);
+		if (gd.ie_flag == 1 && gd.esbc_flag == 1) {
+			gd.srk_sel = 1;
+			printf("With key_ext option used to validate image srk"
+			       " option would not be available. So key1 would"
+			       " always be used to sign the header.\n");
+		} else {
+			gd.srk_sel = STR_TO_UL(file_field.value[0], 0, 10);
+		}
+
 		gd.srk_table_flag = 1;
 	}
 
