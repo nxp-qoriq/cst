@@ -68,6 +68,7 @@
 #define BOTH_KEY		3
 
 void extract_key(u8 *key_ptr, u32 key_len, u32 key_number, RSA * type_key[]);
+void compare_key_pairs();
 
 char *group[][2] = { {"3041", "1"},
 {"4080", "1"},

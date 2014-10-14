@@ -295,10 +295,10 @@ static void usage(void)
 		       " in the output header file.\n\t\tHASH FILE and SIGN"
 		       " FILE name should be defined in input file passed.\n");
 
-		printf("--help\t\t");
-		printf("Show this help message and exit.\n");
-
 		printf("INPUT_FILE\tRefer Default input_file and provide all"
 		       " the input in the file for header generation .\n");
+
+		printf("--help\t\t");
+		printf("Show this help message and exit.\n");
 }
 #endif

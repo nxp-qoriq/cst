@@ -316,8 +316,6 @@ static int get_size(const char *c)
 			break;
 	}
 
-	printf("size of file %s is %x - %d\n", c, bytes, bytes);
-
 	fclose(fp);
 	return bytes;
 }
@@ -1437,6 +1435,7 @@ int main(int argc, char **argv)
 	if (argc == 2 && gd.help_flag != 1)
 		gd.file_flag = 1;
 
+	/* Error checking for required input file*/
 	if ((argc != 3) && gd.help_flag != 1 && gd.file_flag != 1 &&
 	    !(gd.key_ext_flag == 1 &&  gd.img_hash_flag == 1) &&
 	    !(gd.key_ext_flag == 1 &&  gd.sign_app_flag == 1)) {
@@ -1448,8 +1447,8 @@ int main(int argc, char **argv)
 	}
 
 	/* Check and set ESBC flag if provided as input*/
-	check_set_esbc_flag(argv[argc-1]);
-
+	if (gd.help_flag != 1)
+		check_set_esbc_flag(argv[optind]);
 
 	/* Flags would be set as per the option enabled and keys needed.
 	 * If img_hash or sign_app option is used only public keys are needed.
@@ -1476,7 +1475,7 @@ int main(int argc, char **argv)
 
 	/* Parse input file for the fields */
 	if (!gd.help_flag)
-		parse_file(argv[argc-1]);
+		parse_file(argv[optind]);
 
 	check_error(argc, argv);
 
