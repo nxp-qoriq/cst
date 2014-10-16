@@ -191,7 +191,7 @@ void sign_embed(char *hdr_file, char *sign_file, char *hdr_out,
 	free(buf);
 	free(img_hdr);
 	free(img_hdr_ls2);
-	printf("HEADER file %s created\n", hdr_out);
+	printf("HEADER file %s created\n\n", hdr_out);
 	exit(1);
 }
 
@@ -236,7 +236,7 @@ int main(int argc, char **argv)
 		usage_sign_embed();
 
 	/* Error checking for required input file*/
-	req_args = 4;
+	req_args = 3;
 	if (hdr_out_flag)
 		req_args = req_args + 2;
 
