@@ -191,6 +191,11 @@ static void fill_offset()
 	gd.cmbhdrptr[SG_TABLE]->blk_offset =
 					gd.cmbhdrptr[SRK_TABLE]->blk_offset +
 					gd.cmbhdrptr[SRK_TABLE]->blk_size;
+
+	if (gd.ie_flag == 1 && gd.esbc_flag == 1)
+		gd.cmbhdrptr[SG_TABLE]->blk_offset =
+					gd.cmbhdrptr[SRK_TABLE]->blk_offset;
+
 	if (gd.cmbhdrptr[SG_TABLE]->blk_offset & ADDR_ALIGN_MASK) {
 		gd.cmbhdrptr[SG_TABLE]->blk_offset =
 					(gd.cmbhdrptr[SG_TABLE]->blk_offset &
