@@ -74,6 +74,7 @@ HASH_FILENAME=hash.out
 INPUT_SIGN_FILENAME=sign.out
 
 # Specify the signature size.It is mandatory when neither public key nor private key is specified.
+# Signature size would be [0x80 for 1k key, 0x100 for 2k key, and 0x200 for 4k key].
 SIGN_SIZE=
 ---------------------------------------------------
 # Specify the output file name of sg table. (Default :sg_table.out). [Optional]
