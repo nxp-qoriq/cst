@@ -381,7 +381,8 @@ int open_key_file(void)
 			fname_pub = gd.pub_fname[i];
 			gd.fsrk_pub[i] = fopen(fname_pub, "r");
 			if (gd.fsrk_pub[i] == NULL) {
-				fprintf(stderr, "Error in file opening:\n");
+				fprintf(stderr, "Error in file opening %s:\n",
+					fname_pub);
 				return -1;
 			}
 
@@ -389,7 +390,8 @@ int open_key_file(void)
 			gd.srk_pub[i] = PEM_read_RSAPublicKey
 				    (gd.fsrk_pub[i], NULL, NULL, NULL);
 			if (gd.srk_pub[i] == NULL) {
-				fprintf(stderr, "Error in key reading:\n");
+				fprintf(stderr, "Error in key reading %s:\n",
+					fname_pub);
 				return -1;
 			}
 
@@ -403,7 +405,8 @@ int open_key_file(void)
 			fname_pri = gd.priv_fname[i];
 			gd.fsrk_pri[i] = fopen(fname_pri, "r");
 			if (gd.fsrk_pri[i] == NULL) {
-				fprintf(stderr, "Error in file opening:\n");
+				fprintf(stderr, "Error in file opening %s:\n",
+					fname_pri);
 				return -1;
 			}
 
@@ -411,7 +414,8 @@ int open_key_file(void)
 			gd.srk_pri[i] = PEM_read_RSAPrivateKey
 				    (gd.fsrk_pri[i], NULL, NULL, NULL);
 			if (gd.srk_pri[i] == NULL) {
-				fprintf(stderr, "Error in key reading:\n");
+				fprintf(stderr, "Error in key reading: %s\n",
+					fname_pri);
 				return -1;
 			}
 
