@@ -24,7 +24,7 @@ ENTRY_POINT=60020000
 # PRI_KEY (Default private key :srk.pri) - [Optional]
 PRI_KEY=iekey2k_3.pri
 # PUB_KEY (Default public key :srk.pub) - [Optional]
-PUB_KEY=key1.pub
+PUB_KEY=
 # Please provide KEY_SELECT(between 1 to 4) (Required for 1040/2080/C290/9164/4240 only) - [Optional]
 KEY_SELECT=
 ---------------------------------------------------
