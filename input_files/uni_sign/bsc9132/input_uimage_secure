@@ -54,6 +54,11 @@ OEM_UID=
 # Specify the file names of csf header and sg table. (Default :hdr.out) [Optional] 
 OUTPUT_HDR_FILENAME=hdr_uimage.out
 
+# Specify the file names of hash file and sign file.
+HASH_FILENAME=img_hash.out
+INPUT_SIGN_FILENAME=sign.out
+
+---------------------------------------------------
 # Specify the output file name of sg table. (Default :sg_table.out). [Optional]
 # Please note that OUTPUT SG BIN is only required for 2041/3041/4080/5020/5040 when ESBC flag is not set. 
 OUTPUT_SG_BIN=   
