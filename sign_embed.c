@@ -122,10 +122,10 @@ void sign_embed(char *hdr_file, char *sign_file, char *hdr_out,
 		/* Barker checking to validate header file passed to
 		 * embed signature.*/
 		u8 barker[BARKER_LEN] = {0x12, 0x19, 0x20, 0x01};
-		if (!(img_hdr->barker[0] == barker[0] &&
-		    img_hdr->barker[1] == barker[1] &&
-		    img_hdr->barker[2] == barker[2] &&
-		    img_hdr->barker[3] == barker[3])) {
+		if (!(img_hdr_ls2->barker[0] == barker[0] &&
+		    img_hdr_ls2->barker[1] == barker[1] &&
+		    img_hdr_ls2->barker[2] == barker[2] &&
+		    img_hdr_ls2->barker[3] == barker[3])) {
 			printf("Error.Invalid HDR_FILE. Barker Failure\n");
 			exit(1);
 		}

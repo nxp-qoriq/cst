@@ -140,8 +140,8 @@ void hash_sign(char *hash_file, char *priv_file, char *sign_file)
 
 int main(int argc, char **argv)
 {
-	int c;
-	int sign_file_flag;
+	int c = 0;
+	int sign_file_flag = 0;
 	static int help_flag;
 	char *sign_file = SIGN_FILE;
 

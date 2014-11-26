@@ -354,7 +354,7 @@ int main(int argc, char **argv)
 	u8 *cwds;
 	int key_offset;
 	int sign_offset;
-	int temp;
+	u16 temp;
 	int factor = 1;
 	u32 total_key_len;
 
@@ -371,7 +371,7 @@ int main(int argc, char **argv)
 	input_pri_key.count = 1;
 	input_pri_key.value[0] = malloc(strlen(PRI_KEY_FILE));
 	strcpy(input_pri_key.value[0], PRI_KEY_FILE);
-	gd.hdrfile = malloc(strlen(HDR_FILE));
+	gd.hdrfile = malloc(strlen(HDR_FILE) + 1);
 	strcpy(gd.hdrfile, HDR_FILE);
 	image_name = NULL;
 

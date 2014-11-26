@@ -66,7 +66,7 @@ uni_sign: ${uni_sign_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
 %.o: %.c
-	${CC} -c ${CCFLAGS} ${CFLAGS} $< 
+	${CC} -c ${CCFLAGS} ${CFLAGS} $<
 
 install: $(foreach binary,$(INSTALL_BINARIES),install-$(binary))
 	cp -rf input_files $(DESTDIR)$(BIN_DEST_DIR)/cst/

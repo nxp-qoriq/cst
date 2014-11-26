@@ -1393,7 +1393,7 @@ void check_error(int argc, char **argv)
 int main(int argc, char **argv)
 {
 	int c;
-	int i, ret;
+	int i, ret = 0;
 	u32 key_len, hdrlen;
 	u8 *header;
 	unsigned char hash[SHA256_DIGEST_LENGTH];
