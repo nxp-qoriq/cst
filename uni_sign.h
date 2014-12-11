@@ -52,8 +52,8 @@
 #define HDR_FILE		"hdr.out"
 #define HASH_FILE		"img_hash.out"
 #define DESTINATION_ADDR	0xFFFFFFFF
-#define ADDR_ALIGN_MASK		0x000000FF
-#define ADDR_ALIGN_OFFSET	0x00000100
+#define ADDR_ALIGN_MASK		0x000001FF
+#define ADDR_ALIGN_OFFSET	0x00000200
 
 /* I/O block size used for hashing operations */
 #define IOBLOCK			128
