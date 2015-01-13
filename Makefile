@@ -35,12 +35,13 @@ genotpmk_OBJS = gen_otpmk.o
 gendrv_OBJS = gen_drv.o
 gensign_OBJS = gen_sign.o
 sign_embed_OBJS = sign_embed.o
+uni_pbi_OBJS = uni_pbi.o
 
 # targets that are not files
 .PHONY: all clean
 
 # make targets
-INSTALL_BINARIES ?= uni_sign uni_cfsign gen_otpmk gen_keys gen_drv gen_sign sign_embed
+INSTALL_BINARIES ?= uni_sign uni_cfsign uni_pbi gen_otpmk gen_keys gen_drv gen_sign sign_embed
 
 all: $(INSTALL_BINARIES)
 
@@ -65,6 +66,9 @@ uni_cfsign: ${uni_cfsign_OBJS}
 uni_sign: ${uni_sign_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
+uni_pbi: ${uni_pbi_OBJS}
+	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
+
 %.o: %.c
 	${CC} -c ${CCFLAGS} ${CFLAGS} $<
 
@@ -76,7 +80,7 @@ install-%: %
 	$(INSTALL) -m 755 $< $(DESTDIR)$(BIN_DEST_DIR)/cst/
 
 clean:
-	${RM} *.o gen_keys *.out uni_sign uni_cfsign gen_otpmk gen_drv gen_sign sign_embed
+	${RM} *.o gen_keys *.out uni_sign uni_cfsign uni_pbi gen_otpmk gen_drv gen_sign sign_embed
 
 distclean:	clean
 	rm -rf srk.pub srk.pri
