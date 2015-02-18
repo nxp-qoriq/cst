@@ -22,10 +22,8 @@ ENTRY_POINT=67f80000
 
 # PRI_KEY (Default private key :srk.pri) - [Optional]
 PRI_KEY=srk.pri
-#PRI_KEY=srk.pri, srk1.pri
 # PUB_KEY (Default public key :srk.pub) - [Optional]
 PUB_KEY=srk.pub
-#PUB_KEY=srk.pub, srk1.pub
 # Please provide KEY_SELECT(between 1 to 4) (Required for 1040/C290/9164/4240/LS1 only) - [Optional]
 KEY_SELECT=
 ---------------------------------------------------
