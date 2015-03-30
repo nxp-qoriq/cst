@@ -483,8 +483,16 @@ void fill_header_ls(SHA256_CTX *ctx)
 		misc_flags = misc_flags | misc_bit;
 
 	misc_bit = misc_bit << 1;
+#ifdef CONFIG_IBR_WP_ISSUE
+	/* IBR code has an issue where the LW flag in CSF Header is not
+	 * handled correctly. So, the flag is set to default value of 1
+	 * and is hidden from the CSF Header documentation.
+	 */
+	misc_flags = misc_flags | misc_bit;
+#else
 	if (gd.lw_flag == 1 && gd.esbc_flag == 0)
 		misc_flags = misc_flags | misc_bit;
+#endif
 
 	hdr_ptr->misc_flags = (u8)misc_flags;
 
@@ -587,8 +595,15 @@ void fill_header(SHA256_CTX *ctx, u32 key_len)
 		else
 			hdr_ptr->uid_n_wp.uid_flag = BYTE_ORDER_S(NO_UID);
 
-
+#ifdef CONFIG_IBR_WP_ISSUE
+	/* IBR code has an issue where the SFP_WP flag in CSF Header is not
+	 * handled correctly. So, the flag is set to default value of 0
+	 * and is hidden from the CSF Header documentation.
+	 */
+		hdr_ptr->uid_n_wp.sfp_wp = 0;
+#else
 		hdr_ptr->uid_n_wp.sfp_wp = (u8)gd.sfp_wp;
+#endif
 		hdr_ptr->uid_n_wp.sec_image_flag = (u8)gd.sec_image;
         }
 

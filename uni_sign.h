@@ -40,6 +40,12 @@
 #define BYTE_ORDER_S(x)	(x)
 #endif
 
+/* IBR code has an issue where the WP flag in CSF Header is not
+ * handled correctly. So, the flag is set to default value
+ * and is hidden from the CSF Header documentation.
+ */
+#define CONFIG_IBR_WP_ISSUE
+
 #define CSF_HDR_OFFSET		0x0
 #define SRK_TABLE_OFFSET	0x200
 

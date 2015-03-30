@@ -68,12 +68,8 @@ OUTPUT_SG_BIN=
 HK_AREA_POINTER=
 HK_AREA_SIZE=
 ---------------------------------------------------
-# Following two fields are Required for 4240/4860/1040/C290 only
-
-# Specify SFP Write Protect Bit. (0 or 1) - [Optional]
-# (Default is 0) 
-SFP_WP=
-# Specify Secondary Image Flagi. (0 or 1) - [Optional]
+# Following field Required for 4240/4860/1040/C290 only
+# Specify Secondary Image Flag. (0 or 1) - [Optional]
 # (Default is 0)
 SEC_IMAGE=
 ---------------------------------------------------
