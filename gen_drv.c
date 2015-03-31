@@ -49,6 +49,7 @@ u8 drv_hex[DRV_SIZE_BYTES];
  * The values at the locations of the code bits are ignored and is
  * overwritten with the generated values.
  */
+
 void print_drv()
 {
 	int i;
@@ -66,7 +67,54 @@ void print_drv()
 
 }
 
-void generate_code_bits(bool number[])
+/* Generate the Hamming code bits for the 64 bits stored in number*/
+/* according to sfp's ECC algorithm. */
+void generate_code_bits_hamming_B(bool number[])
+{
+	int i, j;
+	char k[9];
+	u8 parity;
+
+/* response must be masked out the hamming coding bits first */
+	for (i = 0; i < 64; i = (2*(i+1) - 1))
+		number[i] = 0;
+
+/* Calculate each code bit in turn */
+	for (i = 0; i < 32; i = (2*(i+1) - 1)) {
+		parity = number[i];
+
+		for (j = i+1; j < 64; j++) {
+			if (((i+1) & (j+1)) != 0)
+				parity ^= number[j];
+
+		number[i] = (number[i] & 0) | parity;
+		}
+	}
+
+/* Calculate the overall parity */
+		parity = 0;
+		for (j = 0; j < 64; j++)
+			parity ^= number[j];
+
+		number[63] = number[63] | parity;
+#ifdef DEBUG
+	printf("\nHamming code -\n");
+	for (i = 0; i < DRV_SIZE_BITS; i++)
+		printf("%d", number[i]);
+#endif
+	for (i = 0; i < DRV_SIZE_BYTES; i++) {
+		for (j = 0; j < 8; j++) {
+			k[j] =
+			    (number[(DRV_SIZE_BYTES - i) * 8 - (j + 1)]) + 48;
+		}
+		k[8] = '\0';
+		drv_hex[i] = strtoul(k, NULL, 2);
+	}
+
+		print_drv();
+}
+
+void generate_code_bits_hamming_A(bool number[])
 {
 	int i, j;
 	char k[9];
@@ -149,7 +197,11 @@ int check_string(char *str)
 
 void usage()
 {
-	printf("\nUsage: ./gen_drv [string]\n");
+	printf("\nUsage: ./gen_drv <Hamming_algo> [string]\n");
+	printf("Hamming_algo : Platforms\n");
+	printf("A            : T10xx, T20xx, T4xxx, P4080rev1, B4xxx, LSx\n");
+	printf("B            : P10xx, P20xx, P30xx, P4080rev2, P4080rev3,"
+				" P50xx, BSC913x, C29x\n");
 	printf("string : 8 byte string\n");
 	printf("e.g. gen_drv 1111111122222222\n");
 }
@@ -159,16 +211,12 @@ int main(int argc, char *argv[])
 	bool num[DRV_SIZE_BITS];
 	char drv_in[2];
 	int i, j, l, ret;
-	if (argc == 2) {
-		if ((strcmp(argv[1], "--help") == 0)
-			|| (strcmp(argv[1], "-h") == 0)) {
-			usage();
-			exit(0);
-		}
+	if (argc == 3 &&
+	    (strlen(argv[1]) == 1 && (*argv[1] == 'A' || *argv[1] == 'B'))) {
 		/*check length of hexadecimal string*/
-		if (strlen(argv[1]) == 2 * DRV_SIZE_BYTES) {
+		if (strlen(argv[2]) == 2 * DRV_SIZE_BYTES) {
 			/*check if string is valid hexadecimal string*/
-			ret = check_string(argv[1]);
+			ret = check_string(argv[2]);
 			if (ret == -1) {
 				printf
 				    ("\nError: Input string is not having "
@@ -176,8 +224,8 @@ int main(int argc, char *argv[])
 				return -1;
 			}
 			for (i = 0; i < 2 * DRV_SIZE_BYTES; i = i + 2) {
-				drv_in[0] = argv[1][i + 0];
-				drv_in[1] = argv[1][i + 1];
+				drv_in[0] = argv[2][i + 0];
+				drv_in[1] = argv[2][i + 1];
 				l = i / 2;
 				drv_hex[l] = strtoul(drv_in, NULL, 16);
 			}
@@ -187,10 +235,21 @@ int main(int argc, char *argv[])
 			exit(1);
 
 		}
-	} else if (argc == 1) {
-		printf("\nGenerating random string as input "
+	} else if (argc == 2) {
+		if ((strcmp(argv[1], "--help") == 0) ||
+		    (strcmp(argv[1], "-h") == 0)) {
+			usage();
+			exit(0);
+		} else if (strlen(argv[1]) == 1 &&
+			   (*argv[1] == 'A' || *argv[1] == 'B')) {
+			printf("\nGenerating random key as input "
 				"string not provided\n");
-		gen_rand_string();
+			gen_rand_string();
+		} else {
+			printf("\nError: Wrong Usage\n");
+			usage();
+			exit(1);
+		}
 	} else {
 		printf("\nError: Wrong Usage\n");
 		usage();
@@ -214,7 +273,10 @@ int main(int argc, char *argv[])
 		printf("%d", num[i]);
 #endif
 	/*generate Hamming code and replace bits in DRV key*/
-	generate_code_bits(num);
+	if (*argv[1] == 'B')
+		generate_code_bits_hamming_B(num);
+	else
+		generate_code_bits_hamming_A(num);
 
 	printf("\n");
 	return 0;
