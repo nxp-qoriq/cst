@@ -4,7 +4,7 @@
 
 ---------------------------------------------------
 # Specify the platform. [Mandatory]
-# Choose Platform - 1010/1040/2080/2041/3041/4080/5020/5040/9131/9132/9164/4240/C290
+# Choose Platform - 1040/2080/2041/3041/4080/5020/5040/4860/4240
 PLATFORM=1040
 # ESBC Flag. Specify ESBC=0 to sign u-boot and ESBC=1 to sign ESBC images.(default is 0)
 ESBC=1
@@ -17,8 +17,8 @@ ENTRY_POINT=e8020000
 # The number of files and key select should lie between 1 and 4 for 1040/2080 and C290.
 # For rest of the platforms only one key is required and key select should not be provided.
 
-# USAGE (for 4080/5020/5040/3041/2041/1010/913x): PRI_KEY = key1.pri
-# USAGE (for 1040/2080/C290/9164/4240): PRI_KEY = key1.pri, key2.pri, key3.pri, key4.pri
+# USAGE (for 4080/5020/5040/3041/2041/1010/913x): PRI_KEY = <key1.pri>
+# USAGE (for 1040/2080/C290/9164/4240): PRI_KEY = <key1.pri>, <key2.pri>, <key3.pri>, <key4.pri>
 
 # PRI_KEY (Default private key :srk.pri) - [Optional]
 PRI_KEY=iekey2k_3.pri
@@ -27,7 +27,7 @@ PUB_KEY=key1.pub
 # Please provide KEY_SELECT(between 1 to 4) (Required for 1040/2080/C290/9164/4240 only) - [Optional]
 KEY_SELECT=
 ---------------------------------------------------
-# Specify SG table address, only for (2041/3041/4080/5020/5040) with esbc flag not set - [Optional]
+# Specify SG table address, only for (2041/3041/4080/5020/5040) with ESBC=0 - [Optional]
 SG_TABLE_ADDR=
 ---------------------------------------------------
 # Specify IE_KEY to be used for signature verification. [Mandatory]

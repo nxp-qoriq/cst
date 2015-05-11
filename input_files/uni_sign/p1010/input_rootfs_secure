@@ -17,8 +17,8 @@ ENTRY_POINT=ee802000
 # The number of files and key select should lie between 1 and 4 for 1040 and C290.
 # For rest of the platforms only one key is required and key select should not be provided. 
 
-# USAGE (for 4080/5020/5040/3041/2041/1010/913x): PRI_KEY = key1.pri
-# USAGE (for 1040/C290/9164/4240): PRI_KEY = key1.pri, key2.pri, key3.pri, key4.pri
+# USAGE (for 4080/5020/5040/3041/2041/1010/913x): PRI_KEY = <key1.pri>
+# USAGE (for 1040/C290/9164/4240): PRI_KEY = <key1.pri>, <key2.pri>, <key3.pri>, <key4.pri>
 
 # PRI_KEY (Default private key :srk.pri) - [Optional]
 PRI_KEY=srk.pri
@@ -27,7 +27,7 @@ PUB_KEY=srk.pub
 # Please provide KEY_SELECT(between 1 to 4) (Required for 1040/C290/9164/4240 only) - [Optional]
 KEY_SELECT=
 ---------------------------------------------------
-# Specify SG table address, only for (2041/3041/4080/5020/5040) with esbc flag not set - [Optional]
+# Specify SG table address, only for (2041/3041/4080/5020/5040) with ESBC=0 - [Optional]
 SG_TABLE_ADDR=
 ---------------------------------------------------
 # Specify the target where image will be loaded. (Default is NOR_16B) - [Optional]
