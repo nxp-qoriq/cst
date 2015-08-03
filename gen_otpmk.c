@@ -84,12 +84,11 @@ void print_otpmk_trust2()
 	printf("\n NAME    |     BITS     |    VALUE  ");
 	printf("\n_________|______________|____________");
 
-	for (i = OTPMK_SIZE_BYTES - 4; i >= 0; i = i - 4) {
+	for (i = OTPMK_REG_NO - 1; i >= 0; i--) {
 		printf("\nOTPMKR %d | %3d-%3d\t|   %.2x%.2x%.2x%.2x ",
-		       OTPMK_REG_NO - 1 - i / 4,
-		       OTPMK_SIZE_BYTES - 1 + (OTPMK_REG_NO - 1 -
-					       i / 4) * OTPMK_SIZE_BYTES,
-		       (OTPMK_REG_NO - 1 - i / 4) * OTPMK_SIZE_BYTES,
+		       OTPMK_REG_NO - i - 1,
+		       ((i + 1) * OTPMK_SIZE_BYTES) - 1,
+		       i * OTPMK_SIZE_BYTES,
 		       otpmk_hex[j], otpmk_hex[j + 1], otpmk_hex[j + 2],
 		       otpmk_hex[j + 3]);
 		j = j + 4;
