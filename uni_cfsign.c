@@ -90,6 +90,7 @@ static int get_size(const char *c)
 		bytes += fread(buf, 1, IOBLOCK, fp);
 		if (ferror(fp)) {
 			fprintf(stderr, "Error in reading file\n");
+			fclose(fp);
 			return -1;
 		} else if (feof(fp) && (bytes == 0))
 			break;
@@ -207,7 +208,7 @@ void parse_file(char *file_name)
 
 		if (file_field.count == 3) {
 			image_name =
-				malloc(strlen(file_field.value[0]));
+				malloc(strlen(file_field.value[0]) + 1);
 			strcpy(image_name, file_field.value[0]);
 			src_addr =
 				strtoul(file_field.value[1], 0, 16);
@@ -292,9 +293,10 @@ void parse_file(char *file_name)
 			gd.srk_table_flag = 1;
 
 		i = 0;
+		free(input_pri_key.value[0]);
 		while (i != input_pri_key.count) {
 			input_pri_key.value[i] =
-			    malloc(strlen(file_field.value[i]));
+			    malloc(strlen(file_field.value[i]) + 1);
 			strcpy(input_pri_key.value[i], file_field.value[i]);
 			i++;
 		}
@@ -306,7 +308,8 @@ void parse_file(char *file_name)
 
 	find_value_from_file("OUTPUT_HDR_FILENAME", fp);
 	if (file_field.count == 1) {
-		gd.hdrfile = malloc(strlen(file_field.value[0]));
+		free(gd.hdrfile);
+		gd.hdrfile = malloc(strlen(file_field.value[0]) + 1);
 		strcpy(gd.hdrfile, file_field.value[0]);
 	}
 
@@ -347,7 +350,7 @@ int main(int argc, char **argv)
 	u8 *sign;
 	uint32_t sign_len;
 	u8 *key;
-	int key_len;
+	int key_len = 0;
 	/* this buffer is written to the file */
 	u8 *buf;
 	int buf_len;
@@ -356,7 +359,7 @@ int main(int argc, char **argv)
 	int sign_offset;
 	u16 temp;
 	int factor = 1;
-	u32 total_key_len;
+	u32 total_key_len = 0;
 
 	struct cf_hdr_legacy *cfl;
 	struct cf_hdr_secure *cfs;
@@ -369,7 +372,7 @@ int main(int argc, char **argv)
 	gd.srk_table_flag = 0;
 	gd.num_srk_entries = 1;
 	input_pri_key.count = 1;
-	input_pri_key.value[0] = malloc(strlen(PRI_KEY_FILE));
+	input_pri_key.value[0] = malloc(strlen(PRI_KEY_FILE) + 1);
 	strcpy(input_pri_key.value[0], PRI_KEY_FILE);
 	gd.hdrfile = malloc(strlen(HDR_FILE) + 1);
 	strcpy(gd.hdrfile, HDR_FILE);
@@ -488,6 +491,10 @@ int main(int argc, char **argv)
 
 	/* Configuration words store */
 	cwds = (u8 *) cfl + size.hdr_legacy;
+	if (size.cfw > sizeof(words)) {
+		printf("Error:Only 1024 CF WORD Pairs Allowed\n");
+		exit(1);
+	}
 	memcpy(cwds, (u8 *) words, size.cfw);
 
 	/* store code_len, src_addr, dst_addr, entry_point in case of legacy
@@ -513,13 +520,13 @@ int main(int argc, char **argv)
 			cfs->key_len = htonl(2 * key_len);
 		} else {
 			temp = 0;
-			temp = temp | gd.srk_table_flag;
+			temp = temp | (u16)gd.srk_table_flag;
 			temp = temp << 12;
-			temp = temp | gd.srk_sel;
+			temp = temp | (u16)gd.srk_sel;
 			temp = htons(temp);
 			memcpy((u8 *) &(cfs->len_kr), &temp, 2);
 			cfs->len_kr.num_srk_entries =
-				htons(gd.num_srk_entries);
+				htons((uint16_t)gd.num_srk_entries);
 			cfs->srk_table_offset = htonl(key_offset);
 		}
 		if (gd.group == 2) {
@@ -583,9 +590,6 @@ int main(int argc, char **argv)
 					sizeof(BIGNUM *); i++, j--)
 						key[j] = tmp[i];
 
-				key =
-				    (u8 *) cfl + key_offset +
-				    (n) * (sizeof(struct srk_table));
 				memcpy(gd.key_table[n].pkey,
 				       (u8 *) cfl + key_offset +
 				       n * sizeof(struct srk_table) + 4,
@@ -635,6 +639,7 @@ int main(int argc, char **argv)
 			(NID_sha256, hash, SHA256_DIGEST_LENGTH, sign,
 			&sign_len, gd.srk[gd.srk_sel - 1]) != 1) {
 			fprintf(stderr, "Error signing the data\n");
+			free(buf);
 			return -1;
 		}
 
@@ -643,6 +648,7 @@ int main(int argc, char **argv)
 	fhdr = fopen(gd.hdrfile, "wb");
 	if (fhdr == NULL) {
 		fprintf(stderr, "Error in opening the file: %s\n", gd.hdrfile);
+		free(buf);
 		return -1;
 	}
 	printf("\n");

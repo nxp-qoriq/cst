@@ -177,7 +177,7 @@ static void dump_img_hdr1(struct global *gd)
 		printf("srk_table_flag(8) : %x\nsrk_sel(8) : %x\nnum_srk_entries(16) : %x\n",
 		       (h->len_kr.srk_table_flag),
 		       (h->len_kr.srk_sel),
-		       BYTE_ORDER_S(h->len_kr.num_srk_entries));
+		       BYTE_ORDER_S((uint16_t)h->len_kr.num_srk_entries));
 	} else {
 		printf("pkey %x, key length %d\n", BYTE_ORDER_L(h->pkey),
 		       BYTE_ORDER_L(h->key_len));
@@ -188,7 +188,7 @@ static void dump_img_hdr1(struct global *gd)
 	printf("sfp_wp(8) : %x\nsec_image_flag(8) : %x\nuid_flag(16) : %x\n",
 	       (h->uid_n_wp.sfp_wp),
 	       (h->uid_n_wp.sec_image_flag),
-	       BYTE_ORDER_S(h->uid_n_wp.uid_flag));
+	       BYTE_ORDER_S((uint16_t)h->uid_n_wp.uid_flag));
 	if (BYTE_ORDER_L(h->sg_flag) || ((gd->esbc_flag == 0) &&
 					 (gd->group != 1))) {
 		printf("psgtable  %x num_entries %d\n",
@@ -204,8 +204,8 @@ static void dump_img_hdr1(struct global *gd)
 		printf("FSL UID 1%x\n", BYTE_ORDER_L(ext_h->fsl_uid_1));
 		printf("OEM UID 1%x\n", BYTE_ORDER_L(ext_h->oem_uid_1));
 		printf("Manufacturing Protection Flag %x\n",
-		       BYTE_ORDER_S(h->mp_n_sg_flag.mp_flag));
-		printf("sg_flag %d\n", BYTE_ORDER_S(h->mp_n_sg_flag.sg_flag));
+		       BYTE_ORDER_S((uint16_t)h->mp_n_sg_flag.mp_flag));
+		printf("sg_flag %d\n", BYTE_ORDER_S((uint16_t)h->mp_n_sg_flag.sg_flag));
 	} else {
 		printf("sg_flag %d\n", BYTE_ORDER_L(h->sg_flag));
 	}

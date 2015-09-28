@@ -316,6 +316,7 @@ static int get_size(const char *c)
 		bytes += fread(buf, 1, IOBLOCK, fp);
 		if (ferror(fp)) {
 			fprintf(stderr, "Error in reading file\n");
+			fclose(fp);
 			return -1;
 		} else if (feof(fp) && (bytes == 0))
 			break;
@@ -561,7 +562,7 @@ void fill_header(SHA256_CTX *ctx, u32 key_len)
 			hdr_ptr->len_kr.srk_table_flag = (u8)gd.srk_table_flag;
 			hdr_ptr->len_kr.srk_sel = (u8)gd.srk_sel;
 			hdr_ptr->len_kr.num_srk_entries = BYTE_ORDER_S
-					(gd.num_srk_entries);
+					((uint16_t)gd.num_srk_entries);
 			hdr_ptr->srk_table_offset = BYTE_ORDER_L
 					(gd.cmbhdrptr[SRK_TABLE]->blk_offset);
 		}
@@ -610,7 +611,7 @@ void fill_header(SHA256_CTX *ctx, u32 key_len)
 	if (gd.group == 5) {
 		if (gd.esbc_flag == 0) {
 			hdr_ptr->mp_n_sg_flag.mp_flag = BYTE_ORDER_S
-							(gd.mp_flag);
+						((uint16_t)gd.mp_flag);
 			hdr_ptr->mp_n_sg_flag.sg_flag = BYTE_ORDER_S(1);
 		}
 	} else if ((gd.group != 1) && (gd.esbc_flag == 0)) {
@@ -990,7 +991,7 @@ void parse_file(char *file_name)
 				exit(1);
 			}
 
-			i = 0; val = 0; bit = 1;
+			i = 0; bit = 1;
 			while (i != gd.ie_key_num_revoc) {
 				val = STR_TO_UL(file_field.value[i], 0, 16);
 				bit = bit << (val - 1);
@@ -1409,7 +1410,7 @@ int main(int argc, char **argv)
 {
 	int c;
 	int i, ret = 0;
-	u32 key_len, hdrlen;
+	u32 key_len = 0, hdrlen = 0;
 	u8 *header;
 	unsigned char hash[SHA256_DIGEST_LENGTH];
 	unsigned char hash_fval[SHA256_DIGEST_LENGTH];
@@ -1664,6 +1665,10 @@ int main(int argc, char **argv)
 			     fhash);
 		printf("HASH file %s created\n", gd.hash_file);
 		fclose(fhash);
+		if (ret == 0) {
+			printf("Error in Writing to file");
+			exit(1);
+		}
 	}
 
 	/* Compare hash with hash present in file, if sign_app flag is ON*/
@@ -1680,6 +1685,10 @@ int main(int argc, char **argv)
 		ret = fread((unsigned char *)hash_fval, 1, fsize,
 			     fhash);
 		fclose(fhash);
+		if (ret == 0) {
+			printf("Error in Reading from file");
+			exit(1);
+		}
 
 		i = 0;
 		while ((i < SHA256_DIGEST_LENGTH) && (hash_fval[i] == hash[i]))
@@ -1696,6 +1705,10 @@ int main(int argc, char **argv)
 	sign = header + gd.cmbhdrptr[SIGNATURE]->blk_offset;
 
 	if (gd.sign_app_flag == 1) {
+		if (gd.sign_file == NULL) {
+			fprintf(stderr, "Error in opening sign_file");
+			goto exit2;
+		}
 		fsign = fopen(gd.sign_file, "rb");
 		if (fsign == NULL) {
 			fprintf(stderr, "Error in opening the"
@@ -1714,6 +1727,10 @@ int main(int argc, char **argv)
 		ret = fread((unsigned char *)sign, 1,
 			     gd.cmbhdrptr[SIGNATURE]->blk_size, fsign);
 		fclose(fsign);
+		if (ret == 0) {
+			printf("Error in Reading from file");
+			exit(1);
+		}
 	}
 
 	if ((gd.img_hash_flag != 1) && (gd.sign_app_flag != 1)) {
@@ -1751,6 +1768,10 @@ int main(int argc, char **argv)
 		ret = fwrite((unsigned char *)sign, 1,
 			     gd.cmbhdrptr[SIGNATURE]->blk_size, fsign);
 		printf("HEADER file %s created\n", "sign.out");
+		if (ret == 0) {
+			printf("Error in Writing to file");
+			exit(1);
+		}
 	}
 
 	if (gd.verbose_flag) {
@@ -1778,6 +1799,10 @@ int main(int argc, char **argv)
 	}
 	ret = fwrite((unsigned char *)header, 1, hdrlen, fhdr);
 	printf("HEADER file %s created\n", gd.hdrfile);
+	if (ret == 0) {
+		printf("Error in Writing to file");
+		exit(1);
+	}
 
 	/* Create the SG Table file for group 1 */
 	if ((gd.sg_flag == 1) && (gd.group == 1)) {
@@ -1791,6 +1816,10 @@ int main(int argc, char **argv)
 			     sizeof(struct sg_table) * gd.num_entries, ftbl);
 		fclose(ftbl);
 		printf("SG Table file %s created\n", gd.sgfile);
+		if (ret == 0) {
+			printf("Error in Writing to file");
+			exit(1);
+		}
 	}
 	printf("\n");
 exit3:

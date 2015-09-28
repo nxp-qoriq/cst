@@ -70,8 +70,6 @@ static int generate_rsa_keys(const unsigned int n, FILE *fpri, FILE *fpub)
 		return -1;
 	}
 
-	ret = 0;
-
 	ret = PEM_write_RSAPublicKey(fpub, srk);
 
 	if (!ret) {

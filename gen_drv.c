@@ -108,7 +108,7 @@ void generate_code_bits_hamming_B(bool number[])
 			    (number[(DRV_SIZE_BYTES - i) * 8 - (j + 1)]) + 48;
 		}
 		k[8] = '\0';
-		drv_hex[i] = strtoul(k, NULL, 2);
+		drv_hex[i] = (u8)strtoul(k, NULL, 2);
 	}
 
 		print_drv();
@@ -147,7 +147,7 @@ void generate_code_bits_hamming_A(bool number[])
 			    (number[(DRV_SIZE_BYTES - i) * 8 - (j + 1)]) + 48;
 		}
 		k[8] = '\0';
-		drv_hex[i] = strtoul(k, NULL, 2);
+		drv_hex[i] = (u8)strtoul(k, NULL, 2);
 	}
 	print_drv();
 }
@@ -172,7 +172,7 @@ void gen_rand_string()
 		rand_string[1] = hex_digits[index2];
 
 		l = i / 2;
-		drv_hex[l] = strtoul(rand_string, NULL, 16);
+		drv_hex[l] = (u8)strtoul(rand_string, NULL, 16);
 	}
 
 }
@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
 				drv_in[0] = argv[2][i + 0];
 				drv_in[1] = argv[2][i + 1];
 				l = i / 2;
-				drv_hex[l] = strtoul(drv_in, NULL, 16);
+				drv_hex[l] = (u8)strtoul(drv_in, NULL, 16);
 			}
 		} else {
 			printf("\nError: Invalid Input string Length\n");

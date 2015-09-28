@@ -80,7 +80,7 @@ char line_data[MAX_LINE_SIZE];
 int cal_line_size(FILE *fp)
 {
 	u32 ctr = 0;
-	char ch = 'a';
+	int ch = 'a';
 	while (ch != EOF) {
 
 		if ((ch == '\n') && (ctr != 1))
@@ -121,7 +121,7 @@ void get_field_from_file(char *line, char *field_name)
 void remove_whitespace(char *line)
 {
 
-	char *p1 = line;
+	char *p1;
 	char *p2 = line;
 	p1 = line;
 	while (*p1 != 0) {

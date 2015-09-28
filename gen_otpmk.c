@@ -129,7 +129,7 @@ void generate_code_bits(bool number[])
 			    (number[(OTPMK_SIZE_BYTES - i) * 8 - (j + 1)]) + 48;
 		}
 		k[8] = '\0';
-		otpmk_hex[i] = strtoul(k, NULL, 2);
+		otpmk_hex[i] = (u8)strtoul(k, NULL, 2);
 	}
 
 	if (trust_arch == 1)
@@ -159,7 +159,7 @@ void gen_rand_string()
 		rand_string[1] = hex_digits[index2];
 
 		l = i / 2;
-		otpmk_hex[l] = strtoul(rand_string, NULL, 16);
+		otpmk_hex[l] = (u8)strtoul(rand_string, NULL, 16);
 	}
 
 }
@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
 				otpmk_in[0] = argv[2][i + 0];
 				otpmk_in[1] = argv[2][i + 1];
 				l = i / 2;
-				otpmk_hex[l] = strtoul(otpmk_in, NULL, 16);
+				otpmk_hex[l] = (u8)strtoul(otpmk_in, NULL, 16);
 			}
 		} else {
 			printf("\nError: Invalid Input key Length\n");
