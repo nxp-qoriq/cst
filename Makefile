@@ -96,7 +96,6 @@ install-%: %
 
 clean:
 	${RM} *.o gen_keys *.out uni_sign uni_cfsign uni_pbi gen_otpmk_high_entropy gen_drv_high_entropy gen_sign sign_embed
-	make LIB_HASH_DRBG_PATH=$(LIB_HASH_DRBG_PATH) -f $(LIB_HASH_DRBG_PATH)/src/Makefile clean 
 
 distclean:	clean
-	rm -rf srk.pub srk.pri
+	rm -f *.pub *.pri $(LIB_HASH_DRBG)
