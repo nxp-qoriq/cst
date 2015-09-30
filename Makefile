@@ -11,7 +11,7 @@ BIN_DEST_DIR ?= /usr/bin
 CC=gcc
 LD=gcc
 RM=rm -f
-CCFLAGS= -g -Wall
+CCFLAGS= -g -Wall -Iinclude
 #-DBLOCK_ADDRESS_FORMAT
 
 ifneq ($(OPENSSL_LIB_PATH),)
@@ -36,6 +36,8 @@ gendrv_OBJS = gen_drv.o
 gensign_OBJS = gen_sign.o
 sign_embed_OBJS = sign_embed.o
 uni_pbi_OBJS = uni_pbi.o
+
+vpath %.c src/
 
 # targets that are not files
 .PHONY: all clean
