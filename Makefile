@@ -8,17 +8,15 @@ ARCH ?= powerpc
 INSTALL ?= install
 BIN_DEST_DIR ?= /usr/bin
 
-SO_LIB_NAME = hash_drbg
-SO_LIB      = $(SO_LIB_DIR)/lib$(SO_LIB_NAME).so
-SO_LIB_PATH = $(shell pwd)/lib/$(SO_LIB_NAME)
-SO_LIB_DIR = $(SO_LIB_PATH)/shared_lib
-SO_LIB_INCLUDE_PATH = $(SO_LIB_PATH)/include
-SO_LIB_SOURCE_PATH = $(SO_LIB_PATH)/source
+LIB_HASH_DRBG_NAME = hash_drbg
+LIB_HASH_DRBG_PATH = lib_$(LIB_HASH_DRBG_NAME)
+LIB_HASH_DRBG = $(LIB_HASH_DRBG_PATH)/lib$(LIB_HASH_DRBG_NAME).a
+LIB_HASH_DRBG_INCLUDE_PATH = $(LIB_HASH_DRBG_PATH)/include
 
 CC=gcc
 LD=gcc
 RM=rm -f
-CCFLAGS= -g -Wall -Iinclude -I$(SO_LIB_INCLUDE_PATH)
+CCFLAGS= -g -Wall -Iinclude -I$(LIB_HASH_DRBG_INCLUDE_PATH)
 
 ifneq ($(OPENSSL_LIB_PATH),)
 LDFLAGS += -L$(OPENSSL_LIB_PATH)
@@ -49,18 +47,18 @@ vpath %.c src/
 .PHONY: all clean
 
 # make targets
-INSTALL_BINARIES ?= uni_sign uni_cfsign uni_pbi gen_otpmk_high_entropy gen_keys gen_drv_high_entropy gen_sign sign_embed
+INSTALL_BINARIES ?= gen_otpmk_high_entropy gen_drv_high_entropy uni_sign uni_cfsign uni_pbi gen_keys gen_sign sign_embed
 
-all: $(SO_LIB_NAME) $(INSTALL_BINARIES)
+all: $(LIB_HASH_DRBG) $(INSTALL_BINARIES)
 
 gen_keys: ${genkeys_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
-gen_otpmk_high_entropy: ${genotpmk_OBJS} $(SO_LIB)
-	${LD} ${LDFLAGS} -L$(SO_LIB_DIR) -Wl,-rpath $(SO_LIB_DIR) -l$(SO_LIB_NAME) -o $@ $^ ${LIBS}
+gen_otpmk_high_entropy: ${genotpmk_OBJS} $(LIB_HASH_DRBG)
+	${LD} ${LDFLAGS} -L$(LIB_HASH_DRBG_PATH) -l$(LIB_HASH_DRBG_NAME) -o $@ $^ ${LIBS}
 
-gen_drv_high_entropy: ${gendrv_OBJS} $(SO_LIB)
-	${LD} ${LDFLAGS} -L$(SO_LIB_DIR) -Wl,-rpath $(SO_LIB_DIR) -l$(SO_LIB_NAME) -o $@ $^ ${LIBS}
+gen_drv_high_entropy: ${gendrv_OBJS} $(LIB_HASH_DRBG)
+	${LD} ${LDFLAGS} -L$(LIB_HASH_DRBG_PATH) -l$(LIB_HASH_DRBG_NAME) -o $@ $^ ${LIBS}
 
 gen_sign: ${gensign_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
@@ -77,12 +75,11 @@ uni_sign: ${uni_sign_OBJS}
 uni_pbi: ${uni_pbi_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
-$(SO_LIB_NAME):
+$(LIB_HASH_DRBG):
 	@echo "#########################################"
 	@echo "### Building Shared Library hash_drbg ###"
 	@echo "#########################################"
-	mkdir -p $(SO_LIB_DIR)
-	make SO_LIB_SOURCE_PATH=$(SO_LIB_PATH)/source -f $(SO_LIB_SOURCE_PATH)/Makefile
+	make LIB_HASH_DRBG_PATH=$(LIB_HASH_DRBG_PATH) -f $(LIB_HASH_DRBG_PATH)/src/Makefile
 	@echo "#########################################"
 	@echo "###    Build Complete for hash_drbg   ###"
 	@echo "#########################################"
@@ -99,7 +96,7 @@ install-%: %
 
 clean:
 	${RM} *.o gen_keys *.out uni_sign uni_cfsign uni_pbi gen_otpmk_high_entropy gen_drv_high_entropy gen_sign sign_embed
-	make SO_LIB_SOURCE_PATH=$(SO_LIB_PATH)/source -f $(SO_LIB_SOURCE_PATH)/Makefile clean 
+	make LIB_HASH_DRBG_PATH=$(LIB_HASH_DRBG_PATH) -f $(LIB_HASH_DRBG_PATH)/src/Makefile clean 
 
 distclean:	clean
 	rm -rf srk.pub srk.pri
