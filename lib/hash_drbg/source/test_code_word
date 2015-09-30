@@ -1,0 +1,39 @@
+#!/usr/bin/calc -d -f
+
+/*
+$ ./otpmk  | ./test_code_word
+*/
+define check_code_bits_256(num)
+{
+    local i, j, n;
+    local check;
+    check = 0;
+    for(i = 1, n = 0; i <= 128; i=(i<<1), n=n+1) {
+        for(j = i; j <= 255; j=j+1) {
+            if((i&j) != 0) {
+                check = xor(check, (bit(num,j)<<n));
+            }
+        }
+    }
+    for(j = 0; j<=255; j = j + 1) {
+        check = xor(check, (bit(num,j)<<8));
+    }
+
+    return check;
+}
+
+total = 0;
+failures = 0;
+a = 0;
+s = 0;
+while(scanf("%s", s) > 0) {
+    total += 1;
+    a = eval(s);
+    b = check_code_bits_256(a);
+    if(b != 0) {
+        failures += 1;
+        printf("error = 0x%x\n", b);
+    }
+}
+
+printf("Total code words = %d,  Incorrect code words = %d\n", total, failures);

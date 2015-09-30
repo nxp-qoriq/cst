@@ -1,0 +1,110 @@
+
+This code implements the SHA256 hashing algorithm specified in FIPS180-4.
+It also implements a NIST approved Hash_DRBG Random Number Generator based on SHA256,
+which includes the Continuous Random Number Generator Test specified in FIP140-2.
+
+It also implements a Random Number Generator for generating 256-bit OTPMK values,
+with check bits already inserted.
+
+NOTE: There has been a change to the API.
+
+There are six routines that can be used to generate random data.
+get_rand_bits() and get_rand_bytes() return purely random data,
+useful for any purpose.  The first parameter is a pointer to the array of data,
+while the second parameter is the length.
+
+otpmk_get_rand_bits_256() and otpmk_get_rand_256() return data formatted
+as an OTPMK 256-bit secret (as a proper hamming code word).
+The first paramter is a pointer to the array of random data, while a second parameter
+(with_f) specifies whether to fix four bits at all 1s.  This is helpful during development,
+when there is no OTPMK programmed into fuses, but the chip requires a valid codeword,
+or it will not go secure.  Simply program those four bits, and this routing will then
+generate an OTPMK value that can be programmed over top of that.
+
+drvr_b_get_rand_bits_64() and drvr_b_get_rand_64() return data formatted
+as a response value for the 64-bit debug challenge/response feature.
+Again, a second parameter (with_1e) specifies whether or not to fix four bits to 1.
+
+int otpmk_get_rand_bits_256() returns the OTPMK as an array of 256 unsigned bytes,
+with each byte containing either 0 or 1.
+
+int otpmk_get_rand_256() returns the OTPMK as an array of 32 unsigned words,
+in big endian format.  It really does not matter whether the array is treated as
+big endian or little endian, it will work either way.
+
+int get_rand_bits() returns an array of unsigned bytes, with each byte
+containing either 0 or 1.
+
+int get_rand_bytes() returns an array of unsigned words, in big endian format.
+It really does not matter whether the array is treated as big endian or little endian,
+it is just random data.
+
+
+These routine are all that is required.
+The first call to any routine will check if a TPM is available and/or required to be used;
+it will open /dev/random as its source of entropy;
+it will perform a CAVP (NIST Cryptographic Algorithm Validation Program) self-test to
+verify the correct operation of the code (both for the SHA256 and Hash_DRBG implementations);
+it will instantiate the Hash_DRBG; and set the reseed interval depending on whether there
+is a TPM present and useable or not.
+
+Each call will cause a reseed, if needed.
+
+The main() program is simply a small test program, and is not needed.
+It is an example only.
+
+The Makefile is set up to build a shared library, stored in shared_lib/libhash_drbg.so.
+The main program is then linked with the shared library.
+
+The shared library, and the main program, can be compiled with either GCC or G++.
+Note that either GCC or G++ must be used to compile all of the files.
+Do not try to mix compilers, as this will not work.
+
+The code compiles cleanly with -Wall -pedantic, except for the large strings that
+are used in sha256LongMsg.c.  C90 specifies only that strings can be at least 509 characters.
+To prevent a GCC warning about strings that may be too long, -Wno-overlength-strings
+has been added to the compile flags.
+
+There are several Makefile parameters that can be set, for production or test use.
+If these are not set in the Makefile, they will default to the strictest values.
+
+TPM_REQUIRED:
+0 - The TPM is not required, but will be used if available
+1 - The TPM is required, and no OTPMK values will be generated if one is not
+    This should be set during production runs.
+
+SEVERITY:
+0 - An error will cause a non-zero return code.
+1 - An error will cause an error message to be printed, and the program will exit immediately.
+
+VERBOSITY:
+0 - Do not print any messages (unless the SEVERITY is 1).
+1 - Print error messages.
+2 - Print informational messages
+
+PRED_RES:
+Prediction Resistance causes a reseed of the Hash_DRBG before every request for random data.
+ Note that if a TPM is present, the Hash_DRBG will reseed after every few requests,
+ therefore PRED_RES is not normally ever required, (other than for testing purposes).
+0 - No Prediction Resistance is required when generating the OTPMK values.
+1 - Prediction Resistance is required, even if a TPM is not present.
+
+Source Files:
+  entropy.c              - Open /dev/random and read entropy; test if a TPM is available for use
+  hash_drbg.c            - Implement the SHA256 Hash_DRBG as specified in SP800-90A
+  hash_drbg_cavp_data.c  - CAVP test data for the Hash_DRBG
+  hash_drbg_selftest.c   - CAVP test code for the Hash_DRBG
+  main.c                 - An example main() program
+  otpmk.c                - Generate and format OTPMK values
+  sha256.c               - Implement the SHA256 algorithm as specified in FIPS180-4
+  sha256_cavp_selftest.c - CAVP test code for SHA256
+  sha256LongMsg_data.c   - CAVP Long Message SHA256 test data
+  sha256Monte_data.c     - CAVP Monte Carlo SHA256 test data
+  sha256ShortMsg_data.c  - CAVP Short Message SHA256 test data
+
+Include Files:
+  entropy.h
+  hash_drbg.h
+  otpmk.h
+  sha256.h
+

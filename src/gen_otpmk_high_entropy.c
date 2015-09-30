@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <time.h>
+#include <get_rand.h>
 
 #define OTPMK_SIZE_BITS 256
 #define OTPMK_SIZE_BYTES (OTPMK_SIZE_BITS/8)
@@ -118,11 +119,13 @@ void generate_code_bits(bool number[])
  */
 	for (j = 0; j <= OTPMK_SIZE_BITS - 1; j = j + 1)
 		number[0] = number[0] ^ number[j];
+
 #ifdef DEBUG
-	printf("\nHamming code -\n");
+	printf("\nHamming code:\n");
 	for (i = 0; i < OTPMK_SIZE_BITS; i++)
 		printf("%d", number[i]);
 #endif
+
 	for (i = 0; i < OTPMK_SIZE_BYTES; i++) {
 		for (j = 0; j < 8; j++) {
 			k[j] =
@@ -132,36 +135,16 @@ void generate_code_bits(bool number[])
 		otpmk_hex[i] = (u8)strtoul(k, NULL, 2);
 	}
 
+	printf("\nOTPMK after Hamming code is:\n");
+	for (i = 0; i < OTPMK_SIZE_BYTES; i++)
+		printf("%x", otpmk_hex[i]);
+
+	printf("\n");
 	if (trust_arch == 1)
 		print_otpmk_trust1();
 
 	if (trust_arch == 2)
 		print_otpmk_trust2();
-}
-
-void gen_rand_string()
-{
-	unsigned int iseed = (unsigned int)time(NULL);
-	int i, l, index1, index2;
-	char hex_digits[] = "0123456789abcdef";
-	char rand_string[3] = {'\0'};
-
-	/*providing seed for random number generation*/
-	srand(iseed);
-
-	for (i = 0; i < 2 * OTPMK_SIZE_BYTES; i = i + 2) {
-		/*generate first random nibble of the byte*/
-		index1 = rand() % strlen(hex_digits);
-		rand_string[0] = hex_digits[index1];
-
-		/*generate second random nibble of the byte*/
-		index2 = rand() % strlen(hex_digits);
-		rand_string[1] = hex_digits[index2];
-
-		l = i / 2;
-		otpmk_hex[l] = (u8)strtoul(rand_string, NULL, 16);
-	}
-
 }
 
 int check_string(char *str)
@@ -184,9 +167,9 @@ int check_string(char *str)
 
 void usage()
 {
-	printf("\nUsage: ./gen_otpmk <trust_arch> [string]\n");
+	printf("\nUsage: ./gen_otpmk_high_entropy <trust_arch> [string]\n");
 	printf("string : 32 byte string\n");
-	printf("e.g. gen_otpmk 1 11111111222222223333333344444444"
+	printf("e.g. gen_otpmk_high_entropy 1 11111111222222223333333344444444"
 			"55555555666666667777777788888888\n");
 }
 
@@ -211,7 +194,7 @@ int main(int argc, char *argv[])
 				otpmk_in[0] = argv[2][i + 0];
 				otpmk_in[1] = argv[2][i + 1];
 				l = i / 2;
-				otpmk_hex[l] = (u8)strtoul(otpmk_in, NULL, 16);
+				otpmk_hex[l] = strtoul(otpmk_in, NULL, 16);
 			}
 		} else {
 			printf("\nError: Invalid Input key Length\n");
@@ -228,7 +211,15 @@ int main(int argc, char *argv[])
 			printf("\nGenerating random key as input "
 				"string not provided\n");
 			trust_arch = *argv[1] - 48;
-			gen_rand_string();
+			/* Generate Random bytes using hash_debg */
+			ret = get_rand_bytes(otpmk_hex, OTPMK_SIZE_BYTES);
+			if (ret != 0) {
+				printf("\nRandom bytes generation failed\n");
+				exit(1);
+			}
+			printf("\nRandom Key Generated is:\n");
+			for (i = 0; i < OTPMK_SIZE_BYTES; i++)
+				printf("%x", otpmk_hex[i]);
 		} else {
 			printf("\nError: Wrong Usage\n");
 			usage();

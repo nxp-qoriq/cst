@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <time.h>
+#include <get_rand.h>
 
 #define DRV_SIZE_BITS 64
 #define DRV_SIZE_BYTES (DRV_SIZE_BITS/8)
@@ -53,6 +54,9 @@ u8 drv_hex[DRV_SIZE_BYTES];
 void print_drv()
 {
 	int i;
+	printf("\nDRV after Hamming Code is:\n");
+	for (i = 0; i < DRV_SIZE_BYTES; i++)
+		printf("%x", drv_hex[i]);
 	printf("\n NAME    |     BITS     |    VALUE  ");
 	printf("\n_________|______________|____________");
 
@@ -152,31 +156,6 @@ void generate_code_bits_hamming_A(bool number[])
 	print_drv();
 }
 
-void gen_rand_string()
-{
-	unsigned int iseed = (unsigned int)time(NULL);
-	int i, l, index1, index2;
-	char hex_digits[] = "0123456789abcdef";
-	char rand_string[2];
-
-	/*providing seed for random number generation*/
-	srand(iseed);
-
-	for (i = 0; i < 2 * DRV_SIZE_BYTES; i = i + 2) {
-		/*generate first random nibble of the byte*/
-		index1 = rand() % strlen(hex_digits);
-		rand_string[0] = hex_digits[index1];
-
-		/*generate second random nibble of the byte*/
-		index2 = rand() % strlen(hex_digits);
-		rand_string[1] = hex_digits[index2];
-
-		l = i / 2;
-		drv_hex[l] = (u8)strtoul(rand_string, NULL, 16);
-	}
-
-}
-
 int check_string(char *str)
 {
 	while (*str) {
@@ -197,13 +176,12 @@ int check_string(char *str)
 
 void usage()
 {
-	printf("\nUsage: ./gen_drv <Hamming_algo> [string]\n");
+	printf("\nUsage: ./gen_drv_high_entropy <Hamming_algo> [string]\n");
 	printf("Hamming_algo : Platforms\n");
 	printf("A            : T10xx, T20xx, T4xxx, P4080rev1, B4xxx, LSx\n");
 	printf("B            : P10xx, P20xx, P30xx, P4080rev2, P4080rev3,"
 				" P50xx, BSC913x, C29x\n");
 	printf("string : 8 byte string\n");
-	printf("e.g. gen_drv 1111111122222222\n");
 }
 
 int main(int argc, char *argv[])
@@ -244,7 +222,17 @@ int main(int argc, char *argv[])
 			   (*argv[1] == 'A' || *argv[1] == 'B')) {
 			printf("\nGenerating random key as input "
 				"string not provided\n");
-			gen_rand_string();
+			/* Generate Random bytes using hash_debg */
+			ret = get_rand_bytes(drv_hex, DRV_SIZE_BYTES);
+			if (ret != 0) {
+				printf("\nRandom bytes generation failed\n");
+				exit(1);
+			}
+			printf("\nRandom Key Genearted is:\n");
+			for (i = 0; i < DRV_SIZE_BYTES; i++)
+				printf("%x", drv_hex[i]);
+
+
 		} else {
 			printf("\nError: Wrong Usage\n");
 			usage();
