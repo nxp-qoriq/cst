@@ -56,7 +56,7 @@ void print_drv()
 	int i;
 	printf("\nDRV after Hamming Code is:\n");
 	for (i = 0; i < DRV_SIZE_BYTES; i++)
-		printf("%x", drv_hex[i]);
+		printf("%.2x", drv_hex[i]);
 	printf("\n NAME    |     BITS     |    VALUE  ");
 	printf("\n_________|______________|____________");
 
@@ -220,8 +220,12 @@ int main(int argc, char *argv[])
 			exit(0);
 		} else if (strlen(argv[1]) == 1 &&
 			   (*argv[1] == 'A' || *argv[1] == 'B')) {
-			printf("\nGenerating random key as input "
-				"string not provided\n");
+			printf("\nInput string not provided");
+			printf("\nGenerating a random string");
+			printf("\n-------------------------------------------");
+			printf("\n* Hash_DRBG library invoked");
+			printf("\n* Seed being taken from /dev/random");
+			printf("\n-------------------------------------------");
 			/* Generate Random bytes using hash_debg */
 			ret = get_rand_bytes(drv_hex, DRV_SIZE_BYTES);
 			if (ret != 0) {
@@ -230,7 +234,7 @@ int main(int argc, char *argv[])
 			}
 			printf("\nRandom Key Genearted is:\n");
 			for (i = 0; i < DRV_SIZE_BYTES; i++)
-				printf("%x", drv_hex[i]);
+				printf("%.2x", drv_hex[i]);
 
 
 		} else {

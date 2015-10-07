@@ -13,6 +13,16 @@ LIB_HASH_DRBG_PATH = lib_$(LIB_HASH_DRBG_NAME)
 LIB_HASH_DRBG = $(LIB_HASH_DRBG_PATH)/lib$(LIB_HASH_DRBG_NAME).a
 LIB_HASH_DRBG_INCLUDE_PATH = $(LIB_HASH_DRBG_PATH)/include
 
+#
+# Should debug output be generated from LIB?
+#
+# VERBOSITY=0: Print no debug output
+# VERBOSITY=1: Print error messages, when the Hash_DRBG fails to operation correctly
+# VERBOSITY=2: Print some informational messages during normal operation
+#
+LIB_VERBOSITY ?= 0
+
+
 CC=gcc
 LD=gcc
 RM=rm -f
@@ -55,10 +65,10 @@ gen_keys: ${genkeys_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
 gen_otpmk_high_entropy: ${genotpmk_OBJS} $(LIB_HASH_DRBG)
-	${LD} ${LDFLAGS} -L$(LIB_HASH_DRBG_PATH) -l$(LIB_HASH_DRBG_NAME) -o $@ $^ ${LIBS}
+	${LD} ${LDFLAGS} -o $@ $^
 
 gen_drv_high_entropy: ${gendrv_OBJS} $(LIB_HASH_DRBG)
-	${LD} ${LDFLAGS} -L$(LIB_HASH_DRBG_PATH) -l$(LIB_HASH_DRBG_NAME) -o $@ $^ ${LIBS}
+	${LD} ${LDFLAGS} -o $@ $^
 
 gen_sign: ${gensign_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
@@ -79,7 +89,9 @@ $(LIB_HASH_DRBG):
 	@echo "#########################################"
 	@echo "### Building Shared Library hash_drbg ###"
 	@echo "#########################################"
-	make LIB_HASH_DRBG_PATH=$(LIB_HASH_DRBG_PATH) -f $(LIB_HASH_DRBG_PATH)/src/Makefile
+	make LIB_HASH_DRBG_PATH=$(LIB_HASH_DRBG_PATH) 	\
+		VERBOSITY=-DVERBOSITY=$(LIB_VERBOSITY)	\
+		-f $(LIB_HASH_DRBG_PATH)/src/Makefile
 	@echo "#########################################"
 	@echo "###    Build Complete for hash_drbg   ###"
 	@echo "#########################################"

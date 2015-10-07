@@ -164,8 +164,12 @@ int main(int argc, char *argv[])
 			exit(0);
 		} else if (strlen(argv[1]) == 1 &&
 			   (*argv[1] == '1' || *argv[1] == '2')) {
-			printf("\nGenerating random key as input "
-				"string not provided\n");
+			printf("\nInput string not provided");
+			printf("\nGenerating a random string");
+			printf("\n-------------------------------------------");
+			printf("\n* Hash_DRBG library invoked");
+			printf("\n* Seed being taken from /dev/random");
+			printf("\n-------------------------------------------");
 			bit_ordering_type = *argv[1] - 48;
 
 			/* Generate Random OTPMK using hash_drbg lib */
@@ -188,7 +192,7 @@ int main(int argc, char *argv[])
 
 	printf("\nOTPMK[255:0] is:\n");
 	for (i = 0; i < OTPMK_SIZE_BYTES; i++)
-		printf("%x", otpmk_hex[i]);
+		printf("%.2x", otpmk_hex[i]);
 
 	printf("\n");
 
