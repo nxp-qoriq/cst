@@ -45,8 +45,8 @@ LIBS += -lssl -lcrypto -ldl
 genkeys_OBJS = gen_keys.o
 uni_cfsign_OBJS = uni_cfsign.o
 uni_sign_OBJS = uni_sign.o
-genotpmk_OBJS = gen_otpmk_high_entropy.o
-gendrv_OBJS = gen_drv_high_entropy.o
+genotpmk_OBJS = gen_otpmk_drbg.o
+gendrv_OBJS = gen_drv_drbg.o
 gensign_OBJS = gen_sign.o
 sign_embed_OBJS = sign_embed.o
 uni_pbi_OBJS = uni_pbi.o
@@ -57,17 +57,17 @@ vpath %.c src/
 .PHONY: all clean
 
 # make targets
-INSTALL_BINARIES ?= gen_otpmk_high_entropy gen_drv_high_entropy uni_sign uni_cfsign uni_pbi gen_keys gen_sign sign_embed
+INSTALL_BINARIES ?= gen_otpmk_drbg gen_drv_drbg uni_sign uni_cfsign uni_pbi gen_keys gen_sign sign_embed
 
 all: $(LIB_HASH_DRBG) $(INSTALL_BINARIES)
 
 gen_keys: ${genkeys_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
-gen_otpmk_high_entropy: ${genotpmk_OBJS} $(LIB_HASH_DRBG)
+gen_otpmk_drbg: ${genotpmk_OBJS} $(LIB_HASH_DRBG)
 	${LD} ${LDFLAGS} -o $@ $^
 
-gen_drv_high_entropy: ${gendrv_OBJS} $(LIB_HASH_DRBG)
+gen_drv_drbg: ${gendrv_OBJS} $(LIB_HASH_DRBG)
 	${LD} ${LDFLAGS} -o $@ $^
 
 gen_sign: ${gensign_OBJS}
@@ -107,7 +107,7 @@ install-%: %
 	$(INSTALL) -m 755 $< $(DESTDIR)$(BIN_DEST_DIR)/cst/
 
 clean:
-	${RM} *.o gen_keys *.out uni_sign uni_cfsign uni_pbi gen_otpmk_high_entropy gen_drv_high_entropy gen_sign sign_embed
+	${RM} *.o gen_keys *.out uni_sign uni_cfsign uni_pbi gen_otpmk_drbg gen_drv_drbg gen_sign sign_embed
 
 distclean:	clean
 	rm -f *.pub *.pri $(LIB_HASH_DRBG)

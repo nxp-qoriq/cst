@@ -35,7 +35,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdbool.h>
-#include <time.h>
 #include <otpmk.h>
 
 #define OTPMK_SIZE_BITS 256
@@ -118,12 +117,12 @@ int check_string(char *str)
 void usage()
 {
 	printf("\n");
-	printf("Usage : ./gen_otpmk_high_entropy <bit_order> [string]\n");
+	printf("Usage : ./gen_otpmk_drbg <bit_order> [string]\n");
 	printf("<bit_order> : (1 or 2) OTPMK Bit Ordering Scheme in SFP\n");
 	printf("\t1 : BSC913x, P1010, P3, P4, P5, C29x\n");
 	printf("\t2 : T1, T2, T4, B4, LSx\n");
 	printf("<string> : 32 byte string\n");
-	printf("\ne.g. gen_otpmk_high_entropy 1 11111111222222223333333344444444"
+	printf("\ne.g. gen_otpmk_drbg 1 11111111222222223333333344444444"
 			"55555555666666667777777788888888\n");
 }
 

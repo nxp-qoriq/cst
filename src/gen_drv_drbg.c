@@ -34,7 +34,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdbool.h>
-#include <time.h>
 #include <get_rand.h>
 
 #define DRV_SIZE_BITS 64
@@ -176,7 +175,7 @@ int check_string(char *str)
 
 void usage()
 {
-	printf("\nUsage: ./gen_drv_high_entropy <Hamming_algo> [string]\n");
+	printf("\nUsage: ./gen_drv_drbg <Hamming_algo> [string]\n");
 	printf("Hamming_algo : Platforms\n");
 	printf("A            : T10xx, T20xx, T4xxx, P4080rev1, B4xxx, LSx\n");
 	printf("B            : P10xx, P20xx, P30xx, P4080rev2, P4080rev3,"
