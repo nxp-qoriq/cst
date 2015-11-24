@@ -55,20 +55,14 @@ extern struct g_data_t gd;
  ***************************************************************************/
 int create_hdr(int argc, char **argv)
 {
-	struct taal_t gd_taal[TA_UNKNOWN_MAX];
 	enum cfg_taal cfg_taal;
-
 	int ret, i;
 
-	/* Initialization of Structures to 0 */
+	/* Initialization of Global Structure to 0 */
 	memset(&gd, 0, sizeof(struct g_data_t));
-	memset(gd_taal, 0, sizeof(struct taal_t) * TA_UNKNOWN_MAX);
 
 	/* Print the Attribution */
 	print_attribution();
-
-	/* Intialize the TAAL (Trust Arch Abstraction Layer) */
-	taal_init(gd_taal);
 
 	/* Check the command line argument */
 	if (argc != 2) {
@@ -97,33 +91,33 @@ int create_hdr(int argc, char **argv)
 	}
 
 	/* TAAL: Parse the Input File and Populate the Global Structure */
-	ret = taal_parse_input_file(gd_taal, cfg_taal);
+	ret = taal_parse_input_file(cfg_taal);
 	if (ret != SUCCESS)
 		return ret;
 
 	/* TAAL: Fill the Structures (CSF Header, SRK, SG Table) */
-	ret = taal_fill_structures(gd_taal, cfg_taal);
+	ret = taal_fill_structures(cfg_taal);
 	if (ret != SUCCESS)
 		return ret;
 
 	/* TAAL: Combine Structures to create the Output Header */
-	ret = taal_create_hdr(gd_taal, cfg_taal);
+	ret = taal_create_hdr(cfg_taal);
 	if (ret != SUCCESS)
 		return ret;
 
 	/* TAAL: Calculate Image Hash Required for Signature */
-	ret = taal_calc_img_hash(gd_taal, cfg_taal);
+	ret = taal_calc_img_hash(cfg_taal);
 	if (ret != SUCCESS)
 		return ret;
 
 	/* TAAL: Calculate Public Key / SRK Hash */
-	ret = taal_calc_srk_hash(gd_taal, cfg_taal);
+	ret = taal_calc_srk_hash(cfg_taal);
 	if (ret != SUCCESS)
 		return ret;
 
 	/* TAAL: Dump the header fields */
 	if (gd.verbose_flag == 1) {
-		ret = taal_dump_header(gd_taal, cfg_taal);
+		ret = taal_dump_header(cfg_taal);
 		if (ret != SUCCESS)
 			return ret;
 		printf("\nImage Hash (To Be signed using Private Key):\n");

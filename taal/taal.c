@@ -40,37 +40,40 @@ static ta_struct_t ta_table[] = {
 #define NUM_TA_TABLE (sizeof(ta_table) / sizeof(ta_struct_t))
 
 /***************************************************************************
- * Function	:	taal_init
- * Arguments	:	taal - TAAL struct
- * Return	:	void
- * Description	:	Sets the function pointers for all API's for various
- *			TA's
+ * Global Arry of Function Pointer Structure
  ***************************************************************************/
-void taal_init(struct taal_t *taal)
-{
-	taal[TA_3_0].parse_input_file		= TA_3_0_PARSE;
-	taal[TA_3_0].fill_structure		= TA_3_0_FILL;
-	taal[TA_3_0].create_header		= TA_3_0_CREATE;
-	taal[TA_3_0].calc_img_hash		= TA_3_0_IMG_HASH;
-	taal[TA_3_0].calc_srk_hash		= TA_3_0_SRK_HASH;
-	taal[TA_3_0].dump_hdr			= TA_3_0_DUMP;
-
-	taal[TA_3_1].parse_input_file		= TA_3_1_PARSE;
-	taal[TA_3_1].fill_structure		= TA_3_1_FILL;
-	taal[TA_3_1].create_header		= TA_3_1_CREATE;
-	taal[TA_3_1].calc_img_hash		= TA_3_1_IMG_HASH;
-	taal[TA_3_1].calc_srk_hash		= TA_3_1_SRK_HASH;
-	taal[TA_3_1].dump_hdr			= TA_3_1_DUMP;
-}
-
+static struct taal_t taal[] = {
+	/* TA_3_0 */
+	{
+		parse_input_file_ta_3_x,
+		fill_structure_ta_3_0,
+		create_header_ta_3_x,
+		calc_img_hash_ta_3_x,
+		calc_srk_hash_ta_3_x,
+		dump_hdr_ta_3_0,
+	},
+	/* TA_3_1 */
+	{
+		parse_input_file_ta_3_x,
+		fill_structure_ta_3_1,
+		create_header_ta_3_x,
+		calc_img_hash_ta_3_x,
+		calc_srk_hash_ta_3_x,
+		dump_hdr_ta_3_1,
+	},
+	/* TA_UNKNOWN_MAX */
+	{
+		NULL, NULL, NULL, NULL, NULL, NULL
+	}
+};
+	
 /***************************************************************************
  * Function	:	taal_parse_input_file
- * Arguments	:	taal - TAAL struct
- *			ta - Trust ARCH Type enum
+ * Arguments	:	ta - Trust ARCH Type enum
  * Return	:	ERROR or SUCCESS
  * Description	:	Parse the Input File and Populate the Global Structure
  ***************************************************************************/
-int taal_parse_input_file(struct taal_t *taal, enum cfg_taal ta)
+int taal_parse_input_file(enum cfg_taal ta)
 {
 	if (taal[ta].parse_input_file)
 		return (*taal[ta].parse_input_file)();
@@ -81,12 +84,11 @@ int taal_parse_input_file(struct taal_t *taal, enum cfg_taal ta)
 
 /***************************************************************************
  * Function	:	taal_fill_structures
- * Arguments	:	taal - TAAL struct
- *			ta - Trust ARCH Type enum
+ * Arguments	:	ta - Trust ARCH Type enum
  * Return	:	ERROR or SUCCESS
  * Description	:	Fill the Structures (CSF Header, SRK, SG Table)
  ***************************************************************************/
-int taal_fill_structures(struct taal_t *taal, enum cfg_taal ta)
+int taal_fill_structures(enum cfg_taal ta)
 {
 	if (taal[ta].fill_structure)
 		return (*taal[ta].fill_structure)();
@@ -97,12 +99,11 @@ int taal_fill_structures(struct taal_t *taal, enum cfg_taal ta)
 
 /***************************************************************************
  * Function	:	taal_create_hdr
- * Arguments	:	taal - TAAL struct
- *			ta - Trust ARCH Type enum
+ * Arguments	:	ta - Trust ARCH Type enum
  * Return	:	ERROR or SUCCESS
  * Description	:	Combine Structures to create the Output Header
  ***************************************************************************/
-int taal_create_hdr(struct taal_t *taal, enum cfg_taal ta)
+int taal_create_hdr(enum cfg_taal ta)
 {
 	if (taal[ta].create_header)
 		return (*taal[ta].create_header)();
@@ -113,12 +114,11 @@ int taal_create_hdr(struct taal_t *taal, enum cfg_taal ta)
 
 /***************************************************************************
  * Function	:	taal_calc_img_hash
- * Arguments	:	taal - TAAL struct
- *			ta - Trust ARCH Type enum
+ * Arguments	:	ta - Trust ARCH Type enum
  * Return	:	ERROR or SUCCESS
  * Description	:	Calculate Image Hash Required for Signature
  ***************************************************************************/
-int taal_calc_img_hash(struct taal_t *taal, enum cfg_taal ta)
+int taal_calc_img_hash(enum cfg_taal ta)
 {
 	if (taal[ta].calc_img_hash)
 		return (*taal[ta].calc_img_hash)();
@@ -129,12 +129,11 @@ int taal_calc_img_hash(struct taal_t *taal, enum cfg_taal ta)
 
 /***************************************************************************
  * Function	:	taal_calc_srk_hash
- * Arguments	:	taal - TAAL struct
- *			ta - Trust ARCH Type enum
+ * Arguments	:	ta - Trust ARCH Type enum
  * Return	:	ERROR or SUCCESS
  * Description	:	Calculate Public Key / SRK Hash
  ***************************************************************************/
-int taal_calc_srk_hash(struct taal_t *taal, enum cfg_taal ta)
+int taal_calc_srk_hash(enum cfg_taal ta)
 {
 	if (taal[ta].calc_srk_hash)
 		return (*taal[ta].calc_srk_hash)();
@@ -145,12 +144,11 @@ int taal_calc_srk_hash(struct taal_t *taal, enum cfg_taal ta)
 
 /***************************************************************************
  * Function	:	taal_dump_header
- * Arguments	:	taal - TAAL struct
- *			ta - Trust ARCH Type enum
+ * Arguments	:	ta - Trust ARCH Type enum
  * Return	:	ERROR or SUCCESS
  * Description	:	Dump the header fields
  ***************************************************************************/
-int taal_dump_header(struct taal_t *taal, enum cfg_taal ta)
+int taal_dump_header(enum cfg_taal ta)
 {
 	if (taal[ta].dump_hdr)
 		return (*taal[ta].dump_hdr)();

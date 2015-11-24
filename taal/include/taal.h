@@ -55,16 +55,13 @@ struct taal_t {
 	ta_dump		dump_hdr;
 };
 
-/* Initialize taal data structure */
-void taal_init(struct taal_t *);
-
 /* Wrappers over target API */
-int taal_parse_input_file(struct taal_t *, enum cfg_taal);
-int taal_fill_structures(struct taal_t *, enum cfg_taal);
-int taal_create_hdr(struct taal_t *, enum cfg_taal);
-int taal_calc_img_hash(struct taal_t *, enum cfg_taal);
-int taal_calc_srk_hash(struct taal_t *, enum cfg_taal);
-int taal_dump_header(struct taal_t *, enum cfg_taal);
+int taal_parse_input_file(enum cfg_taal);
+int taal_fill_structures(enum cfg_taal);
+int taal_create_hdr(enum cfg_taal);
+int taal_calc_img_hash(enum cfg_taal);
+int taal_calc_srk_hash(enum cfg_taal);
+int taal_dump_header(enum cfg_taal);
 
 /* Get TA from File */
 enum cfg_taal get_ta_from_file(char *file_name);

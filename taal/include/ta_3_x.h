@@ -32,29 +32,17 @@
  * Function Pointers for TAAL
  **********************************************************/
 int parse_input_file_ta_3_x(void);
-#define TA_3_0_PARSE		parse_input_file_ta_3_x;
-#define TA_3_1_PARSE		parse_input_file_ta_3_x;
 
 int fill_structure_ta_3_0(void);
 int fill_structure_ta_3_1(void);
-#define TA_3_0_FILL		fill_structure_ta_3_0;
-#define TA_3_1_FILL		fill_structure_ta_3_1;
 
 int create_header_ta_3_x(void);
-#define TA_3_0_CREATE		create_header_ta_3_x;
-#define TA_3_1_CREATE		create_header_ta_3_x;
 
 int calc_img_hash_ta_3_x(void);
-#define TA_3_0_IMG_HASH		calc_img_hash_ta_3_x;
-#define TA_3_1_IMG_HASH		calc_img_hash_ta_3_x;
 
 int calc_srk_hash_ta_3_x(void);
-#define TA_3_0_SRK_HASH		calc_srk_hash_ta_3_x;
-#define TA_3_1_SRK_HASH		calc_srk_hash_ta_3_x;
 
 int dump_hdr_ta_3_0(void);
 int dump_hdr_ta_3_1(void);
-#define TA_3_0_DUMP		dump_hdr_ta_3_0;
-#define TA_3_1_DUMP		dump_hdr_ta_3_1;
 
 #endif

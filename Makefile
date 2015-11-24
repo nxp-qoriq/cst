@@ -158,7 +158,7 @@ install: $(foreach binary,$(INSTALL_BINARIES),install-$(binary))
 
 install-%: %
 	$(INSTALL) -d $(DESTDIR)$(BIN_DEST_DIR)/cst
-	$(INSTALL) -m 755 $< $(DESTDIR)$(BIN_DEST_DIR)/cst/ -c ${CCFLAGS} ${CFLAGS} -o $@ $<
+	$(INSTALL) -m 755 $< $(DESTDIR)$(BIN_DEST_DIR)/cst/
 
 clean:
 	${RM} *.o ${INSTALL_BINARIES}
