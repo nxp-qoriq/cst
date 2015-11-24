@@ -1,5 +1,0 @@
-for t in $(grep -rl "=hash.out" *)
-do
-#sed -i s/"=img_hash.out"/"=img_hash.out"/ $t
-echo "$t"
-done
