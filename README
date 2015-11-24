@@ -1,3 +1,27 @@
-The CST tool is compiled for powerpc by default.
-To compile it for ARM based platforms, define ARCH as arm
-	make ARCH=arm
+CST tool providing the following tools:
+
+1. Key Generation
+	- gen_keys
+	- gen_drv_drbg
+	- gen_otpmk_drbg
+2. Header Creation
+	- create_hdr_pbi
+	- create_hdr_isbc
+	- create_hdr_esbc
+3. Signature Geneartion
+	- sign_img_hash
+	- append_sign_hdr
+
+To Sign any image for verification, following tools need to be invoked
+1. ./create_hdr_<xxx> <input_file>	(Create the CSF Header with padding added till Signature Offset)
+2. ./sign_img_hash <input_file>		(Sign the Image Hash using Private Key)
+3. ./append_sign_hdr <input_file>	(Append the signature to end of CSH Header File)
+
+To execute above in a single step, Shell Scripts are provided which would invoke the
+required CST Tools
+1. sign_pbi.sh
+2. sign_isbc.sh
+3. sign_esbc.sh
+
+Usage of Scripts:
+	./sign_<xxx>.sh <input_file>
