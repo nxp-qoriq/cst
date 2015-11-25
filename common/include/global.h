@@ -41,7 +41,7 @@ int create_hdr(int argc, char **argv);
 #define MAX_FNAME_LEN		0x64
 #define SHA256_DIGEST_LENGTH	32
 
-#define MAX_NUM_PUB_KEY		8
+#define MAX_NUM_KEY		8
 #define MAX_NUM_SG_ENTRY	8
 
 #define KEY_SIZE_BYTES		1024
@@ -85,8 +85,9 @@ struct g_data_t {
 
 	uint32_t srk_sel;
 	uint32_t num_srk_entries;
-	char pub_fname[MAX_NUM_PUB_KEY][MAX_FNAME_LEN];
-	char priv_key_name[MAX_FNAME_LEN];
+	uint32_t num_pri_key;
+	char pub_fname[MAX_NUM_KEY][MAX_FNAME_LEN];
+	char pri_fname[MAX_NUM_KEY][MAX_FNAME_LEN];
 
 	char rcw_fname[MAX_FNAME_LEN];
 
@@ -113,7 +114,7 @@ struct g_data_t {
 	uint8_t img_hash[SHA256_DIGEST_LENGTH];
 	uint8_t rsa_sign[KEY_SIZE_BYTES];
 
-	struct srk_table_t key_table[MAX_NUM_PUB_KEY];
+	struct srk_table_t key_table[MAX_NUM_KEY];
 	struct sg_table_t sg_table[MAX_NUM_SG_ENTRY];
 	uint8_t hdr_struct[MAX_HDR_SIZE];
 	uint32_t hdr_size;
@@ -128,6 +129,9 @@ struct g_data_t {
 	uint32_t sg_size;
 	uint32_t rsa_offset;
 	uint32_t rsa_size;
+
+	uint8_t option_srk_hash;
+	uint8_t option_img_hash;
 };
 
 #endif

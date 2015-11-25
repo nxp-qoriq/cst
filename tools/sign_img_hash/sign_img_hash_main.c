@@ -79,6 +79,7 @@ int main(int argc, char **argv)
 	}
 
 	ret = fill_gd_input_file("PRI_KEY", fp);
+	ret = fill_gd_input_file("KEY_SELECT", fp);
 	ret |= fill_gd_input_file("IMAGE_HASH_FILENAME", fp);
 	ret |= fill_gd_input_file("RSA_SIGN_FILENAME", fp);
 	fclose(fp);
@@ -101,7 +102,7 @@ int main(int argc, char **argv)
 	}
 
 	ret = crypto_rsa_sign(gd.img_hash, SHA256_DIGEST_LENGTH,
-			gd.rsa_sign, &len, gd.priv_key_name);
+			gd.rsa_sign, &len, gd.pri_fname[gd.srk_sel - 1]);
 	if (ret != SUCCESS) {
 		printf("Error in Signing\n");
 		return FAILURE;
@@ -124,7 +125,7 @@ int main(int argc, char **argv)
 
 	printf("Signature Length = %x\n", len);
 	printf("Hash in %s is signed with %s\n",
-			gd.img_hash_file_name, gd.priv_key_name);
+			gd.img_hash_file_name, gd.pri_fname[gd.srk_sel - 1]);
 	printf("Signature is stored in file : %s\n",
 			gd.rsa_sign_file_name);
 	return 0;

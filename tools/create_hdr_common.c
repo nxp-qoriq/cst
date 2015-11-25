@@ -37,6 +37,18 @@
 #include <crypto_utils.h>
 
 extern struct g_data_t gd;
+
+void print_usage(char *tool)
+{
+	printf("\nCorrect Usage of Tool is:\n");
+	printf("\t%s <input_file>             -- Create Header and Sign\n",
+		tool);
+	printf("\t%s --hash <input_file>      -- Print SRK Hash Only\n",
+		tool);
+	printf("\t%s --img_hash <input_file>  -- Create Header w/o Sign\n",
+		tool);
+}
+
 /***************************************************************************
  * Function	:	create_hdr
  * Arguments	:	argc - Argument Count
@@ -56,21 +68,38 @@ int create_hdr(int argc, char **argv)
 	crypto_print_attribution();
 
 	/* Check the command line argument */
-	if (argc != 2) {
+	if ((argc < 2) || (argc > 3)) {
 		/* Incorrect Usage */
 		printf("\nIncorrect Usage");
-		printf("\nCorrect Usage: %s <input_file>\n", argv[0]);
+		print_usage(argv[0]);
 		return FAILURE;
-	} else if ((strcmp(argv[1], "--help") == 0) ||
-		   (strcmp(argv[1], "-h") == 0)) {
-		/* Command Help */
-		printf("\nCorrect Usage: %s <input_file>\n", argv[0]);
-		return SUCCESS;
-	} else {
-		/* Input File passed as Argument */
-		gd.input_file = argv[1];
-		printf("\nInput File is %s\n", gd.input_file);
 	}
+	if ((strcmp(argv[1], "--help") == 0) ||
+	   (strcmp(argv[1], "-h") == 0)) {
+		print_usage(argv[0]);
+		return SUCCESS;
+	} else if (strcmp(argv[1], "--hash") == 0) {
+		gd.option_srk_hash = 1;
+		gd.input_file = argv[2];
+	} else if (strcmp(argv[1], "--img_hash") == 0) {
+		gd.option_img_hash = 1;
+		gd.input_file = argv[2];
+	} else if (argc == 3) {
+		printf("\nIncorrect Usage");
+		print_usage(argv[0]);
+		return FAILURE;
+	} else {
+		gd.input_file = argv[1];
+	}
+
+	if (gd.input_file == NULL) {
+		/* Incorrect Usage */
+		printf("\nIncorrect Usage");
+		print_usage(argv[0]);
+		return FAILURE;
+	}
+
+	printf("\nInput File is %s\n", gd.input_file);
 
 	/* Get the Trust Arch Version from Input File */
 	cfg_taal = get_ta_from_file(gd.input_file);
@@ -86,43 +115,54 @@ int create_hdr(int argc, char **argv)
 	if (ret != SUCCESS)
 		return ret;
 
-	/* TAAL: Fill the Structures (CSF Header, SRK, SG Table) */
-	ret = taal_fill_structures(cfg_taal);
-	if (ret != SUCCESS)
-		return ret;
-
-	/* TAAL: Combine Structures to create the Output Header */
-	ret = taal_create_hdr(cfg_taal);
-	if (ret != SUCCESS)
-		return ret;
-
-	/* TAAL: Calculate Image Hash Required for Signature */
-	ret = taal_calc_img_hash(cfg_taal);
-	if (ret != SUCCESS)
-		return ret;
-
-	/* TAAL: Calculate Public Key / SRK Hash */
+	/* TAAL: Create and Calculate Public Key / SRK Hash */
 	ret = taal_calc_srk_hash(cfg_taal);
 	if (ret != SUCCESS)
 		return ret;
 
-	/* TAAL: Dump the header fields */
-	if (gd.verbose_flag == 1) {
-		ret = taal_dump_header(cfg_taal);
+	/* If SRK Hash Option is Selected, Skip remaining part of Tool */
+	if (gd.option_srk_hash == 0) {
+		/* TAAL: Fill the Structures (CSF Header, SG Table) */
+		ret = taal_fill_structures(cfg_taal);
+		if (ret != SUCCESS)
+		return ret;
+
+		/* TAAL: Calculate Image Hash Required for Signature */
+		ret = taal_calc_img_hash(cfg_taal);
 		if (ret != SUCCESS)
 			return ret;
-		printf("\nImage Hash (To Be signed using Private Key):\n");
-		for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
-			printf("%02x", gd.img_hash[i]);
+
+		/* TAAL: Combine Structures to create the Output Header */
+		ret = taal_create_hdr(cfg_taal);
+		if (ret != SUCCESS)
+			return ret;
+
+		/* TAAL: Dump the header fields */
+		if (gd.verbose_flag == 1) {
+			ret = taal_dump_header(cfg_taal);
+			if (ret != SUCCESS)
+				return ret;
+
+			printf("\nImage Hash:\n");
+			for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
+				printf("%02x", gd.img_hash[i]);
+		}
+
+		/* Output to user and exit */
+		if (gd.option_img_hash == 1) {
+			printf("\n\nImage Hash Stored in File: %s",
+				gd.img_hash_file_name);
+			printf("\nHeader File is w/o Signature appended");
+		} else {
+			printf("\nHeader File is with Signature appended");
+		}
+		printf("\nHeader File Created: %s", gd.hdr_file_name);
 	}
 
-	/* Output to user and exit */
-	printf("\n\nImage Hash Stored in File: %s", gd.img_hash_file_name);
-	printf("\n\nHeader File Created: %s", gd.hdr_file_name);
 	printf("\n\nSRK (Public Key) Hash:\n");
 	for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
 		printf("%02x", gd.srk_hash[i]);
 
-	printf("\n");
+	printf("\n\n");
 	return SUCCESS;
 }

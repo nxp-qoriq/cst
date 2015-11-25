@@ -279,7 +279,22 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 			while (i != gd.num_srk_entries) {
 				strcpy(gd.pub_fname[i], file_field.value[i]);
 				i++;
-				if (i == MAX_NUM_PUB_KEY) {
+				if (i == MAX_NUM_KEY) {
+					printf("\n Key Number Limit reached");
+					break;
+				}
+			}
+		}
+		break;
+
+	case FIELD_PRI_KEY:
+		gd.num_pri_key = file_field.count;
+		if (gd.num_pri_key >= 1) {
+			i = 0;
+			while (i != gd.num_pri_key) {
+				strcpy(gd.pri_fname[i], file_field.value[i]);
+				i++;
+				if (i == MAX_NUM_KEY) {
 					printf("\n Key Number Limit reached");
 					break;
 				}
@@ -480,10 +495,6 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 			strcpy(gd.rcw_fname, file_field.value[0]);
 
 		break;
-
-	case FIELD_PRI_KEY:
-		if (file_field.count == 1)
-			strcpy(gd.priv_key_name, file_field.value[0]);
 
 		break;
 
