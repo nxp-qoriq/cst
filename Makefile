@@ -96,7 +96,7 @@ INCLUDES = 	-Itools/create_hdr_isbc/include/ \
 		-Itaal/include -Icommon/include \
 		-I$(LIB_HASH_DRBG_INCLUDE_PATH)
 
-CCFLAGS= -g -Wall $(INCLUDES)
+CCFLAGS= -g -Wall -Werror $(INCLUDES)
 
 INSTALL_BINARIES = 	create_hdr_isbc create_hdr_esbc create_hdr_pbi \
 			sign_img_hash append_sign_hdr \

@@ -24,14 +24,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- */
-/*
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- */
 
 #ifndef _CRYPTO_UTILS_H
 #define _CRYPTO_UTILS_H
@@ -46,12 +38,18 @@
 #include <errno.h>
 
 #include <global.h>
-#include <openssl/ssl.h>
 
-int extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr);
-int update_ctx_hash_image(SHA256_CTX *ctx, char *fname);
-void print_attribution(void);
-uint32_t calculate_crc(void *data, uint32_t length);
-uint32_t calculate_checksum(void *data, uint32_t num);
+#define CRYPTO_HASH_CTX_SIZE	0x400
+
+int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr);
+void crypto_hash_init(void *ctx);
+void crypto_hash_update(void *ctx, void *data, uint32_t len);
+void crypto_hash_final(void *hash, void *ctx);
+int crypto_hash_update_file(void *ctx, char *fname);
+int crypto_rsa_sign(void *img_hash, uint32_t len,
+		void *rsa_sign, uint32_t *rsa_len, char *key_name);
+void crypto_print_attribution(void);
+uint32_t crypto_calculate_crc(void *data, uint32_t length);
+uint32_t crypto_calculate_checksum(void *data, uint32_t num);
 
 #endif

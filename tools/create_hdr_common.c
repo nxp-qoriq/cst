@@ -24,21 +24,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- */
-/*
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- */
 
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <openssl/ssl.h>
 
 #include <global.h>
 #include <taal.h>
@@ -62,7 +53,7 @@ int create_hdr(int argc, char **argv)
 	memset(&gd, 0, sizeof(struct g_data_t));
 
 	/* Print the Attribution */
-	print_attribution();
+	crypto_print_attribution();
 
 	/* Check the command line argument */
 	if (argc != 2) {

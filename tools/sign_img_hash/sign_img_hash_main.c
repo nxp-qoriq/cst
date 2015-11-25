@@ -24,21 +24,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- */
-/*
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- */
-
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <openssl/ssl.h>
 
 #include <global.h>
 #include <parse_utils.h>
@@ -56,8 +46,7 @@ int main(int argc, char **argv)
 {
 	int ret;
 	uint32_t len;
-	FILE *fp, *fpriv, *fsign, *fhash;
-	RSA *priv_key;
+	FILE *fp, *fsign, *fhash;
 
 	/* Initialization of Structures to 0 */
 	memset(&gd, 0, sizeof(struct g_data_t));
@@ -111,26 +100,9 @@ int main(int argc, char **argv)
 		return FAILURE;
 	}
 
-	/* Open the private Key */
-	fpriv = fopen(gd.priv_key_name, "r");
-	if (fpriv == NULL) {
-		printf("Error in file opening %s:\n", gd.priv_key_name);
-		return FAILURE;
-	}
-
-	priv_key = PEM_read_RSAPrivateKey(fpriv, NULL, NULL, NULL);
-	fclose(fpriv);
-	if (priv_key == NULL) {
-		printf("Error in key reading %s:\n", gd.priv_key_name);
-		return FAILURE;
-	}
-
-	/* Sign the Image Hash with Private Key */
-	len = RSA_size(priv_key);
-	ret = RSA_sign(NID_sha256, gd.img_hash, SHA256_DIGEST_LENGTH,
-			gd.rsa_sign, &len,
-			priv_key);
-	if (ret != 1) {
+	ret = crypto_rsa_sign(gd.img_hash, SHA256_DIGEST_LENGTH,
+			gd.rsa_sign, &len, gd.priv_key_name);
+	if (ret != SUCCESS) {
 		printf("Error in Signing\n");
 		return FAILURE;
 	}

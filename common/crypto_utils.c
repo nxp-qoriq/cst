@@ -34,20 +34,52 @@
  */
 
 #include <crypto_utils.h>
+#include <openssl/ssl.h>
 
 /***************************************************************************
- * Function	:	update_ctx_hash_image
+ * Function	:	crypto_hash_init
+ * Description	:	Wrapper function for SHA256_Init
+ ***************************************************************************/
+void crypto_hash_init(void *ctx)
+{
+	SHA256_CTX *c = (SHA256_CTX *)ctx;
+	SHA256_Init(c);
+}
+
+/***************************************************************************
+ * Function	:	crypto_hash_update
+ * Description	:	Wrapper function for SHA256_Update
+ ***************************************************************************/
+void crypto_hash_update(void *ctx, void *data, uint32_t len)
+{
+	SHA256_CTX *c = (SHA256_CTX *)ctx;
+	SHA256_Update(c, data, len);
+}
+
+/***************************************************************************
+ * Function	:	crypto_hash_final
+ * Description	:	Wrapper function for SHA256_Final
+ ***************************************************************************/
+void crypto_hash_final(void *hash, void *ctx)
+{
+	SHA256_CTX *c = (SHA256_CTX *)ctx;
+	SHA256_Final(hash, c);
+}
+
+/***************************************************************************
+ * Function	:	crypto_hash_update_file
  * Arguments	:	ctx - SHA256 context
  *			fname - Image Name
  * Return	:	SUCCESS or Failure
  * Description	:	Opens the Image File and updates the context with
  *			its contents
  ***************************************************************************/
-int update_ctx_hash_image(SHA256_CTX *ctx, char *fname)
+int crypto_hash_update_file(void *ctx, char *fname)
 {
 	FILE *fp;
 	unsigned char buf[IOBLOCK];
 	size_t bytes = 0;
+	SHA256_CTX *c = (SHA256_CTX *)ctx;
 
 	/* open the file */
 	fp = fopen(fname, "rb");
@@ -69,7 +101,7 @@ int update_ctx_hash_image(SHA256_CTX *ctx, char *fname)
 			break;
 		}
 
-		SHA256_Update(ctx, buf, bytes);
+		SHA256_Update(c, buf, bytes);
 	}
 
 	fclose(fp);
@@ -78,7 +110,43 @@ int update_ctx_hash_image(SHA256_CTX *ctx, char *fname)
 }
 
 /***************************************************************************
- * Function	:	extract_pub_key
+ * Function	:	crypto_rsa_sign
+ * Description	:	Wrapper function for RSA_sign
+ ***************************************************************************/
+int crypto_rsa_sign(void *img_hash, uint32_t len, void *rsa_sign,
+			uint32_t *rsa_len, char *key_name)
+{
+	int ret;
+	FILE *fpriv;
+	RSA *priv_key;
+
+	/* Open the private Key */
+	fpriv = fopen(key_name, "r");
+	if (fpriv == NULL) {
+		printf("Error in file opening %s:\n", key_name);
+		return FAILURE;
+	}
+
+	priv_key = PEM_read_RSAPrivateKey(fpriv, NULL, NULL, NULL);
+	fclose(fpriv);
+	if (priv_key == NULL) {
+		printf("Error in key reading %s:\n", key_name);
+		return FAILURE;
+	}
+
+	/* Sign the Image Hash with Private Key */
+	ret = RSA_sign(NID_sha256, img_hash, len,
+			rsa_sign, rsa_len,
+			priv_key);
+	if (ret != 1) {
+		printf("Error in Signing\n");
+		return FAILURE;
+	}
+	return SUCCESS;
+}
+
+/***************************************************************************
+ * Function	:	crypto_extract_pub_key
  * Arguments	:	fname_pub - Public Key File Name
  *			len - Pointer to Length of public Key (to be updated)
  *			key_ptr - Pointer to buffer where public key is stored
@@ -86,7 +154,7 @@ int update_ctx_hash_image(SHA256_CTX *ctx, char *fname)
  * Description	:	OPen the Public Key, read it into the provided buffer
  *			and update the Key lenght.
  ***************************************************************************/
-int extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr)
+int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr)
 {
 	FILE *fp;
 	RSA *pub_key;
@@ -132,12 +200,12 @@ int extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr)
 }
 
 /***************************************************************************
- * Function	:	print_attribution
+ * Function	:	crypto_print_attribution
  * Arguments	:	None
  * Return	:	Void
  * Description	:	Prints attribution to OpenSSL Project
  ***************************************************************************/
-void print_attribution(void)
+void crypto_print_attribution(void)
 {
 	printf("\n");
 	printf("==========================================================\n");
@@ -148,6 +216,9 @@ void print_attribution(void)
 	printf("==========================================================\n");
 }
 
+/***************************************************************************
+ * Description	:	CRC32 Lookup Table
+ ***************************************************************************/
 static uint32_t crc32_lookup[] = {
 	 0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA,
 	 0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
@@ -215,13 +286,13 @@ static uint32_t crc32_lookup[] = {
 	 0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D };
 	
 /***************************************************************************
- * Function	:	calculate_crc()
+ * Function	:	crypto_calculate_crc()
  * Arguments	:	data - Pointer to Data
  *			length - size of data (in bytes)
  * Return	:	CRC32 Value
  * Description	:	Calculate CRC32 over the data
  ***************************************************************************/
-uint32_t calculate_crc(void *data, uint32_t length)
+uint32_t crypto_calculate_crc(void *data, uint32_t length)
 {
 	uint32_t crc = 0xFFFFFFFF;
 	uint32_t index = 0;
@@ -237,13 +308,13 @@ uint32_t calculate_crc(void *data, uint32_t length)
 }
 
 /***************************************************************************
- * Function	:	calculate_checksum()
+ * Function	:	crypto_calculate_checksum()
  * Arguments	:	data - Pointer to Data
  *			num - Number of 32 bit words for checksum
  * Return	:	Checksum Value
  * Description	:	Calculate Checksum over the data
  ***************************************************************************/
-uint32_t calculate_checksum(void *data, uint32_t num)
+uint32_t crypto_calculate_checksum(void *data, uint32_t num)
 {
 	uint32_t i, checksum;
 	uint64_t sum = 0;

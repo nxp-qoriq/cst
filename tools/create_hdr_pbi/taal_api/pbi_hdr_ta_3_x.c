@@ -24,14 +24,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- */
-/*
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- */
 
 #include <global.h>
 #include <parse_utils.h>
@@ -109,7 +101,7 @@ int create_srk(void)
 	/* Read all the public Keys and Store in SRK Table */
 	for (i = 0; i < gd.num_srk_entries; i++) {
 		key_len = 0;
-		ret = extract_pub_key(gd.pub_fname[i],
+		ret = crypto_extract_pub_key(gd.pub_fname[i],
 					&key_len,
 					gd.key_table[i].pkey);
 		gd.key_table[i].key_len = key_len;
@@ -225,7 +217,8 @@ int update_crc_checksum(void)
 	 * rcw_word[34] = Checksum
 	 */
 	if (rcw_word[1] == LOAD_RCW_CHECKSUM) {
-		checksum = calculate_checksum(rcw_word, NUM_RCW_WORD - 1);
+		checksum = crypto_calculate_checksum(rcw_word,
+						NUM_RCW_WORD - 1);
 		rcw_word[NUM_RCW_WORD - 1] = checksum;
 	} else if (rcw_word[1] != LOAD_RCW_WO_CHECKSUM) {
 		printf("Error: Invalid Load RCW Command\n");
@@ -237,7 +230,7 @@ int update_crc_checksum(void)
 	 * pbi_word[num_pbi - 2] = STOP Command
 	 */
 	if (pbi_word[gd.num_pbi_words - 2] == CRC_STOP_CMD) {
-		crc = calculate_crc(pbi_word,
+		crc = crypto_calculate_crc(pbi_word,
 			(gd.num_pbi_words * sizeof(uint32_t)));
 		pbi_word[gd.num_pbi_words - 1] = crc;
 	} else if (pbi_word[gd.num_pbi_words - 2] != STOP_CMD) {
@@ -449,13 +442,13 @@ int calc_img_hash_ta_3_x(void)
 {
 	int ret;
 	FILE *fp;
-	SHA256_CTX ctx;
-	SHA256_Init(&ctx);
+	uint8_t ctx[CRYPTO_HASH_CTX_SIZE];
+	crypto_hash_init(ctx);
 
-	SHA256_Update(&ctx, gd.hdr_struct, gd.hdr_size);
-	SHA256_Update(&ctx, gd.key_table, gd.srk_size);
+	crypto_hash_update(ctx, gd.hdr_struct, gd.hdr_size);
+	crypto_hash_update(ctx, gd.key_table, gd.srk_size);
 
-	SHA256_Final(gd.img_hash, &ctx);
+	crypto_hash_final(gd.img_hash, ctx);
 
 	fp = fopen(gd.img_hash_file_name, "wb");
 	if (fp == NULL) {
@@ -479,10 +472,11 @@ int calc_img_hash_ta_3_x(void)
  ****************************************************************************/
 int calc_srk_hash_ta_3_x(void)
 {
-	SHA256_CTX ctx;
-	SHA256_Init(&ctx);
-	SHA256_Update(&ctx, gd.key_table, gd.srk_size);
-	SHA256_Final(gd.srk_hash, &ctx);
+	uint8_t ctx[CRYPTO_HASH_CTX_SIZE];
+	crypto_hash_init(ctx);
+
+	crypto_hash_update(ctx, gd.key_table, gd.srk_size);
+	crypto_hash_final(gd.srk_hash, ctx);
 	return SUCCESS;
 }
 

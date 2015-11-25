@@ -24,14 +24,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- */
-/*
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- */
 
 #include <global.h>
 #include <parse_utils.h>
@@ -105,7 +97,7 @@ int create_srk(void)
 	/* Read all the public Keys and Store in SRK Table */
 	for (i = 0; i < gd.num_srk_entries; i++) {
 		key_len = 0;
-		ret = extract_pub_key(gd.pub_fname[i],
+		ret = crypto_extract_pub_key(gd.pub_fname[i],
 					&key_len,
 					gd.key_table[i].pkey);
 		gd.key_table[i].key_len = key_len;
@@ -261,16 +253,16 @@ int calc_img_hash_ta_3_x(void)
 {
 	int ret;
 	FILE *fp;
-	SHA256_CTX ctx;
-	SHA256_Init(&ctx);
+	uint8_t ctx[CRYPTO_HASH_CTX_SIZE];
+	crypto_hash_init(ctx);
 
-	SHA256_Update(&ctx, gd.hdr_struct, gd.hdr_size);
-	SHA256_Update(&ctx, gd.key_table, gd.srk_size);
-	ret = update_ctx_hash_image(&ctx, gd.entries[0].name);
+	crypto_hash_update(ctx, gd.hdr_struct, gd.hdr_size);
+	crypto_hash_update(ctx, gd.key_table, gd.srk_size);
+	ret = crypto_hash_update_file(ctx, gd.entries[0].name);
 	if (ret == FAILURE)
 		return ret;
 
-	SHA256_Final(gd.img_hash, &ctx);
+	crypto_hash_final(gd.img_hash, ctx);
 
 	fp = fopen(gd.img_hash_file_name, "wb");
 	if (fp == NULL) {
@@ -294,10 +286,11 @@ int calc_img_hash_ta_3_x(void)
  ****************************************************************************/
 int calc_srk_hash_ta_3_x(void)
 {
-	SHA256_CTX ctx;
-	SHA256_Init(&ctx);
-	SHA256_Update(&ctx, gd.key_table, gd.srk_size);
-	SHA256_Final(gd.srk_hash, &ctx);
+	uint8_t ctx[CRYPTO_HASH_CTX_SIZE];
+	crypto_hash_init(ctx);
+
+	crypto_hash_update(ctx, gd.key_table, gd.srk_size);
+	crypto_hash_final(gd.srk_hash, ctx);
 	return SUCCESS;
 }
 
