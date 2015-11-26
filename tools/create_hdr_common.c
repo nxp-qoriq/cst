@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <getopt.h>
 
 #include <global.h>
 #include <taal.h>
@@ -38,15 +39,25 @@
 
 extern struct g_data_t gd;
 
+static struct option long_options[] = {
+	{"verbose", no_argument, &gd.verbose_flag, 1},
+	{"hash", no_argument, &gd.option_srk_hash, 1},
+	{"img_hash", no_argument, &gd.option_img_hash, 1},
+	{"help", no_argument, &gd.help_flag, 1},
+	{0, 0, 0, 0}
+};
+
 void print_usage(char *tool)
 {
 	printf("\nCorrect Usage of Tool is:\n");
-	printf("\t%s <input_file>             -- Create Header and Sign\n",
-		tool);
-	printf("\t%s --hash <input_file>      -- Print SRK Hash Only\n",
-		tool);
-	printf("\t%s --img_hash <input_file>  -- Create Header w/o Sign\n",
-		tool);
+	printf("\n%s [options] <input_file>\n", tool);
+	printf("\t--verbose    Display header Info after Creation\n");
+	printf("\t--hash       Print the SRK(Public key) hash.\n");
+	printf("\t--img_hash   Header is generated without Signature.\n");
+	printf("\t             Image Hash is stored in a separate file.\n");
+	printf("\t--help       Show the Help for Tool Usage.\n");
+	printf("\n<input_file>   Contains all information required by tool");
+	printf("\n\n");
 }
 
 /***************************************************************************
@@ -59,7 +70,8 @@ void print_usage(char *tool)
 int create_hdr(int argc, char **argv)
 {
 	enum cfg_taal cfg_taal;
-	int ret, i;
+	int ret, i, c;
+	int option_index;
 	uint32_t *srk;
 
 	/* Initialization of Global Structure to 0 */
@@ -69,37 +81,23 @@ int create_hdr(int argc, char **argv)
 	crypto_print_attribution();
 
 	/* Check the command line argument */
-	if ((argc < 2) || (argc > 3)) {
-		/* Incorrect Usage */
-		printf("\nIncorrect Usage");
-		print_usage(argv[0]);
-		return FAILURE;
-	}
-	if ((strcmp(argv[1], "--help") == 0) ||
-	   (strcmp(argv[1], "-h") == 0)) {
+	c = 0;
+	option_index = 0;
+	while (c != -1)
+		c = getopt_long(argc, argv, "", long_options, &option_index);
+
+	if (gd.help_flag == 1) {
 		print_usage(argv[0]);
 		return SUCCESS;
-	} else if (strcmp(argv[1], "--hash") == 0) {
-		gd.option_srk_hash = 1;
-		gd.input_file = argv[2];
-	} else if (strcmp(argv[1], "--img_hash") == 0) {
-		gd.option_img_hash = 1;
-		gd.input_file = argv[2];
-	} else if (argc == 3) {
-		printf("\nIncorrect Usage");
-		print_usage(argv[0]);
-		return FAILURE;
-	} else {
-		gd.input_file = argv[1];
 	}
-
-	if (gd.input_file == NULL) {
-		/* Incorrect Usage */
-		printf("\nIncorrect Usage");
+		
+	if (optind != argc - 1) {
+		printf("\nError!! Input File is not Specified");
 		print_usage(argv[0]);
 		return FAILURE;
 	}
 
+	gd.input_file = argv[optind];
 	printf("\nInput File is %s\n", gd.input_file);
 
 	/* Get the Trust Arch Version from Input File */
@@ -139,7 +137,7 @@ int create_hdr(int argc, char **argv)
 			return ret;
 
 		/* TAAL: Dump the header fields */
-		if (gd.verbose_flag == 1) {
+		if (gd.verbose_flag) {
 			ret = taal_dump_header(cfg_taal);
 			if (ret != SUCCESS)
 				return ret;
@@ -149,11 +147,12 @@ int create_hdr(int argc, char **argv)
 				printf("%02x", gd.img_hash[i]);
 		}
 
+		printf("\n\n************************************************");
 		/* Check if option for img_has is selected */
 		if (gd.option_img_hash == 1) {
-			printf("\n\nImage Hash Stored in File: %s",
+			printf("\n* Image Hash Stored in File: %s",
 				gd.img_hash_file_name);
-			printf("\nHeader File is w/o Signature appended");
+			printf("\n* Header File is w/o Signature appended");
 		} else {
 			/* Calculate the Signature over Image Hash */
 			ret = calculate_signature();
@@ -164,9 +163,9 @@ int create_hdr(int argc, char **argv)
 			ret = append_signature();
 			if (ret != SUCCESS)
 				return ret;
-			printf("\nHeader File is with Signature appended");
+			printf("\n* Header File is with Signature appended");
 		}
-		printf("\n\n------------------------------------------------");
+		printf("\n************************************************\n");
 		printf("\nHeader File Created: %s", gd.hdr_file_name);
 	}
 

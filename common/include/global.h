@@ -113,7 +113,6 @@ struct g_data_t {
 	uint8_t iss_flag;
 	uint8_t lw_flag;
 
-	uint8_t verbose_flag;
 	uint8_t srk_hash[SHA256_DIGEST_LENGTH];
 	uint8_t img_hash[SHA256_DIGEST_LENGTH];
 	uint8_t rsa_sign[KEY_SIZE_BYTES];
@@ -134,8 +133,10 @@ struct g_data_t {
 	uint32_t rsa_offset;
 	uint32_t rsa_size;
 
-	uint8_t option_srk_hash;
-	uint8_t option_img_hash;
+	int option_srk_hash;
+	int option_img_hash;
+	int verbose_flag;
+	int help_flag;
 };
 
 #endif

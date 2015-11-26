@@ -524,7 +524,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 
 	case FIELD_VERBOSE:
 		if (file_field.count == 1)
-			gd.verbose_flag = STR_TO_UL(file_field.value[0], 16);
+			gd.verbose_flag |= STR_TO_UL(file_field.value[0], 16);
 
 		break;
 
