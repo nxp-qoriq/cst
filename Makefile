@@ -154,7 +154,7 @@ $(LIB_HASH_DRBG):
 
 install: $(foreach binary,$(INSTALL_BINARIES),install-$(binary))
 	cp -rf input_files $(DESTDIR)$(BIN_DEST_DIR)/cst/
-	cp -rf scripts $(DESTDIR)$(BIN_DEST_DIR)/cst/
+	cp -rf scripts/* $(DESTDIR)$(BIN_DEST_DIR)/cst/
 
 install-%: %
 	$(INSTALL) -d $(DESTDIR)$(BIN_DEST_DIR)/cst

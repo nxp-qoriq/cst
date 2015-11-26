@@ -2,12 +2,13 @@
  * Freescale Proprietary.
  */
 
+ESBC=1
 ---------------------------------------------------
 # Specify the platform. [Mandatory]
 # Choose Platform -
 # TRUST 3.0: LS2085
 # TRUST 3.1: LS2088, LS1088
-PLATFORM=LS2085
+PLATFORM=LS2088
 ---------------------------------------------------
 # Specify the Key Information.
 # PUB_KEY [Mandatory] Comma Seperated List
@@ -37,7 +38,7 @@ OEM_UID_4=
 ---------------------------------------------------
 # Specify the output file names [Optional].
 # Default Values chosen in Tool
-OUTPUT_HDR_FILENAME=hdr_uboot.out
+OUTPUT_HDR_FILENAME=hdr_bs.out
 IMAGE_HASH_FILENAME=
 RSA_SIGN_FILENAME=
 ---------------------------------------------------
