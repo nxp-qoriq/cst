@@ -35,6 +35,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <errno.h>
+#include <netinet/in.h>
 
 #include <global.h>
 

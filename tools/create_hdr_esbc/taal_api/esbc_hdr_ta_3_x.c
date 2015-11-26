@@ -57,22 +57,7 @@ static char *parse_list[] = {
 
 int parse_input_file_ta_3_x(void)
 {
-	int i, ret = 0;
-	FILE *fp;
-	fp = fopen(gd.input_file, "r");
-	if (fp == NULL) {
-		printf("Error in opening the file: %s\n", gd.input_file);
-		return FAILURE;
-	}
-
-	for (i = 0; i < NUM_PARSE_LIST; i++) {
-		ret = fill_gd_input_file(parse_list[i], fp);
-		if (ret != SUCCESS)
-			break;
-	}
-
-	fclose(fp);
-	return ret;
+	return (parse_input_file(parse_list, NUM_PARSE_LIST));
 }
 
 /****************************************************************************
@@ -182,9 +167,6 @@ int create_header_ta_3_x(void)
 	FILE *fp;
 	uint32_t hdrlen = gd.rsa_offset;
 
-	if (gd.option_img_hash == 0)
-		hdrlen += gd.rsa_size;
-
 	header = malloc(hdrlen);
 	if (header == NULL) {
 		printf("Error in allocating memory of %d bytes\n", hdrlen);
@@ -195,9 +177,6 @@ int create_header_ta_3_x(void)
 
 	memcpy(header, gd.hdr_struct, gd.hdr_size);
 	memcpy(header + gd.srk_offset, gd.key_table, gd.srk_size);
-
-	if (gd.option_img_hash == 0)
-		memcpy(header + gd.rsa_offset, gd.rsa_sign, gd.rsa_size);
 
 	/* Create the header file */
 	fp = fopen(gd.hdr_file_name, "wb");
@@ -225,7 +204,6 @@ int calc_img_hash_ta_3_x(void)
 	int ret;
 	FILE *fp;
 	uint8_t ctx[CRYPTO_HASH_CTX_SIZE];
-	uint32_t len;
 	crypto_hash_init(ctx);
 
 	crypto_hash_update(ctx, gd.hdr_struct, gd.hdr_size);
@@ -236,14 +214,7 @@ int calc_img_hash_ta_3_x(void)
 
 	crypto_hash_final(gd.img_hash, ctx);
 
-	if (gd.option_img_hash == 0) {
-		ret = crypto_rsa_sign(gd.img_hash, SHA256_DIGEST_LENGTH,
-			gd.rsa_sign, &len, gd.pri_fname[gd.srk_sel - 1]);
-		if (ret != SUCCESS) {
-			printf("Error in Signing\n");
-			return FAILURE;
-		}
-	} else {
+	if (gd.option_img_hash == 1) {
 		fp = fopen(gd.img_hash_file_name, "wb");
 		if (fp == NULL) {
 			printf("Error in opening the file: %s\n",
@@ -265,50 +236,13 @@ int calc_img_hash_ta_3_x(void)
 /****************************************************************************
  * API's for Calculating SRK Hash
  ****************************************************************************/
-int create_srk(void)
-{
-	int i, ret;
-	uint32_t key_len;
-
-	/* Check if Num of Entries and Key Select is Correct */
-	ret = FAILURE;
-	if (gd.num_srk_entries > 8) {
-		printf("\n Invalid Number of Keys");
-		return FAILURE;
-	}
-	if ((gd.srk_sel > gd.num_srk_entries) ||
-	    (gd.srk_sel == 0)) {
-		printf("\n Invalid Key Select");
-		return FAILURE;
-	}
-	if (gd.option_img_hash == 0) {
-		if (gd.num_srk_entries != gd.num_pri_key) {
-			printf("\n Public and Private Key Count Mismatch");
-			return FAILURE;
-		}
-	}
-
-	/* Read all the public Keys and Store in SRK Table */
-	for (i = 0; i < gd.num_srk_entries; i++) {
-		key_len = 0;
-		ret = crypto_extract_pub_key(gd.pub_fname[i],
-					&key_len,
-					gd.key_table[i].pkey);
-		gd.key_table[i].key_len = key_len;
-		if (ret != SUCCESS)
-			break;
-	}
-
-	return ret;
-}
-
 int calc_srk_hash_ta_3_x(void)
 {
 	uint8_t ctx[CRYPTO_HASH_CTX_SIZE];
 	int ret;
 
 	/* Create the SRK Table */
-	ret = create_srk();
+	ret = create_srk(MAX_SRK_TA_3_X);
 	if (ret != SUCCESS)
 		return ret;
 

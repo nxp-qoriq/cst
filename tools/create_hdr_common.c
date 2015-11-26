@@ -60,6 +60,7 @@ int create_hdr(int argc, char **argv)
 {
 	enum cfg_taal cfg_taal;
 	int ret, i;
+	uint32_t *srk;
 
 	/* Initialization of Global Structure to 0 */
 	memset(&gd, 0, sizeof(struct g_data_t));
@@ -148,14 +149,24 @@ int create_hdr(int argc, char **argv)
 				printf("%02x", gd.img_hash[i]);
 		}
 
-		/* Output to user and exit */
+		/* Check if option for img_has is selected */
 		if (gd.option_img_hash == 1) {
 			printf("\n\nImage Hash Stored in File: %s",
 				gd.img_hash_file_name);
 			printf("\nHeader File is w/o Signature appended");
 		} else {
+			/* Calculate the Signature over Image Hash */
+			ret = calculate_signature();
+			if (ret != SUCCESS)
+				return ret;
+
+			/* Append Signature to Header File */
+			ret = append_signature();
+			if (ret != SUCCESS)
+				return ret;
 			printf("\nHeader File is with Signature appended");
 		}
+		printf("\n\n------------------------------------------------");
 		printf("\nHeader File Created: %s", gd.hdr_file_name);
 	}
 
@@ -163,6 +174,128 @@ int create_hdr(int argc, char **argv)
 	for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
 		printf("%02x", gd.srk_hash[i]);
 
+	srk = (uint32_t *)gd.srk_hash;
+	for (i = 0; i < SHA256_DIGEST_LENGTH / sizeof(uint32_t); i++)
+		printf("\n\t SFP SRKHR%i = %08x", i, htonl(srk[i]));
+
 	printf("\n\n");
+	return SUCCESS;
+}
+
+/***************************************************************************
+ * Function	:	create_srk
+ * Arguments	:	max_keys - Maximum Number of entries in SRK Table
+ * Return	:	SUCCESS or FAILURE
+ * Description	:	Creates the SRK Table
+ ***************************************************************************/
+int create_srk(uint32_t max_keys)
+{
+	int i, ret;
+	uint32_t key_len;
+
+	/* Check if Num of Entries and Key Select is Correct */
+	ret = FAILURE;
+	if (gd.num_srk_entries > max_keys) {
+		printf("\n Invalid Number of Keys");
+		return FAILURE;
+	}
+	if ((gd.srk_sel > gd.num_srk_entries) ||
+	    (gd.srk_sel == 0)) {
+		printf("\n Invalid Key Select");
+		return FAILURE;
+	}
+	if (gd.option_img_hash == 0) {
+		if (gd.num_srk_entries != gd.num_pri_key) {
+			printf("\n Public and Private Key Count Mismatch");
+			return FAILURE;
+		}
+	}
+
+	/* Read all the public Keys and Store in SRK Table */
+	for (i = 0; i < gd.num_srk_entries; i++) {
+		key_len = 0;
+		ret = crypto_extract_pub_key(gd.pub_fname[i],
+					&key_len,
+					gd.key_table[i].pkey);
+		gd.key_table[i].key_len = key_len;
+		if (ret != SUCCESS)
+			break;
+	}
+
+	return ret;
+}
+
+/***************************************************************************
+ * Function	:	parse_input_file
+ * Arguments	:	list - Pointer to array of field names
+ *			num_list - Number of elements in list
+ * Return	:	SUCCESS or FAILURE
+ * Description	:	Parses all the fields in the list and fills the info
+ *			in Global Structure
+ ***************************************************************************/
+int parse_input_file(char **list, uint32_t num_list)
+{
+	int i, ret = 0;
+	FILE *fp;
+	fp = fopen(gd.input_file, "r");
+	if (fp == NULL) {
+		printf("Error in opening the file: %s\n", gd.input_file);
+		return FAILURE;
+	}
+
+	for (i = 0; i < num_list; i++) {
+		ret = fill_gd_input_file(list[i], fp);
+		if (ret != SUCCESS)
+			break;
+	}
+
+	fclose(fp);
+	return ret;
+}
+
+/***************************************************************************
+ * Function	:	calculate_signature
+ * Arguments	:	NONE
+ * Return	:	SUCCESS or FAILURE
+ * Description	:	Calculate Signature over Image Hash
+ ***************************************************************************/
+int calculate_signature(void)
+{
+	int ret;
+	ret = crypto_rsa_sign(gd.img_hash, SHA256_DIGEST_LENGTH,
+		gd.rsa_sign, &gd.rsa_size, gd.pri_fname[gd.srk_sel - 1]);
+	if (ret != SUCCESS)
+		printf("Error in Signing\n");
+
+	return ret;
+}
+
+/***************************************************************************
+ * Function	:	append_signature
+ * Arguments	:	NONE
+ * Return	:	SUCCESS or FAILURE
+ * Description	:	Appends Signature to end of HDR
+ ***************************************************************************/
+int append_signature(void)
+{
+	int i;
+	FILE *fhdr;
+	char ch;
+
+	/* Open the OUTPUT_HDR_FILENAME in 'Append Binary' Mode */
+	fhdr = fopen(gd.hdr_file_name, "ab");
+	if (fhdr == NULL) {
+		printf("Error in opening the file: %s\n",
+			gd.hdr_file_name);
+		return FAILURE;
+	}
+
+	for (i = 0; i < gd.rsa_size; i++) {
+		ch = gd.rsa_sign[i];
+		fputc(ch, fhdr);
+	}
+
+	fclose(fhdr);
+
 	return SUCCESS;
 }
