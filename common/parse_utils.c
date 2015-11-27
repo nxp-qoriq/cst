@@ -61,6 +61,11 @@ static parse_struct_t parse_table[] = {
 	{ "RCW_PBI_FILENAME", FIELD_RCW_PBI_FILENAME },
 	{ "BOOT1_PTR", FIELD_BOOT1_PTR },
 	{ "VERBOSE", FIELD_VERBOSE },
+	{ "SEC_IMAGE", FIELD_SEC_IMAGE },
+	{ "WP_FLAG", FIELD_WP_FLAG },
+	{ "HK_AREA_POINTER", FIELD_HK_AREA_POINTER },
+	{ "HK_AREA_SIZE", FIELD_HK_AREA_SIZE },
+	{ "IMAGE_TARGET", FIELD_IMAGE_TARGET }
 
 };
 
@@ -74,6 +79,36 @@ enum input_field_t index_from_field(char *field)
 			return parse_table[i].index;
 	}
 	return FIELD_UNKNOWN_MAX;
+}
+
+char *tar[][2] = { 
+	{"NOR_8B", "b"},
+	{"NOR_16B", "f"},
+	{"NAND_8B_512", "8"},
+	{"NAND_8B_2K", "9"},
+	{"NAND_8B_4K", "a"},
+	{"NAND_16B_512", "c"},
+	{"NAND_16B_2K", "d"},
+	{"NAND_16B_4K", "e"},
+	{"MMC", "7"},
+	{"SD", "7"},
+	{"SDHC", "7"},
+	{"SPI", "6"},
+	{"LAST", "0"}
+};
+
+int check_target(char *target_name, uint32_t *targetid)
+{
+	int i = 0;
+	while (strcmp(tar[i][0], "LAST")) {
+		if (strcmp(tar[i][0], target_name) == 0) {
+			*targetid = strtoul(tar[i][1], 0, 16);
+			return SUCCESS;
+		}
+		i++;
+	}
+	printf("\nInvalid Image Target\n");
+	return FAILURE;
 }
 
 /***************************************************************************
@@ -250,7 +285,7 @@ void find_value_from_file(char *field_name, FILE *fp)
 
 int fill_gd_input_file(char *field_name, FILE *fp)
 {
-	int i;
+	int i, ret = SUCCESS;
 	DWord val64;
 	enum input_field_t idx;
 
@@ -303,8 +338,12 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		break;
 
 	case FIELD_KEY_SELECT:
-		if (file_field.count == 1)
+		if (file_field.count == 1) {
 			gd.srk_sel = STR_TO_UL(file_field.value[0], 16);
+			gd.srk_flag = 1;
+		} else {
+			gd.srk_sel = 1;
+		}
 
 		break;
 
@@ -528,12 +567,43 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 
 		break;
 
+	case FIELD_SEC_IMAGE:
+		if (file_field.count == 1)
+			gd.sec_image_flag |= STR_TO_UL(file_field.value[0], 16);
+
+		break;
+
+	case FIELD_WP_FLAG:
+		if (file_field.count == 1)
+			gd.wp_flag |= STR_TO_UL(file_field.value[0], 16);
+
+		break;
+
+	case FIELD_HK_AREA_POINTER:
+		if (file_field.count == 1)
+			gd.hkarea |= STR_TO_UL(file_field.value[0], 16);
+
+		break;
+
+	case FIELD_HK_AREA_SIZE:
+		if (file_field.count == 1)
+			gd.hksize |= STR_TO_UL(file_field.value[0], 16);
+
+		break;
+
+	case FIELD_IMAGE_TARGET:
+		if (file_field.count == 1)
+			ret = check_target(file_field.value[0],
+					&gd.img_target);
+
+		break;
+
 	default:
 		printf("\n Invalid Field being parsed");
 		return FAILURE;
 	}
 
-	return SUCCESS;
+	return ret;
 }
 
 int get_file_size(const char *c)

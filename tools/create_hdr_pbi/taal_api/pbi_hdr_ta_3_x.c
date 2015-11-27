@@ -59,7 +59,12 @@ static char *parse_list[] = {
 
 #define NUM_PARSE_LIST (sizeof(parse_list) / sizeof(char *))
 
-int parse_input_file_ta_3_x(void)
+int parse_input_file_ta_3_0(void)
+{
+	return (parse_input_file(parse_list, NUM_PARSE_LIST));
+}
+
+int parse_input_file_ta_3_1(void)
 {
 	return (parse_input_file(parse_list, NUM_PARSE_LIST));
 }
@@ -380,6 +385,16 @@ int create_header_ta_3_x(void)
 	return SUCCESS;
 }
 
+int create_header_ta_3_0(void)
+{
+	return (create_header_ta_3_x());
+}
+
+int create_header_ta_3_1(void)
+{
+	return (create_header_ta_3_x());
+}
+
 /****************************************************************************
  * API's for Calculating Image Hash
  ****************************************************************************/
@@ -414,6 +429,16 @@ int calc_img_hash_ta_3_x(void)
 	return SUCCESS;
 }
 
+int calc_img_hash_ta_3_0(void)
+{
+	return (calc_img_hash_ta_3_x());
+}
+
+int calc_img_hash_ta_3_1(void)
+{
+	return (calc_img_hash_ta_3_x());
+}
+
 /****************************************************************************
  * API's for Calculating SRK Hash
  ****************************************************************************/
@@ -432,6 +457,16 @@ int calc_srk_hash_ta_3_x(void)
 	crypto_hash_update(ctx, gd.key_table, gd.srk_size);
 	crypto_hash_final(gd.srk_hash, ctx);
 	return SUCCESS;
+}
+
+int calc_srk_hash_ta_3_0(void)
+{
+	return (calc_srk_hash_ta_3_x());
+}
+
+int calc_srk_hash_ta_3_1(void)
+{
+	return (calc_srk_hash_ta_3_x());
 }
 
 /****************************************************************************

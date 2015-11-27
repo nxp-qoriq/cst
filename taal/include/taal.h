@@ -29,14 +29,26 @@
 #define _TAAL_H_
 
 enum cfg_taal {
-	TA_3_0 = 0,		/* LS2085 */
+	TA_1_X_PBL = 0,		/* P4080, P3041, P5020, P5040 */
+	TA_1_X_NONPBL,		/* P1010, BSC9132 */
+	TA_2_0_PBL,		/* T4240, T1023, T2080, T1040, B4860 */
+	TA_2_0_NONPBL,		/* C290 */
+	TA_2_1_ARM7,		/* LS1020 */
+	TA_2_1_ARM8,		/* LS1043, LS1012 */
+	TA_3_0,			/* LS2085 */
 	TA_3_1,			/* LS2088, LS1088 */
 	TA_UNKNOWN_MAX
+};
+
+enum cfg_core {
+	CORE_ARM = 0,
+	CORE_PPC
 };
 
 typedef struct {
 	char *plat_name;
 	enum cfg_taal ta_type;
+	enum cfg_core core_type;
 } ta_struct_t;
 
 typedef int (*ta_parse)(void);
@@ -64,6 +76,6 @@ int taal_calc_srk_hash(enum cfg_taal);
 int taal_dump_header(enum cfg_taal);
 
 /* Get TA from File */
-enum cfg_taal get_ta_from_file(char *file_name);
+enum cfg_taal get_ta_from_file(char *file_name, enum cfg_core *core_type);
 
 #endif

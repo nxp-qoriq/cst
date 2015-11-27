@@ -24,84 +24,34 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _PARSE_UTILS_H
-#define _PARSE_UTILS_H
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <ctype.h>
-#include <limits.h>
-#include <errno.h>
-#include <netinet/in.h>
+#ifndef _ISBC_HDR_TA_1_X_H_
+#define _ISBC_HDR_TA_1_X_H_
 
-#include <global.h>
+/**********************************************************
+ * HEADER Structures
+ **********************************************************/
+#define MAX_SG_TA_1_X		8
+#define MAX_SRK_TA_1_X		4
 
-#define MAX_LINE_SIZE		1024
-#define MAX_U32			0xFFFFFFFF
+struct isbc_hdr_ta_1_x {
+	uint8_t barker[BARKER_LEN];	/* 0x00 Barker code */
 
-struct input_field {
-	char *value[64];
-	int count;
+	uint32_t pkey;			/* 0x04 Public Key */
+	uint32_t key_len;		/* 0x08 Key Length */
+
+	uint32_t psign;			/* 0x0c signature offset */
+	uint32_t sign_len;		/* 0x10 length of signature */
+
+	uint32_t sg_table_addr;		/* 0x14 ptr to SG table */
+	uint32_t sg_entries;		/* 0x18 no. of entries in SG */
+	uint32_t entry_point;		/* 0x1c ESBC entry point */
+
+	uint32_t sg_flag;		/* 0x20 */
+
+	uint32_t uid_flag;		/* 0x24 Flag to indicate uid */
+	uint32_t fsl_uid_0;		/* 0x28 Freescale unique id */
+	uint32_t oem_uid_0;		/* 0x2c OEM unique id */
 };
-
-unsigned long STR_TO_UL(char *str, int base);
-unsigned long long STR_TO_ULL(char *str, int base);
-void find_value_from_file(char *field_name, FILE *fp);
-int fill_gd_input_file(char *field_name, FILE *fp);
-int get_file_size(const char *file_name);
-
-enum input_field_t {
-	FIELD_PLATFORM = 0,
-	FIELD_ENTRY_POINT,
-	FIELD_PUB_KEY,
-	FIELD_KEY_SELECT,
-	FIELD_IMAGE_1,
-	FIELD_IMAGE_2,
-	FIELD_IMAGE_3,
-	FIELD_IMAGE_4,
-	FIELD_IMAGE_5,
-	FIELD_IMAGE_6,
-	FIELD_IMAGE_7,
-	FIELD_IMAGE_8,
-	FIELD_FSL_UID_0,
-	FIELD_FSL_UID_1,
-	FIELD_OEM_UID_0,
-	FIELD_OEM_UID_1,
-	FIELD_OEM_UID_2,
-	FIELD_OEM_UID_3,
-	FIELD_OEM_UID_4,
-	FIELD_OUTPUT_HDR_FILENAME,
-	FIELD_MP_FLAG,
-	FIELD_ISS_FLAG,
-	FIELD_LW_FLAG,
-	FIELD_VERBOSE,
-	FIELD_PRI_KEY,
-	FIELD_IMAGE_HASH_FILENAME,
-	FIELD_RSA_SIGN_FILENAME,
-	FIELD_RCW_PBI_FILENAME,
-	FIELD_BOOT1_PTR,
-	FIELD_SEC_IMAGE,
-	FIELD_WP_FLAG,
-	FIELD_HK_AREA_POINTER,
-	FIELD_HK_AREA_SIZE,
-	FIELD_IMAGE_TARGET,
-	FIELD_UNKNOWN_MAX
-};
-
-typedef struct {
-	char *field_name;
-	enum input_field_t index;
-} parse_struct_t;
-
-typedef union {
-	uint64_t whole;
-	struct {
-		uint32_t low;
-		uint32_t high;
-	} m_halfs;
-} DWord;
 
 #endif

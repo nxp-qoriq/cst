@@ -28,10 +28,10 @@
 #include <global.h>
 #include <parse_utils.h>
 #include <crypto_utils.h>
-#include <isbc_hdr_ta_3_x.h>
+#include <isbc_hdr_ta_2_x.h>
 
 extern struct g_data_t gd;
-static uint8_t barker[] = {0x12, 0x19, 0x20, 0x01};
+static uint8_t barker[] = {0x68, 0x39, 0x27, 0x81};
 
 /****************************************************************************
  * API's for PARSING INPUT FILES
@@ -53,25 +53,35 @@ static char *parse_list[] = {
 	"FSL_UID_1",
 	"OEM_UID_0",
 	"OEM_UID_1",
-	"OEM_UID_2",
-	"OEM_UID_3",
-	"OEM_UID_4",
 	"OUTPUT_HDR_FILENAME",
 	"IMAGE_HASH_FILENAME",
 	"MP_FLAG",
-	"ISS_FLAG",
-	"LW_FLAG",
+	"SEC_IMAGE",
+	"WP_FLAG",
+	"HK_AREA_POINTER",
+	"HK_AREA_SIZE",
+	"IMAGE_TARGET",
 	"VERBOSE"
 };
 
 #define NUM_PARSE_LIST (sizeof(parse_list) / sizeof(char *))
 
-int parse_input_file_ta_3_0(void)
+int parse_input_file_ta_2_0_pbl(void)
 {
 	return (parse_input_file(parse_list, NUM_PARSE_LIST));
 }
 
-int parse_input_file_ta_3_1(void)
+int parse_input_file_ta_2_0_nonpbl(void)
+{
+	return (parse_input_file(parse_list, NUM_PARSE_LIST));
+}
+
+int parse_input_file_ta_2_1_arm7(void)
+{
+	return (parse_input_file(parse_list, NUM_PARSE_LIST));
+}
+
+int parse_input_file_ta_2_1_arm8(void)
 {
 	return (parse_input_file(parse_list, NUM_PARSE_LIST));
 }
@@ -81,59 +91,119 @@ int parse_input_file_ta_3_1(void)
  ****************************************************************************/
 static void calculate_offset_size(void)
 {
-	gd.srk_size = gd.num_srk_entries * sizeof(struct srk_table_t);
+	uint32_t key_len;
+
 	gd.sg_size = gd.num_entries * sizeof(struct sg_table_t);
-	gd.rsa_size = gd.key_table[gd.srk_sel - 1].key_len / 2;
+
+	if (gd.hton_flag == 0)
+		key_len = gd.key_table[gd.srk_sel - 1].key_len;
+	else
+		key_len = htonl(gd.key_table[gd.srk_sel - 1].key_len);
+
+	gd.rsa_size = key_len / 2;
 
 	/* Calculate the offsets of blocks aligne to boundry 0x200 */
 	gd.srk_offset = OFFSET_ALIGN(gd.hdr_size);
-	gd.sg_offset = OFFSET_ALIGN(gd.srk_offset + gd.srk_size);
+	if (gd.srk_flag == 1)
+		gd.sg_offset = OFFSET_ALIGN(gd.srk_offset + gd.srk_size);
+	else
+		gd.sg_offset = OFFSET_ALIGN(gd.srk_offset + gd.key_len);
+
 	gd.rsa_offset = OFFSET_ALIGN(gd.sg_offset + gd.sg_size);
 }
 
-static uint8_t get_misc_flags(void)
+static uint16_t get_uid_flags(void)
 {
-	uint8_t flag = 0;
+	uint8_t fsluid = 0;
+	uint8_t oemuid = 0;
 
-	if (gd.mp_flag)
-		flag |= MP_FLAG_MASK;
-	if (gd.iss_flag)
-		flag |= ISS_FLAG_MASK;
-	if (gd.lw_flag)
-		flag |= LW_FLAG_MASK;
+	if ((gd.fsluid_flag[0]) || (gd.fsluid_flag[1]))
+		fsluid = 1;
 
-	/* B01 flag is always set in Boot 1 Header */
-	flag |= B01_FLAG_MASK;
-	return flag;
+	if ((gd.oemuid_flag[0]) || (gd.oemuid_flag[1]))
+		oemuid = 1;
+
+	if ((fsluid == 1) && (oemuid == 1))
+		return 0x1;
+
+	if (oemuid == 1)
+		return 0x2;
+
+	if (fsluid == 1)
+		return 0x4;
+
+	return 0;
 }
 
-static uint8_t get_uid_flags(void)
-{
-	uint8_t flag = 0;
-
-	if (gd.fsluid_flag[0])
-		flag |= FID_MASK;
-	if (gd.fsluid_flag[1])
-		flag |= FID_MASK;
-	if (gd.oemuid_flag[0])
-		flag |= OID_0_MASK;
-	if (gd.oemuid_flag[1])
-		flag |= OID_1_MASK;
-	if (gd.oemuid_flag[2])
-		flag |= OID_2_MASK;
-	if (gd.oemuid_flag[3])
-		flag |= OID_3_MASK;
-	if (gd.oemuid_flag[4])
-		flag |= OID_4_MASK;
-
-	return flag;
-}
-
-int fill_structure_ta_3_0(void)
+int fill_structure_ta_2_0(void)
 {
 	int ret, i;
-	struct isbc_hdr_ta_3_0 *hdr = (struct isbc_hdr_ta_3_0 *)gd.hdr_struct;
-	memset(hdr, 0, sizeof(struct isbc_hdr_ta_3_0));
+	struct isbc_hdr_ta_2_0 *hdr = (struct isbc_hdr_ta_2_0 *)gd.hdr_struct;
+	memset(hdr, 0, sizeof(struct isbc_hdr_ta_2_0));
+
+	/* Create the SG Table */
+	for (i = 0; i < gd.num_entries; i++) {
+		ret = get_file_size(gd.entries[i].name);
+		if (ret == FAILURE)
+			return ret;
+		gd.sg_table[i].len = htonl(ret);
+		gd.sg_table[i].target = htonl(gd.img_target);
+		gd.sg_table[i].src_addr_low = htonl(gd.entries[i].addr_low);
+		gd.sg_table[i].dst_addr = htonl(gd.entries[i].dst_addr);
+	}
+
+	/* Calculate Offsets and Size */
+	gd.hdr_size = sizeof(struct isbc_hdr_ta_2_0);
+	calculate_offset_size();
+
+	/* Pouplate the fields in Header */
+	hdr->barker[0] = barker[0];
+	hdr->barker[1] = barker[1];
+	hdr->barker[2] = barker[2];
+	hdr->barker[3] = barker[3];
+	if (gd.srk_flag == 1) {
+		hdr->srk_table_offset = htonl(gd.srk_offset);
+		hdr->len_kr.num_keys = htons(gd.num_srk_entries);
+		hdr->len_kr.key_num_verify = (uint8_t)(gd.srk_sel);
+		hdr->len_kr.srk_table_flag = gd.srk_flag;
+	} else {
+		hdr->key_len = htonl(gd.key_len);
+		hdr->pkey = htonl(gd.srk_offset);
+	}
+	hdr->psign = htonl(gd.rsa_offset);
+	hdr->sign_len = htonl(gd.rsa_size);
+	hdr->sg_table_addr = htonl(gd.sg_offset);
+	hdr->sg_entries = htonl(gd.num_entries);
+	hdr->entry_point = htonl(gd.entry_addr_low);
+	hdr->fsl_uid_0 = htonl(gd.fsluid[0]);
+	hdr->oem_uid_0 = htonl(gd.oemuid[0]);
+	hdr->hkarea = htonl(gd.hkarea);
+	hdr->hksize = htonl(gd.hksize);
+
+	/* Pouplate the Flags in Header */
+	hdr->uid_n_wp.uid_flag = htons(get_uid_flags());
+	hdr->uid_n_wp.sec_image_flag = gd.sec_image_flag;
+	hdr->uid_n_wp.sfp_wp = gd.wp_flag;
+	hdr->mp_n_sg_flag.sg_flag = htons(0x1);
+
+	return SUCCESS;
+}
+
+int fill_structure_ta_2_0_pbl(void)
+{
+	return (fill_structure_ta_2_0());
+}
+
+int fill_structure_ta_2_0_nonpbl(void)
+{
+	return (fill_structure_ta_2_0());
+}
+
+int fill_structure_ta_2_1(void)
+{
+	int ret, i;
+	struct isbc_hdr_ta_2_1 *hdr = (struct isbc_hdr_ta_2_1 *)gd.hdr_struct;
+	memset(hdr, 0, sizeof(struct isbc_hdr_ta_2_1));
 
 	/* Create the SG Table */
 	for (i = 0; i < gd.num_entries; i++) {
@@ -146,7 +216,7 @@ int fill_structure_ta_3_0(void)
 	}
 
 	/* Calculate Offsets and Size */
-	gd.hdr_size = sizeof(struct isbc_hdr_ta_3_0);
+	gd.hdr_size = sizeof(struct isbc_hdr_ta_2_1);
 	calculate_offset_size();
 
 	/* Pouplate the fields in Header */
@@ -154,82 +224,49 @@ int fill_structure_ta_3_0(void)
 	hdr->barker[1] = barker[1];
 	hdr->barker[2] = barker[2];
 	hdr->barker[3] = barker[3];
-	hdr->srk_table_offset = gd.srk_offset;
-	hdr->num_keys = gd.num_srk_entries;
-	hdr->key_num_verify = gd.srk_sel;
+	if (gd.srk_flag == 1) {
+		hdr->srk_table_offset = gd.srk_offset;
+		hdr->len_kr.num_keys = gd.num_srk_entries;
+		hdr->len_kr.key_num_verify = gd.srk_sel;
+		hdr->len_kr.srk_table_flag = gd.srk_flag;
+	} else {
+		hdr->key_len = gd.key_len;
+		hdr->pkey = gd.srk_offset;
+	}
 	hdr->psign = gd.rsa_offset;
 	hdr->sign_len = gd.rsa_size;
 	hdr->sg_table_addr = gd.sg_offset;
 	hdr->sg_entries = gd.num_entries;
 	hdr->entry_point = gd.entry_addr_low;
-	hdr->fsl_uid[0] = gd.fsluid[0];
-	hdr->fsl_uid[1] = gd.fsluid[1];
-	hdr->oem_uid[0] = gd.oemuid[0];
-	hdr->oem_uid[1] = gd.oemuid[1];
-	hdr->oem_uid[2] = gd.oemuid[2];
-	hdr->oem_uid[3] = gd.oemuid[3];
-	hdr->oem_uid[4] = gd.oemuid[4];
+	hdr->fsl_uid_0 = gd.fsluid[0];
+	hdr->fsl_uid_1 = gd.fsluid[1];
+	hdr->oem_uid_0 = gd.oemuid[0];
+	hdr->oem_uid_1 = gd.oemuid[1];
 
 	/* Pouplate the Flags in Header */
-	hdr->misc_flags = get_misc_flags();
-	hdr->uid_flags = get_uid_flags();
+	hdr->uid_n_wp.uid_flag = get_uid_flags();
+	hdr->uid_n_wp.sec_image_flag = gd.sec_image_flag;
+	hdr->uid_n_wp.sfp_wp = gd.wp_flag;
+	hdr->mp_n_sg_flag.mp_flag = gd.mp_flag;
+	hdr->mp_n_sg_flag.sg_flag = 0x1;
 
 	return SUCCESS;
 }
 
-int fill_structure_ta_3_1(void)
+int fill_structure_ta_2_1_arm7(void)
 {
-	int ret, i;
-	struct isbc_hdr_ta_3_1 *hdr = (struct isbc_hdr_ta_3_1 *)gd.hdr_struct;
-	memset(hdr, 0, sizeof(struct isbc_hdr_ta_3_0));
+	return (fill_structure_ta_2_1());
+}
 
-	/* Create the SG Table */
-	for (i = 0; i < gd.num_entries; i++) {
-		ret = get_file_size(gd.entries[i].name);
-		if (ret == FAILURE)
-			return ret;
-		gd.sg_table[i].len = ret;
-		gd.sg_table[i].src_addr_low = gd.entries[i].addr_low;
-		gd.sg_table[i].src_addr_high = gd.entries[i].addr_high;
-	}
-
-	/* Calculate Offsets and Size */
-	gd.hdr_size = sizeof(struct isbc_hdr_ta_3_1);
-	calculate_offset_size();
-
-	/* Pouplate the fields in Header */
-	hdr->barker[0] = barker[0];
-	hdr->barker[1] = barker[1];
-	hdr->barker[2] = barker[2];
-	hdr->barker[3] = barker[3];
-	hdr->srk_table_offset = gd.srk_offset;
-	hdr->num_keys = gd.num_srk_entries;
-	hdr->key_num_verify = gd.srk_sel;
-	hdr->psign = gd.rsa_offset;
-	hdr->sign_len = gd.rsa_size;
-	hdr->sg_table_addr = gd.sg_offset;
-	hdr->sg_entries = gd.num_entries;
-	hdr->entry_point_l = gd.entry_addr_low;
-	hdr->entry_point_h = gd.entry_addr_high;
-	hdr->fsl_uid[0] = gd.fsluid[0];
-	hdr->fsl_uid[1] = gd.fsluid[1];
-	hdr->oem_uid[0] = gd.oemuid[0];
-	hdr->oem_uid[1] = gd.oemuid[1];
-	hdr->oem_uid[2] = gd.oemuid[2];
-	hdr->oem_uid[3] = gd.oemuid[3];
-	hdr->oem_uid[4] = gd.oemuid[4];
-
-	/* Pouplate the Flags in Header */
-	hdr->misc_flags = get_misc_flags();
-	hdr->uid_flags = get_uid_flags();
-
-	return SUCCESS;
+int fill_structure_ta_2_1_arm8(void)
+{
+	return (fill_structure_ta_2_1());
 }
 
 /****************************************************************************
  * API's for Creating HEADER FILES
  ****************************************************************************/
-int create_header_ta_3_x(void)
+int create_header_ta_2_x(void)
 {
 	int ret;
 	uint8_t *header;
@@ -245,7 +282,10 @@ int create_header_ta_3_x(void)
 	memset(header, 0, hdrlen);
 
 	memcpy(header, gd.hdr_struct, gd.hdr_size);
-	memcpy(header + gd.srk_offset, gd.key_table, gd.srk_size);
+	if (gd.srk_flag == 1)
+		memcpy(header + gd.srk_offset, gd.key_table, gd.srk_size);
+	else
+		memcpy(header + gd.srk_offset, gd.pkey, gd.key_len);
 	memcpy(header + gd.sg_offset, gd.sg_table, gd.sg_size);
 
 	/* Create the header file */
@@ -266,20 +306,30 @@ int create_header_ta_3_x(void)
 	return SUCCESS;
 }
 
-int create_header_ta_3_0(void)
+int create_header_ta_2_0_pbl(void)
 {
-	return (create_header_ta_3_x());
+	return (create_header_ta_2_x());
 }
 
-int create_header_ta_3_1(void)
+int create_header_ta_2_0_nonpbl(void)
 {
-	return (create_header_ta_3_x());
+	return (create_header_ta_2_x());
+}
+
+int create_header_ta_2_1_arm7(void)
+{
+	return (create_header_ta_2_x());
+}
+
+int create_header_ta_2_1_arm8(void)
+{
+	return (create_header_ta_2_x());
 }
 
 /****************************************************************************
  * API's for Calculating Image Hash
  ****************************************************************************/
-int calc_img_hash_ta_3_x(void)
+int calc_img_hash_ta_2_x(void)
 {
 	int i, ret;
 	FILE *fp;
@@ -287,7 +337,10 @@ int calc_img_hash_ta_3_x(void)
 	crypto_hash_init(ctx);
 
 	crypto_hash_update(ctx, gd.hdr_struct, gd.hdr_size);
-	crypto_hash_update(ctx, gd.key_table, gd.srk_size);
+	if (gd.srk_flag == 1)
+		crypto_hash_update(ctx, gd.key_table, gd.srk_size);
+	else
+		crypto_hash_update(ctx, gd.pkey, gd.key_len);
 	crypto_hash_update(ctx, gd.sg_table, gd.sg_size);
 
 	for (i = 0; i < gd.num_entries; i++) {
@@ -317,61 +370,97 @@ int calc_img_hash_ta_3_x(void)
 	return SUCCESS;
 }
 
-int calc_img_hash_ta_3_0(void)
+int calc_img_hash_ta_2_0_pbl(void)
 {
-	return (calc_img_hash_ta_3_x());
+	return (calc_img_hash_ta_2_x());
 }
 
-int calc_img_hash_ta_3_1(void)
+int calc_img_hash_ta_2_0_nonpbl(void)
 {
-	return (calc_img_hash_ta_3_x());
+	return (calc_img_hash_ta_2_x());
+}
+
+int calc_img_hash_ta_2_1_arm7(void)
+{
+	return (calc_img_hash_ta_2_x());
+}
+
+int calc_img_hash_ta_2_1_arm8(void)
+{
+	return (calc_img_hash_ta_2_x());
 }
 
 /****************************************************************************
  * API's for Calculating SRK Hash
  ****************************************************************************/
-int calc_srk_hash_ta_3_x(void)
+int calc_srk_hash_ta_2_x(void)
 {
 	uint8_t ctx[CRYPTO_HASH_CTX_SIZE];
 	int ret;
 
-	/* Create the SRK Table */
-	ret = create_srk(MAX_SRK_TA_3_X);
+	/* Read the Public Keys and Create the SRK Table */
+	if (gd.srk_flag == 1)
+		ret = create_srk(MAX_SRK_TA_2_X);
+	else
+		ret = create_srk(1);
+
 	if (ret != SUCCESS)
 		return ret;
 
 	crypto_hash_init(ctx);
 
-	crypto_hash_update(ctx, gd.key_table, gd.srk_size);
+	if (gd.srk_flag == 1)
+		crypto_hash_update(ctx, gd.key_table, gd.srk_size);
+	else {
+		gd.pkey = gd.key_table[0].pkey;
+
+		if (gd.hton_flag == 0)
+			gd.key_len = gd.key_table[0].key_len;
+		else
+			gd.key_len = htonl(gd.key_table[0].key_len);
+
+		crypto_hash_update(ctx, gd.pkey, gd.key_len);
+	}
+
 	crypto_hash_final(gd.srk_hash, ctx);
 	return SUCCESS;
 }
 
-int calc_srk_hash_ta_3_0(void)
+int calc_srk_hash_ta_2_0_pbl(void)
 {
-	return (calc_srk_hash_ta_3_x());
+	return (calc_srk_hash_ta_2_x());
 }
 
-int calc_srk_hash_ta_3_1(void)
+int calc_srk_hash_ta_2_0_nonpbl(void)
 {
-	return (calc_srk_hash_ta_3_x());
+	return (calc_srk_hash_ta_2_x());
+}
+
+int calc_srk_hash_ta_2_1_arm7(void)
+{
+	return (calc_srk_hash_ta_2_x());
+}
+
+int calc_srk_hash_ta_2_1_arm8(void)
+{
+	return (calc_srk_hash_ta_2_x());
 }
 
 /****************************************************************************
  * API's for Dumping Headers
  ****************************************************************************/
-int dump_hdr_ta_3_0(void)
+int dump_hdr_ta_2_0(void)
 {
 	int i;
-	struct isbc_hdr_ta_3_0 *hdr = (struct isbc_hdr_ta_3_0 *)gd.hdr_struct;
+	struct isbc_hdr_ta_2_0 *hdr = (struct isbc_hdr_ta_2_0 *)gd.hdr_struct;
 
 	printf("\n-----------------------------------------------");
 	printf("\n-\tDumping the Header Fields");
 	printf("\n-----------------------------------------------");
 	printf("\n- SRK Information");
 	printf("\n-\t SRK Offset : %x", hdr->srk_table_offset);
-	printf("\n-\t Number of Keys : %x", hdr->num_keys);
-	printf("\n-\t Key Select : %x", hdr->key_num_verify);
+	printf("\n-\t Number of Keys : %x", hdr->len_kr.num_keys);
+	printf("\n-\t Key Select : %x", hdr->len_kr.key_num_verify);
 	printf("\n-\t Key List : ");
 	for (i = 0; i < gd.num_srk_entries; i++) {
 		printf("\n-\t\tKey%d %s(%x)", i + 1, gd.pub_fname[i],
@@ -379,17 +468,10 @@ int dump_hdr_ta_3_0(void)
 	}
 
 	printf("\n- UID Information");
-	printf("\n-\t UID Flags = %02x", hdr->uid_flags);
-	printf("\n-\t FSL UID = %08x_%08x",
-			hdr->fsl_uid[0], hdr->fsl_uid[1]);
-	for (i = 0; i < 5; i++)
-		printf("\n-\t OEM UID%d = %08x", i, hdr->oem_uid[i]);
+	printf("\n-\t UID Flags = %02x", hdr->uid_n_wp.uid_flag);
+	printf("\n-\t FSL UID = %08x", hdr->fsl_uid_0);
+	printf("\n-\t OEM UID = %08x", hdr->oem_uid_0);
 	printf("\n- FLAGS Information");
-	printf("\n-\t MISC Flags = %02x", hdr->misc_flags);
-	printf("\n-\t\t ISS = %x", gd.iss_flag);
-	printf("\n-\t\t MP = %x", gd.mp_flag);
-	printf("\n-\t\t LW = %x", gd.lw_flag);
-	printf("\n-\t\t B01 = %x", 1);
 	printf("\n- Image Information");
 	printf("\n-\t SG Table Offset : %x", hdr->sg_table_addr);
 	printf("\n-\t Number of entries : %x", hdr->sg_entries);
@@ -406,18 +488,28 @@ int dump_hdr_ta_3_0(void)
 	return SUCCESS;
 }
 
-int dump_hdr_ta_3_1(void)
+int dump_hdr_ta_2_0_pbl(void)
+{
+	return (dump_hdr_ta_2_0());
+}
+
+int dump_hdr_ta_2_0_nonpbl(void)
+{
+	return (dump_hdr_ta_2_0());
+}
+
+int dump_hdr_ta_2_1(void)
 {
 	int i;
-	struct isbc_hdr_ta_3_1 *hdr = (struct isbc_hdr_ta_3_1 *)gd.hdr_struct;
+	struct isbc_hdr_ta_2_1 *hdr = (struct isbc_hdr_ta_2_1 *)gd.hdr_struct;
 
 	printf("\n-----------------------------------------------");
 	printf("\n-\tDumping the Header Fields");
 	printf("\n-----------------------------------------------");
 	printf("\n- SRK Information");
 	printf("\n-\t SRK Offset : %x", hdr->srk_table_offset);
-	printf("\n-\t Number of Keys : %x", hdr->num_keys);
-	printf("\n-\t Key Select : %x", hdr->key_num_verify);
+	printf("\n-\t Number of Keys : %x", hdr->len_kr.num_keys);
+	printf("\n-\t Key Select : %x", hdr->len_kr.key_num_verify);
 	printf("\n-\t Key List : ");
 	for (i = 0; i < gd.num_srk_entries; i++) {
 		printf("\n-\t\tKey%d %s(%x)", i + 1, gd.pub_fname[i],
@@ -425,22 +517,16 @@ int dump_hdr_ta_3_1(void)
 	}
 
 	printf("\n- UID Information");
-	printf("\n-\t UID Flags = %02x", hdr->uid_flags);
+	printf("\n-\t UID Flags = %02x", hdr->uid_n_wp.uid_flag);
 	printf("\n-\t FSL UID = %08x_%08x",
-			hdr->fsl_uid[0], hdr->fsl_uid[1]);
-	for (i = 0; i < 5; i++)
-		printf("\n-\t OEM UID%d = %08x", i, hdr->oem_uid[i]);
+			hdr->fsl_uid_0, hdr->fsl_uid_1);
+	printf("\n-\t OEM UID = %08x_%08x",
+			hdr->oem_uid_0, hdr->oem_uid_1);
 	printf("\n- FLAGS Information");
-	printf("\n-\t MISC Flags = %02x", hdr->misc_flags);
-	printf("\n-\t\t ISS = %x", gd.iss_flag);
-	printf("\n-\t\t MP = %x", gd.mp_flag);
-	printf("\n-\t\t LW = %x", gd.lw_flag);
-	printf("\n-\t\t B01 = %x", 1);
 	printf("\n- Image Information");
 	printf("\n-\t SG Table Offset : %x", hdr->sg_table_addr);
 	printf("\n-\t Number of entries : %x", hdr->sg_entries);
-	printf("\n-\t Entry Point : %08x_%08x",
-			hdr->entry_point_h, hdr->entry_point_l);
+	printf("\n-\t Entry Point : %08x", hdr->entry_point);
 	for (i = 0; i < gd.num_entries; i++)
 		printf("\n-\t Entry %d : %s (Size = %08x SRC = %08x_%08x) ",
 			i + 1, gd.entries[i].name, gd.sg_table[i].len,
@@ -452,4 +538,14 @@ int dump_hdr_ta_3_1(void)
 	printf("\n-----------------------------------------------\n");
 
 	return SUCCESS;
+}
+
+int dump_hdr_ta_2_1_arm7(void)
+{
+	return (dump_hdr_ta_2_1());
+}
+
+int dump_hdr_ta_2_1_arm8(void)
+{
+	return (dump_hdr_ta_2_1());
 }

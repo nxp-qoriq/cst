@@ -70,6 +70,7 @@ void print_usage(char *tool)
 int create_hdr(int argc, char **argv)
 {
 	enum cfg_taal cfg_taal;
+	enum cfg_core core_type;
 	int ret, i, c;
 	int option_index;
 	uint32_t *srk;
@@ -101,7 +102,10 @@ int create_hdr(int argc, char **argv)
 	printf("\nInput File is %s\n", gd.input_file);
 
 	/* Get the Trust Arch Version from Input File */
-	cfg_taal = get_ta_from_file(gd.input_file);
+	cfg_taal = get_ta_from_file(gd.input_file, &core_type);
+
+	if (core_type == CORE_PPC)
+		gd.hton_flag = 1;
 
 	if (cfg_taal == TA_UNKNOWN_MAX) {
 		/* Invalid Platform Name in Input File */
@@ -216,10 +220,14 @@ int create_srk(uint32_t max_keys)
 		ret = crypto_extract_pub_key(gd.pub_fname[i],
 					&key_len,
 					gd.key_table[i].pkey);
-		gd.key_table[i].key_len = key_len;
+		if (gd.hton_flag == 0)
+			gd.key_table[i].key_len = key_len;
+		else
+			gd.key_table[i].key_len = htonl(key_len);
 		if (ret != SUCCESS)
 			break;
 	}
+	gd.srk_size = gd.num_srk_entries * sizeof(struct srk_table_t);
 
 	return ret;
 }
@@ -297,4 +305,14 @@ int append_signature(void)
 	fclose(fhdr);
 
 	return SUCCESS;
+}
+
+/*****************************************************************************
+ * Error For Unsupported Platforms
+ *****************************************************************************/
+int error_unsupported(void)
+{
+	printf("\nError !!! ");
+	printf("This tool is not applicable for the Platform specified\n");
+	return FAILURE;
 }

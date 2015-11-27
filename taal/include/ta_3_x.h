@@ -31,16 +31,20 @@
 /**********************************************************
  * Function Pointers for TAAL
  **********************************************************/
-int parse_input_file_ta_3_x(void);
+int parse_input_file_ta_3_0(void);
+int parse_input_file_ta_3_1(void);
 
 int fill_structure_ta_3_0(void);
 int fill_structure_ta_3_1(void);
 
-int create_header_ta_3_x(void);
+int create_header_ta_3_0(void);
+int create_header_ta_3_1(void);
 
-int calc_img_hash_ta_3_x(void);
+int calc_img_hash_ta_3_0(void);
+int calc_img_hash_ta_3_1(void);
 
-int calc_srk_hash_ta_3_x(void);
+int calc_srk_hash_ta_3_0(void);
+int calc_srk_hash_ta_3_1(void);
 
 int dump_hdr_ta_3_0(void);
 int dump_hdr_ta_3_1(void);

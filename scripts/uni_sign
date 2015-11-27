@@ -52,7 +52,7 @@ else
 	# Check if Input File exists
 	if [ -s $input_file ]; then
 		# Check if image is ESBC or ISBC
-		grep "ESBC=1" $input_file &> /dev/null
+		grep "^ESBC=1$" $input_file &> /dev/null
 
 	else
 		echo "*************************************************************"
@@ -69,7 +69,7 @@ else
 	if [ $? -eq 0 ]; then
 		./create_hdr_esbc $@
 	else
-		./create_hdr_esbc $@
+		./create_hdr_isbc $@
 	fi
 
 fi

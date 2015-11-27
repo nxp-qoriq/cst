@@ -36,6 +36,7 @@ int create_srk(uint32_t max_keys);
 int parse_input_file(char **list, uint32_t num_list);
 int calculate_signature(void);
 int append_signature(void);
+int error_unsupported(void);
 
 #define SUCCESS			0
 #define FAILURE			-1
@@ -68,7 +69,7 @@ struct srk_table_t {
 
 struct sg_table_t {
 	uint32_t len;
-	uint32_t reserved;
+	uint32_t target;
 	uint32_t src_addr_low;
 	union {
 		uint32_t src_addr_high;
@@ -90,8 +91,11 @@ struct g_data_t {
 	uint32_t srk_sel;
 	uint32_t num_srk_entries;
 	uint32_t num_pri_key;
+	uint8_t srk_flag;
 	char pub_fname[MAX_NUM_KEY][MAX_FNAME_LEN];
 	char pri_fname[MAX_NUM_KEY][MAX_FNAME_LEN];
+	uint8_t *pkey;
+	uint32_t key_len;
 
 	char rcw_fname[MAX_FNAME_LEN];
 
@@ -109,9 +113,12 @@ struct g_data_t {
 	char img_hash_file_name[MAX_FNAME_LEN];
 	char rsa_sign_file_name[MAX_FNAME_LEN];
 
+	uint8_t hton_flag;
 	uint8_t mp_flag;
 	uint8_t iss_flag;
 	uint8_t lw_flag;
+	uint8_t wp_flag;
+	uint8_t sec_image_flag;
 
 	uint8_t srk_hash[SHA256_DIGEST_LENGTH];
 	uint8_t img_hash[SHA256_DIGEST_LENGTH];
@@ -119,10 +126,14 @@ struct g_data_t {
 
 	struct srk_table_t key_table[MAX_NUM_KEY];
 	struct sg_table_t sg_table[MAX_NUM_SG_ENTRY];
+	uint32_t img_target;
 	uint8_t hdr_struct[MAX_HDR_SIZE];
 	uint32_t hdr_size;
 	uint32_t num_pbi_words;
 	uint32_t pbi_len;
+
+	uint32_t hkarea;
+	uint32_t hksize;
 
 	uint32_t boot1_ptr;
 

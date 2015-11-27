@@ -24,84 +24,29 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _PARSE_UTILS_H
-#define _PARSE_UTILS_H
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <ctype.h>
-#include <limits.h>
-#include <errno.h>
-#include <netinet/in.h>
+#ifndef _TA_1_X_H_
+#define _TA_1_X_H_
 
-#include <global.h>
+/**********************************************************
+ * Function Pointers for TAAL
+ **********************************************************/
+int parse_input_file_ta_1_x_pbl(void);
+int parse_input_file_ta_1_x_nonpbl(void);
 
-#define MAX_LINE_SIZE		1024
-#define MAX_U32			0xFFFFFFFF
+int fill_structure_ta_1_x_pbl(void);
+int fill_structure_ta_1_x_nonpbl(void);
 
-struct input_field {
-	char *value[64];
-	int count;
-};
+int create_header_ta_1_x_pbl(void);
+int create_header_ta_1_x_nonpbl(void);
 
-unsigned long STR_TO_UL(char *str, int base);
-unsigned long long STR_TO_ULL(char *str, int base);
-void find_value_from_file(char *field_name, FILE *fp);
-int fill_gd_input_file(char *field_name, FILE *fp);
-int get_file_size(const char *file_name);
+int calc_img_hash_ta_1_x_pbl(void);
+int calc_img_hash_ta_1_x_nonpbl(void);
 
-enum input_field_t {
-	FIELD_PLATFORM = 0,
-	FIELD_ENTRY_POINT,
-	FIELD_PUB_KEY,
-	FIELD_KEY_SELECT,
-	FIELD_IMAGE_1,
-	FIELD_IMAGE_2,
-	FIELD_IMAGE_3,
-	FIELD_IMAGE_4,
-	FIELD_IMAGE_5,
-	FIELD_IMAGE_6,
-	FIELD_IMAGE_7,
-	FIELD_IMAGE_8,
-	FIELD_FSL_UID_0,
-	FIELD_FSL_UID_1,
-	FIELD_OEM_UID_0,
-	FIELD_OEM_UID_1,
-	FIELD_OEM_UID_2,
-	FIELD_OEM_UID_3,
-	FIELD_OEM_UID_4,
-	FIELD_OUTPUT_HDR_FILENAME,
-	FIELD_MP_FLAG,
-	FIELD_ISS_FLAG,
-	FIELD_LW_FLAG,
-	FIELD_VERBOSE,
-	FIELD_PRI_KEY,
-	FIELD_IMAGE_HASH_FILENAME,
-	FIELD_RSA_SIGN_FILENAME,
-	FIELD_RCW_PBI_FILENAME,
-	FIELD_BOOT1_PTR,
-	FIELD_SEC_IMAGE,
-	FIELD_WP_FLAG,
-	FIELD_HK_AREA_POINTER,
-	FIELD_HK_AREA_SIZE,
-	FIELD_IMAGE_TARGET,
-	FIELD_UNKNOWN_MAX
-};
+int calc_srk_hash_ta_1_x_pbl(void);
+int calc_srk_hash_ta_1_x_nonpbl(void);
 
-typedef struct {
-	char *field_name;
-	enum input_field_t index;
-} parse_struct_t;
-
-typedef union {
-	uint64_t whole;
-	struct {
-		uint32_t low;
-		uint32_t high;
-	} m_halfs;
-} DWord;
+int dump_hdr_ta_1_x_pbl(void);
+int dump_hdr_ta_1_x_nonpbl(void);
 
 #endif

@@ -27,14 +27,32 @@
 
 #include <taal.h>
 #include <parse_utils.h>
+#include <ta_1_x.h>
+#include <ta_2_x.h>
 #include <ta_3_x.h>
 
 extern struct input_field file_field;
 
 static ta_struct_t ta_table[] = {
-	{ "LS2085", TA_3_0 },
-	{ "LS2088", TA_3_1 },
-	{ "LS1088", TA_3_1 },
+	{ "P4080", TA_1_X_PBL, CORE_PPC },
+	{ "P3041", TA_1_X_PBL, CORE_PPC },
+	{ "P5040", TA_1_X_PBL, CORE_PPC },
+	{ "P5020", TA_1_X_PBL, CORE_PPC },
+	{ "P1010", TA_1_X_NONPBL, CORE_PPC },
+	{ "BSC9132", TA_1_X_NONPBL, CORE_PPC },
+	{ "T4240", TA_2_0_PBL, CORE_PPC },
+	{ "T2080", TA_2_0_PBL, CORE_PPC },
+	{ "T1040", TA_2_0_PBL, CORE_PPC },
+	{ "T1023", TA_2_0_PBL, CORE_PPC },
+	{ "B4860", TA_2_0_PBL, CORE_PPC },
+	{ "C290", TA_2_0_NONPBL, CORE_PPC },
+	{ "LS1020", TA_2_1_ARM7, CORE_ARM },
+	{ "LS1043", TA_2_1_ARM8, CORE_ARM },
+	{ "LS1012", TA_2_1_ARM8, CORE_ARM },
+	{ "LS2085", TA_3_0, CORE_ARM },
+	{ "LS2085", TA_3_0, CORE_ARM },
+	{ "LS2088", TA_3_1, CORE_ARM },
+	{ "LS1088", TA_3_1, CORE_ARM },
 };
 
 #define NUM_TA_TABLE (sizeof(ta_table) / sizeof(ta_struct_t))
@@ -43,22 +61,76 @@ static ta_struct_t ta_table[] = {
  * Global Arry of Function Pointer Structure
  ***************************************************************************/
 static struct taal_t taal[] = {
+	/* TA_1_X_PBL */
+	{
+		parse_input_file_ta_1_x_pbl,
+		fill_structure_ta_1_x_pbl,
+		create_header_ta_1_x_pbl,
+		calc_img_hash_ta_1_x_pbl,
+		calc_srk_hash_ta_1_x_pbl,
+		dump_hdr_ta_1_x_pbl,
+	},
+	/* TA_1_X_NONPBL */
+	{
+		parse_input_file_ta_1_x_nonpbl,
+		fill_structure_ta_1_x_nonpbl,
+		create_header_ta_1_x_nonpbl,
+		calc_img_hash_ta_1_x_nonpbl,
+		calc_srk_hash_ta_1_x_nonpbl,
+		dump_hdr_ta_1_x_nonpbl,
+	},
+	/* TA_2_0_PBL */
+	{
+		parse_input_file_ta_2_0_pbl,
+		fill_structure_ta_2_0_pbl,
+		create_header_ta_2_0_pbl,
+		calc_img_hash_ta_2_0_pbl,
+		calc_srk_hash_ta_2_0_pbl,
+		dump_hdr_ta_2_0_pbl,
+	},
+	/* TA_2_0_NONPBL */
+	{
+		parse_input_file_ta_2_0_nonpbl,
+		fill_structure_ta_2_0_nonpbl,
+		create_header_ta_2_0_nonpbl,
+		calc_img_hash_ta_2_0_nonpbl,
+		calc_srk_hash_ta_2_0_nonpbl,
+		dump_hdr_ta_2_0_nonpbl,
+	},
+	/* TA_2_1_ARM7 */
+	{
+		parse_input_file_ta_2_1_arm7,
+		fill_structure_ta_2_1_arm7,
+		create_header_ta_2_1_arm7,
+		calc_img_hash_ta_2_1_arm7,
+		calc_srk_hash_ta_2_1_arm7,
+		dump_hdr_ta_2_1_arm7,
+	},
+	/* TA_2_1_ARM8 */
+	{
+		parse_input_file_ta_2_1_arm8,
+		fill_structure_ta_2_1_arm8,
+		create_header_ta_2_1_arm8,
+		calc_img_hash_ta_2_1_arm8,
+		calc_srk_hash_ta_2_1_arm8,
+		dump_hdr_ta_2_1_arm8,
+	},
 	/* TA_3_0 */
 	{
-		parse_input_file_ta_3_x,
+		parse_input_file_ta_3_0,
 		fill_structure_ta_3_0,
-		create_header_ta_3_x,
-		calc_img_hash_ta_3_x,
-		calc_srk_hash_ta_3_x,
+		create_header_ta_3_0,
+		calc_img_hash_ta_3_0,
+		calc_srk_hash_ta_3_0,
 		dump_hdr_ta_3_0,
 	},
 	/* TA_3_1 */
 	{
-		parse_input_file_ta_3_x,
+		parse_input_file_ta_3_1,
 		fill_structure_ta_3_1,
-		create_header_ta_3_x,
-		calc_img_hash_ta_3_x,
-		calc_srk_hash_ta_3_x,
+		create_header_ta_3_1,
+		calc_img_hash_ta_3_1,
+		calc_srk_hash_ta_3_1,
 		dump_hdr_ta_3_1,
 	},
 	/* TA_UNKNOWN_MAX */
@@ -160,10 +232,11 @@ int taal_dump_header(enum cfg_taal ta)
 /***************************************************************************
  * Function	:	get_ta_from_file
  * Arguments	:	file_name - Input File Name
+ *			core_type - ARM or PPC(PowerPC)
  * Return	:	TA Type
  * Description	:	Parse PLATFORM from input file and return TA_TYPE
  ***************************************************************************/
-enum cfg_taal get_ta_from_file(char *file_name)
+enum cfg_taal get_ta_from_file(char *file_name, enum cfg_core *core_type)
 {
 	int i = 0;
 	char *plat_name;
@@ -182,6 +255,7 @@ enum cfg_taal get_ta_from_file(char *file_name)
 		for (i = 0; i < NUM_TA_TABLE; i++) {
 			if (strcmp(ta_table[i].plat_name, plat_name) == 0) {
 				fclose(fp);
+				*core_type = ta_table[i].core_type;
 				return ta_table[i].ta_type;
 			}
 		}
