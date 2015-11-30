@@ -40,15 +40,9 @@ enum cfg_taal {
 	TA_UNKNOWN_MAX
 };
 
-enum cfg_core {
-	CORE_ARM = 0,
-	CORE_PPC
-};
-
 typedef struct {
 	char *plat_name;
 	enum cfg_taal ta_type;
-	enum cfg_core core_type;
 } ta_struct_t;
 
 typedef int (*ta_parse)(void);
@@ -76,6 +70,6 @@ int taal_calc_srk_hash(enum cfg_taal);
 int taal_dump_header(enum cfg_taal);
 
 /* Get TA from File */
-enum cfg_taal get_ta_from_file(char *file_name, enum cfg_core *core_type);
+enum cfg_taal get_ta_from_file(char *file_name);
 
 #endif

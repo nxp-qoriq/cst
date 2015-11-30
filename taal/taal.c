@@ -34,25 +34,25 @@
 extern struct input_field file_field;
 
 static ta_struct_t ta_table[] = {
-	{ "P4080", TA_1_X_PBL, CORE_PPC },
-	{ "P3041", TA_1_X_PBL, CORE_PPC },
-	{ "P5040", TA_1_X_PBL, CORE_PPC },
-	{ "P5020", TA_1_X_PBL, CORE_PPC },
-	{ "P1010", TA_1_X_NONPBL, CORE_PPC },
-	{ "BSC9132", TA_1_X_NONPBL, CORE_PPC },
-	{ "T4240", TA_2_0_PBL, CORE_PPC },
-	{ "T2080", TA_2_0_PBL, CORE_PPC },
-	{ "T1040", TA_2_0_PBL, CORE_PPC },
-	{ "T1023", TA_2_0_PBL, CORE_PPC },
-	{ "B4860", TA_2_0_PBL, CORE_PPC },
-	{ "C290", TA_2_0_NONPBL, CORE_PPC },
-	{ "LS1020", TA_2_1_ARM7, CORE_ARM },
-	{ "LS1043", TA_2_1_ARM8, CORE_ARM },
-	{ "LS1012", TA_2_1_ARM8, CORE_ARM },
-	{ "LS2085", TA_3_0, CORE_ARM },
-	{ "LS2085", TA_3_0, CORE_ARM },
-	{ "LS2088", TA_3_1, CORE_ARM },
-	{ "LS1088", TA_3_1, CORE_ARM },
+	{ "P4080", TA_1_X_PBL },
+	{ "P3041", TA_1_X_PBL },
+	{ "P5040", TA_1_X_PBL },
+	{ "P5020", TA_1_X_PBL },
+	{ "P1010", TA_1_X_NONPBL },
+	{ "BSC9132", TA_1_X_NONPBL },
+	{ "T4240", TA_2_0_PBL },
+	{ "T2080", TA_2_0_PBL },
+	{ "T1040", TA_2_0_PBL },
+	{ "T1023", TA_2_0_PBL },
+	{ "B4860", TA_2_0_PBL },
+	{ "C290", TA_2_0_NONPBL },
+	{ "LS1020", TA_2_1_ARM7 },
+	{ "LS1043", TA_2_1_ARM8 },
+	{ "LS1012", TA_2_1_ARM8 },
+	{ "LS2085", TA_3_0 },
+	{ "LS2085", TA_3_0 },
+	{ "LS2088", TA_3_1 },
+	{ "LS1088", TA_3_1 },
 };
 
 #define NUM_TA_TABLE (sizeof(ta_table) / sizeof(ta_struct_t))
@@ -232,11 +232,10 @@ int taal_dump_header(enum cfg_taal ta)
 /***************************************************************************
  * Function	:	get_ta_from_file
  * Arguments	:	file_name - Input File Name
- *			core_type - ARM or PPC(PowerPC)
  * Return	:	TA Type
  * Description	:	Parse PLATFORM from input file and return TA_TYPE
  ***************************************************************************/
-enum cfg_taal get_ta_from_file(char *file_name, enum cfg_core *core_type)
+enum cfg_taal get_ta_from_file(char *file_name)
 {
 	int i = 0;
 	char *plat_name;
@@ -255,7 +254,6 @@ enum cfg_taal get_ta_from_file(char *file_name, enum cfg_core *core_type)
 		for (i = 0; i < NUM_TA_TABLE; i++) {
 			if (strcmp(ta_table[i].plat_name, plat_name) == 0) {
 				fclose(fp);
-				*core_type = ta_table[i].core_type;
 				return ta_table[i].ta_type;
 			}
 		}

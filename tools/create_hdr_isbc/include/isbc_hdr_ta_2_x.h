@@ -31,19 +31,6 @@
 /**********************************************************
  * HEADER Structures
  **********************************************************/
-#define LW_FLAG_MASK		0x80
-#define B01_FLAG_MASK		0x40
-#define ISS_FLAG_MASK		0x20
-#define MP_FLAG_MASK		0x10
-#define IE_FLAG_MASK		0x01
-
-#define FID_MASK		0x80
-#define OID_0_MASK		0x40
-#define OID_1_MASK		0x20
-#define OID_2_MASK		0x10
-#define OID_3_MASK		0x08
-#define OID_4_MASK		0x04
-
 #define MAX_SG_TA_2_X		8
 #define MAX_SRK_TA_2_X		4
 

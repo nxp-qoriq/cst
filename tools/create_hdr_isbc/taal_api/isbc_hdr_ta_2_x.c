@@ -68,11 +68,13 @@ static char *parse_list[] = {
 
 int parse_input_file_ta_2_0_pbl(void)
 {
+	gd.hton_flag = 1;
 	return (parse_input_file(parse_list, NUM_PARSE_LIST));
 }
 
 int parse_input_file_ta_2_0_nonpbl(void)
 {
+	gd.hton_flag = 1;
 	return (parse_input_file(parse_list, NUM_PARSE_LIST));
 }
 
@@ -458,31 +460,42 @@ int dump_hdr_ta_2_0(void)
 	printf("\n-\tDumping the Header Fields");
 	printf("\n-----------------------------------------------");
 	printf("\n- SRK Information");
-	printf("\n-\t SRK Offset : %x", hdr->srk_table_offset);
-	printf("\n-\t Number of Keys : %x", hdr->len_kr.num_keys);
-	printf("\n-\t Key Select : %x", hdr->len_kr.key_num_verify);
-	printf("\n-\t Key List : ");
-	for (i = 0; i < gd.num_srk_entries; i++) {
-		printf("\n-\t\tKey%d %s(%x)", i + 1, gd.pub_fname[i],
-				gd.key_table[i].key_len);
+	printf("\n-\t SRK/Public Key Offset : %x",
+		htonl(hdr->srk_table_offset));
+	printf("\n-\t SRK Flag = %x", hdr->len_kr.srk_table_flag);
+	if (hdr->len_kr.srk_table_flag) {
+		printf("\n-\t Number of Keys : %x",
+			htons(hdr->len_kr.num_keys));
+		printf("\n-\t Key Select : %x",
+			hdr->len_kr.key_num_verify);
+		printf("\n-\t Key List : ");
+		for (i = 0; i < gd.num_srk_entries; i++) {
+			printf("\n-\t\tKey%d %s(%x)", i + 1, gd.pub_fname[i],
+				htonl(gd.key_table[i].key_len));
+		}
+	} else {
+		printf("\n-\t Single Key: %s(%x)", gd.pub_fname[0],
+			htonl(gd.key_table[0].key_len));
 	}
 
 	printf("\n- UID Information");
-	printf("\n-\t UID Flags = %02x", hdr->uid_n_wp.uid_flag);
-	printf("\n-\t FSL UID = %08x", hdr->fsl_uid_0);
-	printf("\n-\t OEM UID = %08x", hdr->oem_uid_0);
+	printf("\n-\t UID Flags = %02x", htons(hdr->uid_n_wp.uid_flag));
+	printf("\n-\t FSL UID = %08x", htonl(hdr->fsl_uid_0));
+	printf("\n-\t OEM UID = %08x", htonl(hdr->oem_uid_0));
 	printf("\n- FLAGS Information");
+	printf("\n-\t Secondary Image = %x", hdr->uid_n_wp.sec_image_flag);
 	printf("\n- Image Information");
-	printf("\n-\t SG Table Offset : %x", hdr->sg_table_addr);
-	printf("\n-\t Number of entries : %x", hdr->sg_entries);
-	printf("\n-\t Entry Point : %08x", hdr->entry_point);
+	printf("\n-\t SG Table Offset : %x", htonl(hdr->sg_table_addr));
+	printf("\n-\t Number of entries : %x", htonl(hdr->sg_entries));
+	printf("\n-\t Entry Point : %08x", htonl(hdr->entry_point));
 	for (i = 0; i < gd.num_entries; i++)
 		printf("\n-\t Entry %d : %s (Size = %08x SRC = %08x DST = %08x) ",
-			i + 1, gd.entries[i].name, gd.sg_table[i].len,
-			gd.sg_table[i].src_addr_low, gd.sg_table[i].dst_addr);
+			i + 1, gd.entries[i].name, htonl(gd.sg_table[i].len),
+			htonl(gd.sg_table[i].src_addr_low),
+			htonl(gd.sg_table[i].dst_addr));
 	printf("\n- RSA Signature Information");
-	printf("\n-\t RSA Offset : %x", hdr->psign);
-	printf("\n-\t RSA Size : %x", hdr->sign_len);
+	printf("\n-\t RSA Offset : %x", htonl(hdr->psign));
+	printf("\n-\t RSA Size : %x", htonl(hdr->sign_len));
 	printf("\n-----------------------------------------------\n");
 
 	return SUCCESS;
@@ -508,12 +521,18 @@ int dump_hdr_ta_2_1(void)
 	printf("\n-----------------------------------------------");
 	printf("\n- SRK Information");
 	printf("\n-\t SRK Offset : %x", hdr->srk_table_offset);
-	printf("\n-\t Number of Keys : %x", hdr->len_kr.num_keys);
-	printf("\n-\t Key Select : %x", hdr->len_kr.key_num_verify);
-	printf("\n-\t Key List : ");
-	for (i = 0; i < gd.num_srk_entries; i++) {
-		printf("\n-\t\tKey%d %s(%x)", i + 1, gd.pub_fname[i],
+	printf("\n-\t SRK Flag = %x", hdr->len_kr.srk_table_flag);
+	if (hdr->len_kr.srk_table_flag) {
+		printf("\n-\t Number of Keys : %x", hdr->len_kr.num_keys);
+		printf("\n-\t Key Select : %x", hdr->len_kr.key_num_verify);
+		printf("\n-\t Key List : ");
+		for (i = 0; i < gd.num_srk_entries; i++) {
+			printf("\n-\t\tKey%d %s(%x)", i + 1, gd.pub_fname[i],
 				gd.key_table[i].key_len);
+		}
+	} else {
+		printf("\n-\t Single Key: %s(%x)", gd.pub_fname[0],
+			gd.key_table[0].key_len);
 	}
 
 	printf("\n- UID Information");
@@ -523,15 +542,17 @@ int dump_hdr_ta_2_1(void)
 	printf("\n-\t OEM UID = %08x_%08x",
 			hdr->oem_uid_0, hdr->oem_uid_1);
 	printf("\n- FLAGS Information");
+	printf("\n-\t Secondary Image = %x", hdr->uid_n_wp.sec_image_flag);
+	printf("\n-\t Manufacturing Protection = %x",
+			hdr->mp_n_sg_flag.mp_flag);
 	printf("\n- Image Information");
 	printf("\n-\t SG Table Offset : %x", hdr->sg_table_addr);
 	printf("\n-\t Number of entries : %x", hdr->sg_entries);
 	printf("\n-\t Entry Point : %08x", hdr->entry_point);
 	for (i = 0; i < gd.num_entries; i++)
-		printf("\n-\t Entry %d : %s (Size = %08x SRC = %08x_%08x) ",
+		printf("\n-\t Entry %d : %s (Size = %08x SRC = %08x DST = %08x) ",
 			i + 1, gd.entries[i].name, gd.sg_table[i].len,
-			gd.sg_table[i].src_addr_high,
-			gd.sg_table[i].src_addr_low);
+			gd.sg_table[i].src_addr_low, gd.sg_table[i].dst_addr);
 	printf("\n- RSA Signature Information");
 	printf("\n-\t RSA Offset : %x", hdr->psign);
 	printf("\n-\t RSA Size : %x", hdr->sign_len);

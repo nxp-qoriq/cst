@@ -70,7 +70,6 @@ void print_usage(char *tool)
 int create_hdr(int argc, char **argv)
 {
 	enum cfg_taal cfg_taal;
-	enum cfg_core core_type;
 	int ret, i, c;
 	int option_index;
 	uint32_t *srk;
@@ -102,10 +101,7 @@ int create_hdr(int argc, char **argv)
 	printf("\nInput File is %s\n", gd.input_file);
 
 	/* Get the Trust Arch Version from Input File */
-	cfg_taal = get_ta_from_file(gd.input_file, &core_type);
-
-	if (core_type == CORE_PPC)
-		gd.hton_flag = 1;
+	cfg_taal = get_ta_from_file(gd.input_file);
 
 	if (cfg_taal == TA_UNKNOWN_MAX) {
 		/* Invalid Platform Name in Input File */
