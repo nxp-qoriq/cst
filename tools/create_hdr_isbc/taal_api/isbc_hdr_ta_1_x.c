@@ -348,13 +348,14 @@ int calc_img_hash_ta_1_x_nonpbl(void)
 
 	crypto_hash_update(ctx, gd.hdr_struct, gd.hdr_size);
 	crypto_hash_update(ctx, gd.pkey, gd.key_len);
-	crypto_hash_update(ctx, gd.sg_table, gd.sg_size);
 
 	for (i = 0; i < gd.num_entries; i++) {
 		ret = crypto_hash_update_file(ctx, gd.entries[i].name);
 		if (ret == FAILURE)
 			return ret;
 	}
+
+	crypto_hash_update(ctx, gd.sg_table, gd.sg_size);
 
 	crypto_hash_final(gd.img_hash, ctx);
 
