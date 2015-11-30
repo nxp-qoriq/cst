@@ -35,22 +35,43 @@ extern struct input_field file_field;
 
 static ta_struct_t ta_table[] = {
 	{ "P4080", TA_1_X_PBL },
+	{ "4080", TA_1_X_PBL },
 	{ "P3041", TA_1_X_PBL },
+	{ "3041", TA_1_X_PBL },
+	{ "P2041", TA_1_X_PBL },
+	{ "2041", TA_1_X_PBL },
 	{ "P5040", TA_1_X_PBL },
+	{ "5040", TA_1_X_PBL },
 	{ "P5020", TA_1_X_PBL },
+	{ "5020", TA_1_X_PBL },
+
 	{ "P1010", TA_1_X_NONPBL },
+	{ "1010", TA_1_X_NONPBL },
 	{ "BSC9132", TA_1_X_NONPBL },
+	{ "9132", TA_1_X_NONPBL },
+	{ "9131", TA_1_X_NONPBL },
+
 	{ "T4240", TA_2_0_PBL },
+	{ "4240", TA_2_0_PBL },
 	{ "T2080", TA_2_0_PBL },
+	{ "2080", TA_2_0_PBL },
 	{ "T1040", TA_2_0_PBL },
+	{ "1040", TA_2_0_PBL },
 	{ "T1023", TA_2_0_PBL },
+	{ "1023", TA_2_0_PBL },
 	{ "B4860", TA_2_0_PBL },
+	{ "4860", TA_2_0_PBL },
+
 	{ "C290", TA_2_0_NONPBL },
+
 	{ "LS1020", TA_2_1_ARM7 },
+	{ "LS1", TA_2_1_ARM7 },
+
 	{ "LS1043", TA_2_1_ARM8 },
 	{ "LS1012", TA_2_1_ARM8 },
+
 	{ "LS2085", TA_3_0 },
-	{ "LS2085", TA_3_0 },
+
 	{ "LS2088", TA_3_1 },
 	{ "LS1088", TA_3_1 },
 };
