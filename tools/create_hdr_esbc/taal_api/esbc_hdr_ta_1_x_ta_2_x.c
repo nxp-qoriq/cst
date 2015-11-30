@@ -415,12 +415,22 @@ int calc_img_hash_ta_2_1_arm8(void)
  ****************************************************************************/
 int calc_srk_hash_ta_1_x_pbl(void)
 {
-	return (create_srk_calc_hash(MAX_SRK_ESBC_X));
+	gd.srk_flag = 0;
+	if (gd.srk_sel != 0) {
+		printf("Error !! SRK Table not supported by this SoC\n");
+		return FAILURE;
+	}
+	return (create_srk_calc_hash(1));
 }
 
 int calc_srk_hash_ta_1_x_nonpbl(void)
 {
-	return (create_srk_calc_hash(MAX_SRK_ESBC_X));
+	gd.srk_flag = 0;
+	if (gd.srk_sel != 0) {
+		printf("Error !! SRK Table not supported by this SoC\n");
+		return FAILURE;
+	}
+	return (create_srk_calc_hash(1));
 }
 
 int calc_srk_hash_ta_2_0_pbl(void)
