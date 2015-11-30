@@ -400,8 +400,6 @@ int create_header_ta_3_1(void)
  ****************************************************************************/
 int calc_img_hash_ta_3_x(void)
 {
-	int ret;
-	FILE *fp;
 	uint8_t ctx[CRYPTO_HASH_CTX_SIZE];
 	crypto_hash_init(ctx);
 
@@ -409,22 +407,6 @@ int calc_img_hash_ta_3_x(void)
 	crypto_hash_update(ctx, gd.key_table, gd.srk_size);
 
 	crypto_hash_final(gd.img_hash, ctx);
-
-	if (gd.option_img_hash == 1) {
-		fp = fopen(gd.img_hash_file_name, "wb");
-		if (fp == NULL) {
-			printf("Error in opening the file: %s\n",
-				gd.img_hash_file_name);
-			return FAILURE;
-		}
-		ret = fwrite(gd.img_hash, 1, SHA256_DIGEST_LENGTH, fp);
-		fclose(fp);
-
-		if (ret == 0) {
-			printf("Error in Writing to file");
-			return FAILURE;
-		}
-	}
 
 	return SUCCESS;
 }
@@ -442,31 +424,16 @@ int calc_img_hash_ta_3_1(void)
 /****************************************************************************
  * API's for Calculating SRK Hash
  ****************************************************************************/
-int calc_srk_hash_ta_3_x(void)
-{
-	uint8_t ctx[CRYPTO_HASH_CTX_SIZE];
-	int ret;
-
-	/* Create the SRK Table */
-	ret = create_srk(MAX_SRK_TA_3_X);
-	if (ret != SUCCESS)
-		return ret;
-
-	crypto_hash_init(ctx);
-
-	crypto_hash_update(ctx, gd.key_table, gd.srk_size);
-	crypto_hash_final(gd.srk_hash, ctx);
-	return SUCCESS;
-}
-
 int calc_srk_hash_ta_3_0(void)
 {
-	return (calc_srk_hash_ta_3_x());
+	gd.srk_flag = 1;
+	return (create_srk_calc_hash(MAX_SRK_TA_3_X));
 }
 
 int calc_srk_hash_ta_3_1(void)
 {
-	return (calc_srk_hash_ta_3_x());
+	gd.srk_flag = 1;
+	return (create_srk_calc_hash(MAX_SRK_TA_3_X));
 }
 
 /****************************************************************************

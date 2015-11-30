@@ -150,6 +150,9 @@ int create_hdr(int argc, char **argv)
 		printf("\n\n************************************************");
 		/* Check if option for img_has is selected */
 		if (gd.option_img_hash == 1) {
+			ret = create_img_hash_file();
+			if (ret != SUCCESS)
+				return ret;
 			printf("\n* Image Hash Stored in File: %s",
 				gd.img_hash_file_name);
 			printf("\n* Header File is w/o Signature appended");
@@ -182,27 +185,34 @@ int create_hdr(int argc, char **argv)
 }
 
 /***************************************************************************
- * Function	:	create_srk
+ * Function	:	create_srk_calc_hash
  * Arguments	:	max_keys - Maximum Number of entries in SRK Table
  * Return	:	SUCCESS or FAILURE
- * Description	:	Creates the SRK Table
+ * Description	:	Creates the SRK Table and calculate the hash
  ***************************************************************************/
-int create_srk(uint32_t max_keys)
+int create_srk_calc_hash(uint32_t max_keys)
 {
 	int i, ret;
 	uint32_t key_len;
+	uint8_t ctx[CRYPTO_HASH_CTX_SIZE];
 
 	/* Check if Num of Entries and Key Select is Correct */
 	ret = FAILURE;
+
+	if (gd.srk_flag == 0)
+		max_keys = 1;
+
 	if (gd.num_srk_entries > max_keys) {
 		printf("\n Invalid Number of Keys");
 		return FAILURE;
 	}
+
 	if ((gd.srk_sel > gd.num_srk_entries) ||
 	    (gd.srk_sel == 0)) {
 		printf("\n Invalid Key Select");
 		return FAILURE;
 	}
+
 	if (gd.option_img_hash == 0) {
 		if (gd.num_srk_entries != gd.num_pri_key) {
 			printf("\n Public and Private Key Count Mismatch");
@@ -223,7 +233,27 @@ int create_srk(uint32_t max_keys)
 		if (ret != SUCCESS)
 			break;
 	}
+
+	/* Update the size of SRK Table */
 	gd.srk_size = gd.num_srk_entries * sizeof(struct srk_table_t);
+
+	/* Calculate the Hash if SRK/ Public Key */
+	crypto_hash_init(ctx);
+
+	if (gd.srk_flag == 1)
+		crypto_hash_update(ctx, gd.key_table, gd.srk_size);
+	else {
+		gd.pkey = gd.key_table[0].pkey;
+
+		if (gd.hton_flag == 0)
+			gd.key_len = gd.key_table[0].key_len;
+		else
+			gd.key_len = htonl(gd.key_table[0].key_len);
+
+		crypto_hash_update(ctx, gd.pkey, gd.key_len);
+	}
+
+	crypto_hash_final(gd.srk_hash, ctx);
 
 	return ret;
 }
@@ -300,6 +330,33 @@ int append_signature(void)
 
 	fclose(fhdr);
 
+	return SUCCESS;
+}
+
+/***************************************************************************
+ * Function	:	create_img_hash_file
+ * Arguments	:	NONE
+ * Return	:	SUCCESS or FAILURE
+ * Description	:	Writes Image Hash to a file
+ ***************************************************************************/
+int create_img_hash_file(void)
+{
+	int ret;
+	FILE *fp;
+
+	fp = fopen(gd.img_hash_file_name, "wb");
+	if (fp == NULL) {
+		printf("Error in opening the file: %s\n",
+			gd.img_hash_file_name);
+		return FAILURE;
+	}
+	ret = fwrite(gd.img_hash, 1, SHA256_DIGEST_LENGTH, fp);
+	fclose(fp);
+
+	if (ret == 0) {
+		printf("Error in Writing to file");
+		return FAILURE;
+	}
 	return SUCCESS;
 }
 

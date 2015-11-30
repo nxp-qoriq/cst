@@ -32,9 +32,10 @@
 #include <stdint.h>
 
 int create_hdr(int argc, char **argv);
-int create_srk(uint32_t max_keys);
+int create_srk_calc_hash(uint32_t max_keys);
 int parse_input_file(char **list, uint32_t num_list);
 int calculate_signature(void);
+int create_img_hash_file(void);
 int append_signature(void);
 int error_unsupported(void);
 
