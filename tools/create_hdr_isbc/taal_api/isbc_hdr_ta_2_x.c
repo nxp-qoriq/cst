@@ -186,7 +186,6 @@ int fill_structure_ta_2_0(void)
 	hdr->uid_n_wp.uid_flag = htons(get_uid_flags());
 	hdr->uid_n_wp.sec_image_flag = gd.sec_image_flag;
 	hdr->uid_n_wp.sfp_wp = gd.wp_flag;
-	hdr->mp_n_sg_flag.sg_flag = htons(0x1);
 
 	return SUCCESS;
 }
@@ -250,7 +249,6 @@ int fill_structure_ta_2_1(void)
 	hdr->uid_n_wp.sec_image_flag = gd.sec_image_flag;
 	hdr->uid_n_wp.sfp_wp = gd.wp_flag;
 	hdr->mp_n_sg_flag.mp_flag = gd.mp_flag;
-	hdr->mp_n_sg_flag.sg_flag = 0x1;
 
 	return SUCCESS;
 }

@@ -172,7 +172,6 @@ int fill_structure_ta_1_x_nonpbl(void)
 		(struct isbc_hdr_ta_1_x_nonpbl *)gd.hdr_struct;
 	memset(hdr, 0, sizeof(struct isbc_hdr_ta_1_x_nonpbl));
 
-	gd.sg_flag = 1;
 
 	/* Calculate Offsets and Size */
 	gd.hdr_size = sizeof(struct isbc_hdr_ta_1_x_nonpbl);
@@ -183,8 +182,6 @@ int fill_structure_ta_1_x_nonpbl(void)
 	gd.srk_offset = OFFSET_ALIGN(gd.hdr_size);
 	gd.sg_offset = OFFSET_ALIGN(gd.srk_offset + gd.key_len);
 	gd.rsa_offset = OFFSET_ALIGN(gd.sg_offset + gd.sg_size);
-
-	hdr->sg_flag = htonl((uint32_t)gd.sg_flag);
 
 	/* Create the SG Table */
 	for (i = 0; i < gd.num_entries; i++) {
