@@ -62,6 +62,7 @@ int error_unsupported(void);
 #define DEFAULT_HDR_FILE_NAME	"hdr.out"
 #define DEFAULT_HASH_FILE_NAME	"hash.out"
 #define DEFAULT_SIGN_FILE_NAME	"sign.out"
+#define DEFAULT_SG_FILE_NAME	"sg_table.out"
 
 struct srk_table_t {
 	uint32_t key_len;
@@ -78,6 +79,10 @@ struct sg_table_t {
 	};
 };
 
+struct sg_table_ptr_t {
+	uint32_t len;
+	uint32_t src_addr;
+};
 
 struct sg_input {
 	char name[MAX_FNAME_LEN];
@@ -113,6 +118,7 @@ struct g_data_t {
 	char hdr_file_name[MAX_FNAME_LEN];
 	char img_hash_file_name[MAX_FNAME_LEN];
 	char rsa_sign_file_name[MAX_FNAME_LEN];
+	char sg_file_name[MAX_FNAME_LEN];
 
 	uint8_t hton_flag;
 	uint8_t mp_flag;
@@ -120,6 +126,7 @@ struct g_data_t {
 	uint8_t lw_flag;
 	uint8_t wp_flag;
 	uint8_t sec_image_flag;
+	uint8_t sg_flag;
 
 	uint8_t srk_hash[SHA256_DIGEST_LENGTH];
 	uint8_t img_hash[SHA256_DIGEST_LENGTH];
@@ -127,6 +134,7 @@ struct g_data_t {
 
 	struct srk_table_t key_table[MAX_NUM_KEY];
 	struct sg_table_t sg_table[MAX_NUM_SG_ENTRY];
+	struct sg_table_ptr_t sg_table_ptr[MAX_NUM_SG_ENTRY];
 	uint32_t img_target;
 	uint8_t hdr_struct[MAX_HDR_SIZE];
 	uint32_t hdr_size;
@@ -142,6 +150,7 @@ struct g_data_t {
 	uint32_t srk_size;
 	uint32_t sg_offset;
 	uint32_t sg_size;
+	uint32_t sg_addr;
 	uint32_t rsa_offset;
 	uint32_t rsa_size;
 

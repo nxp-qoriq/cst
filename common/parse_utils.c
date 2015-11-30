@@ -65,7 +65,9 @@ static parse_struct_t parse_table[] = {
 	{ "WP_FLAG", FIELD_WP_FLAG },
 	{ "HK_AREA_POINTER", FIELD_HK_AREA_POINTER },
 	{ "HK_AREA_SIZE", FIELD_HK_AREA_SIZE },
-	{ "IMAGE_TARGET", FIELD_IMAGE_TARGET }
+	{ "IMAGE_TARGET", FIELD_IMAGE_TARGET },
+	{ "SG_TABLE_ADDR", FIELD_SG_TABLE_ADDR },
+	{ "OUTPUT_SG_BIN", FIELD_OUTPUT_SG_BIN }
 
 };
 
@@ -529,11 +531,16 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 			strcpy(gd.rsa_sign_file_name, DEFAULT_SIGN_FILE_NAME);
 		break;
 
+	case FIELD_OUTPUT_SG_BIN:
+		if (file_field.count == 1)
+			strcpy(gd.sg_file_name, file_field.value[0]);
+		else
+			strcpy(gd.sg_file_name, DEFAULT_SG_FILE_NAME);
+		break;
+
 	case FIELD_RCW_PBI_FILENAME:
 		if (file_field.count == 1)
 			strcpy(gd.rcw_fname, file_field.value[0]);
-
-		break;
 
 		break;
 
@@ -569,25 +576,33 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 
 	case FIELD_SEC_IMAGE:
 		if (file_field.count == 1)
-			gd.sec_image_flag |= STR_TO_UL(file_field.value[0], 16);
+			gd.sec_image_flag = STR_TO_UL(file_field.value[0], 16);
 
 		break;
 
 	case FIELD_WP_FLAG:
 		if (file_field.count == 1)
-			gd.wp_flag |= STR_TO_UL(file_field.value[0], 16);
+			gd.wp_flag = STR_TO_UL(file_field.value[0], 16);
 
 		break;
 
 	case FIELD_HK_AREA_POINTER:
 		if (file_field.count == 1)
-			gd.hkarea |= STR_TO_UL(file_field.value[0], 16);
+			gd.hkarea = STR_TO_UL(file_field.value[0], 16);
 
 		break;
 
 	case FIELD_HK_AREA_SIZE:
 		if (file_field.count == 1)
-			gd.hksize |= STR_TO_UL(file_field.value[0], 16);
+			gd.hksize = STR_TO_UL(file_field.value[0], 16);
+
+		break;
+
+	case FIELD_SG_TABLE_ADDR:
+		if (file_field.count == 1) {
+			gd.sg_addr = STR_TO_UL(file_field.value[0], 16);
+			gd.sg_flag = 1;
+		}
 
 		break;
 

@@ -32,9 +32,36 @@
  * HEADER Structures
  **********************************************************/
 #define MAX_SG_TA_1_X		8
-#define MAX_SRK_TA_1_X		4
 
-struct isbc_hdr_ta_1_x {
+struct isbc_hdr_ta_1_x_pbl {
+	uint8_t barker[BARKER_LEN];	/* 0x00 Barker code */
+
+	uint32_t pkey;			/* 0x04 Public Key */
+	uint32_t key_len;		/* 0x08 Key Length */
+
+	uint32_t psign;			/* 0x0c signature offset */
+	uint32_t sign_len;		/* 0x10 length of signature */
+
+	union {
+		uint32_t sg_table_addr;	/* 0x14 ptr to SG table */
+		uint32_t pimg;		/* Pointer to Image */
+	};
+
+	union {
+		uint32_t sg_entries;	/* 0x18 no. of entries in SG */
+		uint32_t img_size;	/* Size of Image */
+	};
+
+	uint32_t entry_point;		/* 0x1c ESBC entry point */
+
+	uint32_t sg_flag;		/* 0x20 SG Flag */
+
+	uint32_t uid_flag;		/* 0x24 Flag to indicate uid */
+	uint32_t fsl_uid_0;		/* 0x28 Freescale unique id */
+	uint32_t oem_uid_0;		/* 0x2c OEM unique id */
+};
+
+struct isbc_hdr_ta_1_x_nonpbl {
 	uint8_t barker[BARKER_LEN];	/* 0x00 Barker code */
 
 	uint32_t pkey;			/* 0x04 Public Key */
@@ -47,7 +74,7 @@ struct isbc_hdr_ta_1_x {
 	uint32_t sg_entries;		/* 0x18 no. of entries in SG */
 	uint32_t entry_point;		/* 0x1c ESBC entry point */
 
-	uint32_t sg_flag;		/* 0x20 */
+	uint32_t sg_flag;		/* 0x20 SG Flag */
 
 	uint32_t uid_flag;		/* 0x24 Flag to indicate uid */
 	uint32_t fsl_uid_0;		/* 0x28 Freescale unique id */

@@ -416,7 +416,7 @@ int calc_img_hash_ta_2_1_arm8(void)
 int calc_srk_hash_ta_1_x_pbl(void)
 {
 	gd.srk_flag = 0;
-	if (gd.srk_sel != 0) {
+	if (gd.num_srk_entries > 1) {
 		printf("Error !! SRK Table not supported by this SoC\n");
 		return FAILURE;
 	}
@@ -426,7 +426,7 @@ int calc_srk_hash_ta_1_x_pbl(void)
 int calc_srk_hash_ta_1_x_nonpbl(void)
 {
 	gd.srk_flag = 0;
-	if (gd.srk_sel != 0) {
+	if (gd.num_srk_entries > 1) {
 		printf("Error !! SRK Table not supported by this SoC\n");
 		return FAILURE;
 	}
