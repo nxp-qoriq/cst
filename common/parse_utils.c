@@ -67,7 +67,9 @@ static parse_struct_t parse_table[] = {
 	{ "HK_AREA_SIZE", FIELD_HK_AREA_SIZE },
 	{ "IMAGE_TARGET", FIELD_IMAGE_TARGET },
 	{ "SG_TABLE_ADDR", FIELD_SG_TABLE_ADDR },
-	{ "OUTPUT_SG_BIN", FIELD_OUTPUT_SG_BIN }
+	{ "OUTPUT_SG_BIN", FIELD_OUTPUT_SG_BIN },
+	{ "ESBC_HDRADDR_SEC_IMAGE", FIELD_ESBC_HDRADDR_SEC_IMAGE },
+	{ "ESBC_HDRADDR", FIELD_ESBC_HDRADDR }
 
 };
 
@@ -282,7 +284,60 @@ void find_value_from_file(char *field_name, FILE *fp)
 
 		fseek(fp, -line_size, SEEK_CUR);
 	}
-	file_field.count = -1;
+	file_field.count = 0;
+}
+
+int find_cfw_from_file(char *file_name)
+{
+	int line_size = 0;
+	char *field_name = "CF_WORD";
+	FILE *fp;
+	fp = fopen(file_name, "r");
+	if (fp == NULL) {
+		printf("Error in opening the file: %s\n", file_name);
+		return FAILURE;
+	}
+
+	file_field.value[0] = NULL;
+	file_field.value[1] = NULL;
+	file_field.value[2] = NULL;
+	file_field.value[3] = NULL;
+	file_field.count = 0;
+
+	fseek(fp, 0, SEEK_SET);
+	line_size = cal_line_size(fp);
+	fseek(fp, -line_size, SEEK_CUR);
+
+	while (fread(line_data, 1, line_size, fp)) {
+		*(line_data + line_size) = '\0';
+		remove_whitespace(line_data);
+		if ((strstr(line_data, field_name)) && (*line_data != '#')) {
+			get_field_from_file(line_data, field_name);
+			if (file_field.count == 2) {
+				gd.cf_word[gd.cf_count].addr =
+				htonl(STR_TO_UL(file_field.value[0], 16));
+				gd.cf_word[gd.cf_count].data =
+				htonl(STR_TO_UL(file_field.value[1], 16));
+				gd.cf_count++;
+				if (gd.cf_count >= MAX_CF_WORD) {
+					printf("Error:Only %d CF WORD Pairs"
+						" Allowed\n", MAX_CF_WORD);
+					fclose(fp);
+					return FAILURE;
+				}
+			} else {
+				printf("Error:Wrong Format in Input File\n"
+				       "Usage: CF_WORD = (ADDR, DATA)\n");
+				fclose(fp);
+				return FAILURE;
+			}
+		}
+		line_size = cal_line_size(fp);
+		fseek(fp, -line_size, SEEK_CUR);
+	}
+
+	fclose(fp);
+	return SUCCESS;
 }
 
 int fill_gd_input_file(char *field_name, FILE *fp)
@@ -610,6 +665,18 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		if (file_field.count == 1)
 			ret = check_target(file_field.value[0],
 					&gd.img_target);
+
+		break;
+
+	case FIELD_ESBC_HDRADDR:
+		if (file_field.count == 1)
+			gd.hdr_addr = STR_TO_UL(file_field.value[0], 16);
+
+		break;
+
+	case FIELD_ESBC_HDRADDR_SEC_IMAGE:
+		if (file_field.count == 1)
+			gd.hdr_addr_sec = STR_TO_UL(file_field.value[0], 16);
 
 		break;
 

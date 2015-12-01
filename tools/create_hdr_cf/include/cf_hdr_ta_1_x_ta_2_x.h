@@ -24,89 +24,54 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _PARSE_UTILS_H
-#define _PARSE_UTILS_H
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <ctype.h>
-#include <limits.h>
-#include <errno.h>
-#include <netinet/in.h>
+#ifndef _CF_HDR_TA_1_X_2_X_H_
+#define _CF_HDR_TA_1_X_2_X_H_
 
-#include <global.h>
+/**********************************************************
+ * HEADER Structures
+ **********************************************************/
+#define MAX_SRK_ESBC_X		4
+#define BOOT_SIGNATURE		0x424F4F54
 
-#define MAX_LINE_SIZE		1024
-#define MAX_U32			0xFFFFFFFF
-
-struct input_field {
-	char *value[64];
-	int count;
+struct cf_hdr_legacy {
+	uint32_t boot_sig;		/*0x40*/
+	uint32_t res1;			/*0x44-0x47*/
+	uint32_t code_len;		/*0x48-0x4B*/
+	uint32_t res2;			/*0x4C-0x4F*/
+	uint32_t src_addr;		/*0x50-0x53*/
+	uint32_t res3;			/*0x54-0x57*/
+	uint32_t dst_addr;		/*0x58-0x5B*/
+	uint32_t res4;			/*0x5C-0x5F*/
+	uint32_t entry_point;		/*0x60-0x63*/
+	uint32_t res5;			/*0x64-0x67*/
+	uint32_t no_conf_pairs;		/*0x68-0x6B*/
+	uint8_t res6[20];		/*0x6C-0x7F*/
 };
 
-unsigned long STR_TO_UL(char *str, int base);
-unsigned long long STR_TO_ULL(char *str, int base);
-void find_value_from_file(char *field_name, FILE *fp);
-int find_cfw_from_file(char *file_name);
-int fill_gd_input_file(char *field_name, FILE *fp);
-int get_file_size(const char *file_name);
-
-enum input_field_t {
-	FIELD_PLATFORM = 0,
-	FIELD_ENTRY_POINT,
-	FIELD_PUB_KEY,
-	FIELD_KEY_SELECT,
-	FIELD_IMAGE_1,
-	FIELD_IMAGE_2,
-	FIELD_IMAGE_3,
-	FIELD_IMAGE_4,
-	FIELD_IMAGE_5,
-	FIELD_IMAGE_6,
-	FIELD_IMAGE_7,
-	FIELD_IMAGE_8,
-	FIELD_FSL_UID_0,
-	FIELD_FSL_UID_1,
-	FIELD_OEM_UID_0,
-	FIELD_OEM_UID_1,
-	FIELD_OEM_UID_2,
-	FIELD_OEM_UID_3,
-	FIELD_OEM_UID_4,
-	FIELD_OUTPUT_HDR_FILENAME,
-	FIELD_MP_FLAG,
-	FIELD_ISS_FLAG,
-	FIELD_LW_FLAG,
-	FIELD_VERBOSE,
-	FIELD_PRI_KEY,
-	FIELD_IMAGE_HASH_FILENAME,
-	FIELD_RSA_SIGN_FILENAME,
-	FIELD_RCW_PBI_FILENAME,
-	FIELD_BOOT1_PTR,
-	FIELD_SEC_IMAGE,
-	FIELD_WP_FLAG,
-	FIELD_HK_AREA_POINTER,
-	FIELD_HK_AREA_SIZE,
-	FIELD_IMAGE_TARGET,
-	FIELD_OUTPUT_SG_BIN,
-	FIELD_SG_TABLE_ADDR,
-	FIELD_ESBC_HDRADDR,
-	FIELD_ESBC_HDRADDR_SEC_IMAGE,
-	FIELD_UNKNOWN_MAX
+struct cf_hdr_secure {
+	uint32_t ehdrloc;
+	uint32_t esbc_target_id;
+	union {
+		uint32_t pkey_off;		/* public key offset */
+		uint32_t srk_table_offset;
+	};	
+	union {
+		uint32_t key_len;		/* pub key length */
+		struct {
+			uint32_t srk_sel:16;
+			uint32_t num_srk_entries:16;	
+		}len_kr;	
+	};
+	uint32_t psign_off;			/* sign ptr */
+	uint32_t sign_len;			/* length of the signature */
+	uint32_t ehdrloc_simg;
 };
 
-typedef struct {
-	char *field_name;
-	enum input_field_t index;
-} parse_struct_t;
-
-typedef union {
-	uint64_t whole;
-	struct {
-		uint32_t low;
-		uint32_t high;
-	} m_halfs;
-} DWord;
+#define SIZE_HDR_LEGACY		(sizeof(struct cf_hdr_legacy))
+#define SIZE_HDR_SECURE_TA_2	(sizeof(struct cf_hdr_secure))
+#define SIZE_HDR_SECURE_TA_1	(SIZE_HDR_SECURE_TA_2 - sizeof(uint32_t))
+#define SIZE_CF_WORD		(sizeof(struct cf_word_t) * gd.cf_count)
+#define SIZE_RESERVED		0x40
 
 #endif

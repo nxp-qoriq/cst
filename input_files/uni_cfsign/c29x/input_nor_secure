@@ -17,6 +17,7 @@ ESBC_HDRADDR=CC002000
 # USAGE (for 1010/913x): PRI_KEY = key1.pri
 # USAGE (for 1040/C290): PRI_KEY = key1.pri, key2.pri, key3.pri, key4.pri
 
+PUB_KEY=srk.pub
 # PRI_KEY (Default private key :srk.pri) - [Optional]
 PRI_KEY=srk.pri
 # Please provide KEY_SELECT(between 1 to 4) (Required for 1040 and C290 only) - [Optional]

@@ -1,0 +1,61 @@
+#!/bin/bash
+
+#-----------------------------------------------------------------------------
+#
+# File: uni_cfsign
+#
+# Description:
+#	This script takes input file as argument and is used to sign the
+#	CF Words for the Platform specified.
+#	For doing this the required CST Tools are invoked with the
+#	input file as argument
+#
+#		Copyright (c) 2015 Freescale Semiconductor, Inc.
+#		Freescale Proprietary.
+#
+#-----------------------------------------------------------------------------
+
+# Help Function
+print_help() {
+	./create_hdr_cf --help
+	echo "*************************************************************"
+	echo "* uni_cfsign is a wrapper script over the TOOL"
+	echo "* Correct Usage (Description as specified above):"
+	echo "*"
+	echo "* $0 [options] <input_file>"
+	echo "*"
+	echo "*************************************************************"
+	exit
+}
+
+############################################################
+# Script Starts Here
+############################################################
+echo ""
+
+# Check if proper arguments are specified
+
+if [ $# -eq 0 ]; then
+	# Invalid Arguments
+	echo "*************************************************************"
+	echo "* Error !! Invalid Usage"
+	echo "*************************************************************"
+	print_help
+
+elif [ $1 == "--help" ]; then
+	# Help Message to be printed
+	print_help
+
+else 
+	input_file=${@:$#}
+
+	# Check if Input File exists
+	if [ -s $input_file ]; then
+		./create_hdr_cf $@
+	else
+		echo "*************************************************************"
+		echo "Input File $input_file does not exist"
+		echo "*************************************************************"
+		print_help
+	fi
+fi

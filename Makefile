@@ -68,6 +68,16 @@ create_hdr_pbi_OBJS = $(basename $(create_hdr_pbi_SRCS))
 create_hdr_pbi_OBJS := $(notdir $(create_hdr_pbi_OBJS))
 create_hdr_pbi_OBJS := $(create_hdr_pbi_OBJS:%=%.o)
 
+create_hdr_cf_SRCS = $(wildcard common/*.c) \
+		$(wildcard taal/*.c) \
+		$(wildcard tools/*.c) \
+		$(wildcard tools/create_hdr_cf/*.c) \
+		$(wildcard tools/create_hdr_cf/taal_api/*.c)
+
+create_hdr_cf_OBJS = $(basename $(create_hdr_cf_SRCS))
+create_hdr_cf_OBJS := $(notdir $(create_hdr_cf_OBJS))
+create_hdr_cf_OBJS := $(create_hdr_cf_OBJS:%=%.o)
+
 sign_img_hash_SRCS = $(wildcard common/*.c) \
 		$(wildcard tools/sign_img_hash/*.c) \
 
@@ -86,6 +96,7 @@ vpath %.c 	common/ taal/ tools/ \
 		tools/create_hdr_isbc/ tools/create_hdr_isbc/taal_api/ \
 		tools/create_hdr_esbc/ tools/create_hdr_esbc/taal_api/ \
 		tools/create_hdr_pbi/ tools/create_hdr_pbi/taal_api/ \
+		tools/create_hdr_cf/ tools/create_hdr_cf/taal_api/ \
 		tools/key_generation/ \
 		tools/sign_img_hash \
 		tools/append_sign_hdr
@@ -93,12 +104,14 @@ vpath %.c 	common/ taal/ tools/ \
 INCLUDES = 	-Itools/create_hdr_isbc/include/ \
 		-Itools/create_hdr_esbc/include/ \
 		-Itools/create_hdr_pbi/include/ \
+		-Itools/create_hdr_cf/include/ \
 		-Itaal/include -Icommon/include \
 		-I$(LIB_HASH_DRBG_INCLUDE_PATH)
 
 CCFLAGS= -g -Wall -Werror $(INCLUDES)
 
 INSTALL_BINARIES = 	create_hdr_isbc create_hdr_esbc create_hdr_pbi \
+			create_hdr_cf \
 			sign_img_hash append_sign_hdr \
 			gen_keys gen_otpmk_drbg gen_drv_drbg
 
@@ -115,19 +128,22 @@ all: $(LIB_HASH_DRBG) ${INSTALL_BINARIES}
 	@echo
 
 create_hdr_isbc: ${create_hdr_isbc_OBJS}
-	${LD} ${LDFLAGS} -o $@ ${create_hdr_isbc_OBJS} ${LIBS}
+	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
 create_hdr_esbc: ${create_hdr_esbc_OBJS}
-	${LD} ${LDFLAGS} -o $@ ${create_hdr_esbc_OBJS} ${LIBS}
+	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
 create_hdr_pbi: ${create_hdr_pbi_OBJS}
-	${LD} ${LDFLAGS} -o $@ ${create_hdr_pbi_OBJS} ${LIBS}
+	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
+
+create_hdr_cf: ${create_hdr_cf_OBJS}
+	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
 sign_img_hash: ${sign_img_hash_OBJS}
-	${LD} ${LDFLAGS} -o $@ ${sign_img_hash_OBJS} ${LIBS}
+	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
 append_sign_hdr: ${append_sign_hdr_OBJS}
-	${LD} ${LDFLAGS} -o $@ ${append_sign_hdr_OBJS} ${LIBS}
+	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
 gen_keys: ${genkeys_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}

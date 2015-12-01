@@ -202,20 +202,21 @@ int create_srk_calc_hash(uint32_t max_keys)
 	if (gd.srk_flag == 0)
 		max_keys = 1;
 
-	if (gd.num_srk_entries > max_keys) {
-		printf("\n Invalid Number of Keys");
+	if ((gd.num_srk_entries > max_keys) ||
+	(gd.num_srk_entries == 0)) {
+		printf("Invalid Number of Keys\n");
 		return FAILURE;
 	}
 
 	if ((gd.srk_sel > gd.num_srk_entries) ||
 	    (gd.srk_sel == 0)) {
-		printf("\n Invalid Key Select");
+		printf("Invalid Key Select\n");
 		return FAILURE;
 	}
 
 	if (gd.option_img_hash == 0) {
 		if (gd.num_srk_entries != gd.num_pri_key) {
-			printf("\n Public and Private Key Count Mismatch");
+			printf("Public and Private Key Count Mismatch\n");
 			return FAILURE;
 		}
 	}

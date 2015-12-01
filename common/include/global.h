@@ -51,6 +51,8 @@ int error_unsupported(void);
 #define MAX_NUM_SG_ENTRY	8
 
 #define KEY_SIZE_BYTES		1024
+#define MAX_CF_WORD		1024
+
 #define MAX_HDR_SIZE		0x1000
 
 #define ADDR_ALIGN_MASK		0x000001FF
@@ -89,6 +91,11 @@ struct sg_input {
 	uint32_t addr_low;
 	uint32_t addr_high;
 	uint32_t dst_addr;
+};
+
+struct cf_word_t {
+	uint32_t addr;
+	uint32_t data;
 };
 
 struct g_data_t {
@@ -153,6 +160,12 @@ struct g_data_t {
 	uint32_t sg_addr;
 	uint32_t rsa_offset;
 	uint32_t rsa_size;
+
+	struct cf_word_t cf_word[MAX_CF_WORD];
+	uint32_t cf_count;
+
+	uint32_t hdr_addr;
+	uint32_t hdr_addr_sec;
 
 	int option_srk_hash;
 	int option_img_hash;
