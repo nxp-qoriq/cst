@@ -59,7 +59,7 @@ struct esbc_hdr_ta_3_x {
 	uint32_t img_addr_l;		/* 0x18 Pointer to Image */
 	uint32_t img_addr_h;		/* 0x1c Pointer to Image */
 	uint32_t img_len;		/* 0x20 Image Length */
-	uint32_t res2;			/* 0x24 Reserved */
+	uint32_t ie_key_select;		/* 0x24 IE Key Select */
 
 	uint32_t fsl_uid[2];		/* 0x28-0x30 Freescale unique id's*/
 	uint32_t oem_uid[5];		/* 0x30-0x44 OEM unique id's*/

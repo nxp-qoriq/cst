@@ -69,6 +69,7 @@ static parse_struct_t parse_table[] = {
 	{ "SG_TABLE_ADDR", FIELD_SG_TABLE_ADDR },
 	{ "OUTPUT_SG_BIN", FIELD_OUTPUT_SG_BIN },
 	{ "ESBC_HDRADDR_SEC_IMAGE", FIELD_ESBC_HDRADDR_SEC_IMAGE },
+	{ "IE_KEY_SEL", FIELD_IE_KEY_SEL },
 	{ "ESBC_HDRADDR", FIELD_ESBC_HDRADDR }
 
 };
@@ -678,6 +679,13 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		if (file_field.count == 1)
 			gd.hdr_addr_sec = STR_TO_UL(file_field.value[0], 16);
 
+		break;
+
+	case FIELD_IE_KEY_SEL:
+		if (file_field.count == 1) {
+			gd.iek_sel = STR_TO_UL(file_field.value[0], 16);
+			gd.iek_flag = 1;
+		}
 		break;
 
 	default:

@@ -47,6 +47,7 @@ static char *parse_list[] = {
 	"OEM_UID_1",
 	"OUTPUT_HDR_FILENAME",
 	"IMAGE_HASH_FILENAME",
+	"IE_KEY_SEL",
 	"VERBOSE"
 };
 
@@ -93,7 +94,11 @@ static void calculate_offset_size(void)
 {
 	uint32_t key_len;
 
-	gd.sg_size = gd.num_entries * sizeof(struct sg_table_t);
+	if (gd.iek_flag == 1) {
+		gd.rsa_size = gd.key_len / 2;
+		gd.rsa_offset = OFFSET_ALIGN(gd.hdr_size);
+		return;
+	}
 
 	if (gd.hton_flag == 0)
 		key_len = gd.key_table[gd.srk_sel - 1].key_len;
@@ -155,7 +160,10 @@ int fill_structure_ta_1_ta_2_ppc(void)
 	hdr->barker[1] = barker[1];
 	hdr->barker[2] = barker[2];
 	hdr->barker[3] = barker[3];
-	if (gd.srk_flag == 1) {
+	if (gd.iek_flag == 1) {
+		hdr->ie_flag = htonl(1);
+		hdr->ie_key_select = htonl(gd.iek_sel);
+	} else if (gd.srk_flag == 1) {
 		hdr->srk_table_offset = htonl(gd.srk_offset);
 		hdr->len_kr.num_keys = htons(gd.num_srk_entries);
 		hdr->len_kr.key_num_verify = (uint8_t)(gd.srk_sel);
@@ -217,7 +225,10 @@ int fill_structure_ta_2_1_arm7(void)
 	hdr->barker[1] = barker[1];
 	hdr->barker[2] = barker[2];
 	hdr->barker[3] = barker[3];
-	if (gd.srk_flag == 1) {
+	if (gd.iek_flag == 1) {
+		hdr->ie_flag = 1;
+		hdr->ie_key_select = gd.iek_sel;
+	} else if (gd.srk_flag == 1) {
 		hdr->srk_table_offset = gd.srk_offset;
 		hdr->len_kr.num_keys = gd.num_srk_entries;
 		hdr->len_kr.key_num_verify = (uint8_t)(gd.srk_sel);
@@ -262,7 +273,10 @@ int fill_structure_ta_2_1_arm8(void)
 	hdr->barker[1] = barker[1];
 	hdr->barker[2] = barker[2];
 	hdr->barker[3] = barker[3];
-	if (gd.srk_flag == 1) {
+	if (gd.iek_flag == 1) {
+		hdr->ie_flag = 1;
+		hdr->ie_key_select = gd.iek_sel;
+	} else if (gd.srk_flag == 1) {
 		hdr->srk_table_offset = gd.srk_offset;
 		hdr->len_kr.num_keys = gd.num_srk_entries;
 		hdr->len_kr.key_num_verify = (uint8_t)(gd.srk_sel);
@@ -303,10 +317,16 @@ int create_header_ta_2_x(void)
 	memset(header, 0, hdrlen);
 
 	memcpy(header, gd.hdr_struct, gd.hdr_size);
-	if (gd.srk_flag == 1)
-		memcpy(header + gd.srk_offset, gd.key_table, gd.srk_size);
-	else
-		memcpy(header + gd.srk_offset, gd.pkey, gd.key_len);
+	if (gd.iek_flag == 0) {
+		if (gd.srk_flag == 1)
+			memcpy(header + gd.srk_offset,
+				gd.key_table,
+				gd.srk_size);
+		else
+			memcpy(header + gd.srk_offset,
+				gd.pkey,
+				gd.key_len);
+	}
 
 	/* Create the header file */
 	fp = fopen(gd.hdr_file_name, "wb");
@@ -366,10 +386,12 @@ int calc_img_hash_ta_2_x(void)
 	crypto_hash_init(ctx);
 
 	crypto_hash_update(ctx, gd.hdr_struct, gd.hdr_size);
-	if (gd.srk_flag == 1)
-		crypto_hash_update(ctx, gd.key_table, gd.srk_size);
-	else
-		crypto_hash_update(ctx, gd.pkey, gd.key_len);
+	if (gd.iek_flag == 0) {
+		if (gd.srk_flag == 1)
+			crypto_hash_update(ctx, gd.key_table, gd.srk_size);
+		else
+			crypto_hash_update(ctx, gd.pkey, gd.key_len);
+	}
 
 	ret = crypto_hash_update_file(ctx, gd.entries[0].name);
 	if (ret == FAILURE)
@@ -413,6 +435,29 @@ int calc_img_hash_ta_2_1_arm8(void)
 /****************************************************************************
  * API's for Calculating SRK Hash
  ****************************************************************************/
+static int calc_srk_hash_common(uint32_t max_keys)
+{
+	int ret;
+
+	if (gd.iek_flag == 1) {
+		printf("\nSRK/Public Key Hash not calculated.. IE = 1");
+		if ((gd.num_pri_key > 1) || (gd.num_srk_entries > 1)) {
+			printf("Error !! IE=1, Only 1 Key required\n");
+			return FAILURE;
+		}
+		gd.srk_hash_flag = 0;
+		gd.srk_flag = 0;
+		gd.srk_sel = 1;
+		ret = crypto_extract_pub_key(gd.pub_fname[0],
+					&gd.key_len,
+					gd.key_table[0].pkey);
+
+		return ret;
+	}
+
+	return (create_srk_calc_hash(max_keys));
+}
+
 int calc_srk_hash_ta_1_x_pbl(void)
 {
 	gd.srk_flag = 0;
@@ -420,7 +465,8 @@ int calc_srk_hash_ta_1_x_pbl(void)
 		printf("Error !! SRK Table not supported by this SoC\n");
 		return FAILURE;
 	}
-	return (create_srk_calc_hash(1));
+
+	return (calc_srk_hash_common(1));
 }
 
 int calc_srk_hash_ta_1_x_nonpbl(void)
@@ -430,27 +476,28 @@ int calc_srk_hash_ta_1_x_nonpbl(void)
 		printf("Error !! SRK Table not supported by this SoC\n");
 		return FAILURE;
 	}
-	return (create_srk_calc_hash(1));
+
+	return (calc_srk_hash_common(1));
 }
 
 int calc_srk_hash_ta_2_0_pbl(void)
 {
-	return (create_srk_calc_hash(MAX_SRK_ESBC_X));
+	return (calc_srk_hash_common(MAX_SRK_ESBC_X));
 }
 
 int calc_srk_hash_ta_2_0_nonpbl(void)
 {
-	return (create_srk_calc_hash(MAX_SRK_ESBC_X));
+	return (calc_srk_hash_common(MAX_SRK_ESBC_X));
 }
 
 int calc_srk_hash_ta_2_1_arm7(void)
 {
-	return (create_srk_calc_hash(MAX_SRK_ESBC_X));
+	return (calc_srk_hash_common(MAX_SRK_ESBC_X));
 }
 
 int calc_srk_hash_ta_2_1_arm8(void)
 {
-	return (create_srk_calc_hash(MAX_SRK_ESBC_X));
+	return (calc_srk_hash_common(MAX_SRK_ESBC_X));
 }
 
 /****************************************************************************
@@ -465,6 +512,11 @@ int dump_hdr_ta_1_ta_2_ppc(void)
 	printf("\n-----------------------------------------------");
 	printf("\n-\tDumping the Header Fields");
 	printf("\n-----------------------------------------------");
+	if (gd.iek_flag == 1) {
+	printf("\n- IE FLAG = 1. No SRK/Public Key");
+	printf("\n- \t IE Key Select : %x", htonl(hdr->ie_key_select));
+	printf("\n- \t IE Key : %s(%x)", gd.pub_fname[0], gd.key_len);
+	} else {
 	printf("\n- SRK Information");
 	printf("\n-\t SRK/Public Key Offset : %x",
 		htonl(hdr->srk_table_offset));
@@ -482,6 +534,7 @@ int dump_hdr_ta_1_ta_2_ppc(void)
 	} else {
 		printf("\n-\t Single Key: %s(%x)", gd.pub_fname[0],
 			htonl(gd.key_table[0].key_len));
+	}
 	}
 
 	printf("\n- UID Information");
@@ -529,6 +582,11 @@ int dump_hdr_ta_2_1_arm7(void)
 	printf("\n-----------------------------------------------");
 	printf("\n-\tDumping the Header Fields");
 	printf("\n-----------------------------------------------");
+	if (gd.iek_flag == 1) {
+	printf("\n- IE FLAG = 1. No SRK/Public Key");
+	printf("\n- \t IE Key Select : %x", hdr->ie_key_select);
+	printf("\n- \t IE Key : %s(%x)", gd.pub_fname[0], gd.key_len);
+	} else {
 	printf("\n- SRK Information");
 	printf("\n-\t SRK Offset : %x", hdr->srk_table_offset);
 	printf("\n-\t SRK Flag = %x", hdr->len_kr.srk_table_flag);
@@ -543,6 +601,7 @@ int dump_hdr_ta_2_1_arm7(void)
 	} else {
 		printf("\n-\t Single Key: %s(%x)", gd.pub_fname[0],
 			gd.key_table[0].key_len);
+	}
 	}
 
 	printf("\n- UID Information");
@@ -571,6 +630,11 @@ int dump_hdr_ta_2_1_arm8(void)
 	printf("\n-----------------------------------------------");
 	printf("\n-\tDumping the Header Fields");
 	printf("\n-----------------------------------------------");
+	if (gd.iek_flag == 1) {
+	printf("\n- IE FLAG = 1. No SRK/Public Key");
+	printf("\n- \t IE Key Select : %x", hdr->ie_key_select);
+	printf("\n- \t IE Key : %s(%x)", gd.pub_fname[0], gd.key_len);
+	} else {
 	printf("\n- SRK Information");
 	printf("\n-\t SRK Offset : %x", hdr->srk_table_offset);
 	printf("\n-\t SRK Flag = %x", hdr->len_kr.srk_table_flag);
@@ -585,6 +649,7 @@ int dump_hdr_ta_2_1_arm8(void)
 	} else {
 		printf("\n-\t Single Key: %s(%x)", gd.pub_fname[0],
 			gd.key_table[0].key_len);
+	}
 	}
 
 	printf("\n- UID Information");

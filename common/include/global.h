@@ -48,6 +48,7 @@ int error_unsupported(void);
 #define SHA256_DIGEST_LENGTH	32
 
 #define MAX_NUM_KEY		8
+#define MAX_NUM_IEKEY		32
 #define MAX_NUM_SG_ENTRY	8
 
 #define KEY_SIZE_BYTES		1024
@@ -102,11 +103,14 @@ struct g_data_t {
 	char *input_file;
 
 	uint32_t srk_sel;
+	uint32_t iek_sel;
 	uint32_t num_srk_entries;
 	uint32_t num_pri_key;
 	uint8_t srk_flag;
+	uint8_t srk_hash_flag;
 	char pub_fname[MAX_NUM_KEY][MAX_FNAME_LEN];
 	char pri_fname[MAX_NUM_KEY][MAX_FNAME_LEN];
+	char iek_fname[MAX_NUM_IEKEY][MAX_FNAME_LEN];
 	uint8_t *pkey;
 	uint32_t key_len;
 
@@ -134,6 +138,7 @@ struct g_data_t {
 	uint8_t wp_flag;
 	uint8_t sec_image_flag;
 	uint8_t sg_flag;
+	uint8_t iek_flag;
 
 	uint8_t srk_hash[SHA256_DIGEST_LENGTH];
 	uint8_t img_hash[SHA256_DIGEST_LENGTH];

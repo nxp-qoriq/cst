@@ -50,6 +50,7 @@ static char *parse_list[] = {
 	"OEM_UID_4",
 	"OUTPUT_HDR_FILENAME",
 	"IMAGE_HASH_FILENAME",
+	"IE_KEY_SEL",
 	"VERBOSE"
 };
 
@@ -70,8 +71,13 @@ int parse_input_file_ta_3_1(void)
  ****************************************************************************/
 void calculate_offset_size(void)
 {
+	if (gd.iek_flag == 1) {
+		gd.rsa_size = gd.key_len / 2;
+		gd.rsa_offset = OFFSET_ALIGN(gd.hdr_size);
+		return;
+	}
+
 	gd.srk_size = gd.num_srk_entries * sizeof(struct srk_table_t);
-	gd.sg_size = gd.num_entries * sizeof(struct sg_table_t);
 	gd.rsa_size = gd.key_table[gd.srk_sel - 1].key_len / 2;
 
 	/* Calculate the offsets of blocks aligne to boundry 0x200 */
@@ -82,6 +88,9 @@ void calculate_offset_size(void)
 uint8_t get_misc_flags(void)
 {
 	uint8_t flag = 0;
+
+	if (gd.iek_flag == 1)
+		flag |= IE_FLAG_MASK;
 
 	return flag;
 }
@@ -132,9 +141,13 @@ int fill_structure_ta_3_x(void)
 	hdr->barker[1] = barker[1];
 	hdr->barker[2] = barker[2];
 	hdr->barker[3] = barker[3];
-	hdr->srk_table_offset = gd.srk_offset;
-	hdr->num_keys = gd.num_srk_entries;
-	hdr->key_num_verify = gd.srk_sel;
+	if (gd.iek_flag == 0) {
+		hdr->srk_table_offset = gd.srk_offset;
+		hdr->num_keys = gd.num_srk_entries;
+		hdr->key_num_verify = gd.srk_sel;
+	} else {
+		hdr->ie_key_select = gd.iek_sel;
+	}
 	hdr->psign = gd.rsa_offset;
 	hdr->sign_len = gd.rsa_size;
 	hdr->fsl_uid[0] = gd.fsluid[0];
@@ -181,7 +194,8 @@ int create_header_ta_3_x(void)
 	memset(header, 0, hdrlen);
 
 	memcpy(header, gd.hdr_struct, gd.hdr_size);
-	memcpy(header + gd.srk_offset, gd.key_table, gd.srk_size);
+	if (gd.iek_flag == 0)
+		memcpy(header + gd.srk_offset, gd.key_table, gd.srk_size);
 
 	/* Create the header file */
 	fp = fopen(gd.hdr_file_name, "wb");
@@ -221,7 +235,8 @@ int calc_img_hash_ta_3_x(void)
 	crypto_hash_init(ctx);
 
 	crypto_hash_update(ctx, gd.hdr_struct, gd.hdr_size);
-	crypto_hash_update(ctx, gd.key_table, gd.srk_size);
+	if (gd.iek_flag == 0)
+		crypto_hash_update(ctx, gd.key_table, gd.srk_size);
 	ret = crypto_hash_update_file(ctx, gd.entries[0].name);
 	if (ret == FAILURE)
 		return ret;
@@ -244,16 +259,37 @@ int calc_img_hash_ta_3_1(void)
 /****************************************************************************
  * API's for Calculating SRK Hash
  ****************************************************************************/
-int calc_srk_hash_ta_3_0(void)
+static int calc_srk_hash_ta_3_x()
 {
+	int ret;
+	if (gd.iek_flag == 1) {
+		printf("\nSRK/Public Key Hash not calculated.. IE = 1");
+		if (gd.num_pri_key > 1) {
+			printf("Error !! IE=1, Only 1 Private Key required\n");
+			return FAILURE;
+		}
+		gd.srk_hash_flag = 0;
+		gd.srk_flag = 0;
+		gd.srk_sel = 1;
+		ret = crypto_extract_pub_key(gd.pub_fname[0],
+					&gd.key_len,
+					gd.key_table[0].pkey);
+
+		return ret;
+	}
+
 	gd.srk_flag = 1;
 	return (create_srk_calc_hash(MAX_SRK_TA_3_X));
 }
 
+int calc_srk_hash_ta_3_0(void)
+{
+	return (calc_srk_hash_ta_3_x(MAX_SRK_TA_3_X));
+}
+
 int calc_srk_hash_ta_3_1(void)
 {
-	gd.srk_flag = 1;
-	return (create_srk_calc_hash(MAX_SRK_TA_3_X));
+	return (calc_srk_hash_ta_3_x(MAX_SRK_TA_3_X));
 }
 
 /****************************************************************************
@@ -267,6 +303,11 @@ int dump_hdr_ta_3_x(void)
 	printf("\n-----------------------------------------------");
 	printf("\n-\tDumping the Header Fields");
 	printf("\n-----------------------------------------------");
+	if (gd.iek_flag == 1) {
+	printf("\n- IE FLAG = 1. No SRK/Public Key");
+	printf("\n- \t IE Key Select : %x", hdr->ie_key_select);
+	printf("\n- \t IE Key : %s(%x)", gd.pub_fname[0], gd.key_len);
+	} else {
 	printf("\n- SRK Information");
 	printf("\n-\t SRK Offset : %x", hdr->srk_table_offset);
 	printf("\n-\t Number of Keys : %x", hdr->num_keys);
@@ -275,6 +316,7 @@ int dump_hdr_ta_3_x(void)
 	for (i = 0; i < gd.num_srk_entries; i++) {
 		printf("\n-\t\tKey%d %s(%x)", i + 1, gd.pub_fname[i],
 				gd.key_table[i].key_len);
+	}
 	}
 
 	printf("\n- UID Information");

@@ -179,13 +179,17 @@ int create_hdr(int argc, char **argv)
 		printf("\nHeader File Created: %s", gd.hdr_file_name);
 	}
 
-	printf("\n\nSRK (Public Key) Hash:\n");
-	for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
-		printf("%02x", gd.srk_hash[i]);
+	if (gd.srk_hash_flag == 1) {
+		printf("\n\nSRK (Public Key) Hash:\n");
+		for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
+			printf("%02x", gd.srk_hash[i]);
 
-	srk = (uint32_t *)gd.srk_hash;
-	for (i = 0; i < SHA256_DIGEST_LENGTH / sizeof(uint32_t); i++)
-		printf("\n\t SFP SRKHR%i = %08x", i, htonl(srk[i]));
+		srk = (uint32_t *)gd.srk_hash;
+		for (i = 0; i < SHA256_DIGEST_LENGTH / sizeof(uint32_t); i++)
+			printf("\n\t SFP SRKHR%i = %08x", i, htonl(srk[i]));
+	} else {
+		printf("\nSRK (Public Key) Hash Not Available");
+	}
 
 	printf("\n\n");
 	return SUCCESS;
@@ -262,6 +266,7 @@ int create_srk_calc_hash(uint32_t max_keys)
 	}
 
 	crypto_hash_final(gd.srk_hash, ctx);
+	gd.srk_hash_flag = 1;
 
 	return ret;
 }
