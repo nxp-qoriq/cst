@@ -37,12 +37,14 @@ LIBS += -lssl -lcrypto -ldl
 genkeys_OBJS = gen_keys.o
 genotpmk_OBJS = gen_otpmk_drbg.o
 gendrv_OBJS = gen_drv_drbg.o
+gen_sign_OBJS = gen_sign.o crypto_utils.o
+sign_embed_OBJS = sign_embed.o
 
 create_hdr_isbc_SRCS = $(wildcard common/*.c) \
 		$(wildcard taal/*.c) \
-		$(wildcard tools/*.c) \
-		$(wildcard tools/create_hdr_isbc/*.c) \
-		$(wildcard tools/create_hdr_isbc/taal_api/*.c)
+		$(wildcard tools/header_generation/*.c) \
+		$(wildcard tools/header_generation/create_hdr_isbc/*.c) \
+		$(wildcard tools/header_generation/create_hdr_isbc/taal_api/*.c)
 
 create_hdr_isbc_OBJS = $(basename $(create_hdr_isbc_SRCS))
 create_hdr_isbc_OBJS := $(notdir $(create_hdr_isbc_OBJS))
@@ -50,9 +52,9 @@ create_hdr_isbc_OBJS := $(create_hdr_isbc_OBJS:%=%.o)
 
 create_hdr_esbc_SRCS = $(wildcard common/*.c) \
 		$(wildcard taal/*.c) \
-		$(wildcard tools/*.c) \
-		$(wildcard tools/create_hdr_esbc/*.c) \
-		$(wildcard tools/create_hdr_esbc/taal_api/*.c)
+		$(wildcard tools/header_generation/*.c) \
+		$(wildcard tools/header_generation/create_hdr_esbc/*.c) \
+		$(wildcard tools/header_generation/create_hdr_esbc/taal_api/*.c)
 
 create_hdr_esbc_OBJS = $(basename $(create_hdr_esbc_SRCS))
 create_hdr_esbc_OBJS := $(notdir $(create_hdr_esbc_OBJS))
@@ -60,9 +62,9 @@ create_hdr_esbc_OBJS := $(create_hdr_esbc_OBJS:%=%.o)
 
 create_hdr_pbi_SRCS = $(wildcard common/*.c) \
 		$(wildcard taal/*.c) \
-		$(wildcard tools/*.c) \
-		$(wildcard tools/create_hdr_pbi/*.c) \
-		$(wildcard tools/create_hdr_pbi/taal_api/*.c)
+		$(wildcard tools/header_generation/*.c) \
+		$(wildcard tools/header_generation/create_hdr_pbi/*.c) \
+		$(wildcard tools/header_generation/create_hdr_pbi/taal_api/*.c)
 
 create_hdr_pbi_OBJS = $(basename $(create_hdr_pbi_SRCS))
 create_hdr_pbi_OBJS := $(notdir $(create_hdr_pbi_OBJS))
@@ -70,50 +72,35 @@ create_hdr_pbi_OBJS := $(create_hdr_pbi_OBJS:%=%.o)
 
 create_hdr_cf_SRCS = $(wildcard common/*.c) \
 		$(wildcard taal/*.c) \
-		$(wildcard tools/*.c) \
-		$(wildcard tools/create_hdr_cf/*.c) \
-		$(wildcard tools/create_hdr_cf/taal_api/*.c)
+		$(wildcard tools/header_generation/*.c) \
+		$(wildcard tools/header_generation/create_hdr_cf/*.c) \
+		$(wildcard tools/header_generation/create_hdr_cf/taal_api/*.c)
 
 create_hdr_cf_OBJS = $(basename $(create_hdr_cf_SRCS))
 create_hdr_cf_OBJS := $(notdir $(create_hdr_cf_OBJS))
 create_hdr_cf_OBJS := $(create_hdr_cf_OBJS:%=%.o)
 
-sign_img_hash_SRCS = $(wildcard common/*.c) \
-		$(wildcard tools/sign_img_hash/*.c) \
-
-sign_img_hash_OBJS = $(basename $(sign_img_hash_SRCS))
-sign_img_hash_OBJS := $(notdir $(sign_img_hash_OBJS))
-sign_img_hash_OBJS := $(sign_img_hash_OBJS:%=%.o)
-
-append_sign_hdr_SRCS = $(wildcard common/*.c) \
-		$(wildcard tools/append_sign_hdr/*.c) \
-
-append_sign_hdr_OBJS = $(basename $(append_sign_hdr_SRCS))
-append_sign_hdr_OBJS := $(notdir $(append_sign_hdr_OBJS))
-append_sign_hdr_OBJS := $(append_sign_hdr_OBJS:%=%.o)
-
-vpath %.c 	common/ taal/ tools/ \
-		tools/create_hdr_isbc/ tools/create_hdr_isbc/taal_api/ \
-		tools/create_hdr_esbc/ tools/create_hdr_esbc/taal_api/ \
-		tools/create_hdr_pbi/ tools/create_hdr_pbi/taal_api/ \
-		tools/create_hdr_cf/ tools/create_hdr_cf/taal_api/ \
+vpath %.c 	common/ taal/ tools/header_generation/ \
+		tools/header_generation/create_hdr_isbc/ tools/header_generation/create_hdr_isbc/taal_api/ \
+		tools/header_generation/create_hdr_esbc/ tools/header_generation/create_hdr_esbc/taal_api/ \
+		tools/header_generation/create_hdr_pbi/ tools/header_generation/create_hdr_pbi/taal_api/ \
+		tools/header_generation/create_hdr_cf/ tools/header_generation/create_hdr_cf/taal_api/ \
 		tools/key_generation/ \
-		tools/sign_img_hash \
-		tools/append_sign_hdr
+		tools/signature_generation \
 
-INCLUDES = 	-Itools/create_hdr_isbc/include/ \
-		-Itools/create_hdr_esbc/include/ \
-		-Itools/create_hdr_pbi/include/ \
-		-Itools/create_hdr_cf/include/ \
+INCLUDES = 	-Itools/header_generation/create_hdr_isbc/include/ \
+		-Itools/header_generation/create_hdr_esbc/include/ \
+		-Itools/header_generation/create_hdr_pbi/include/ \
+		-Itools/header_generation/create_hdr_cf/include/ \
 		-Itaal/include -Icommon/include \
 		-I$(LIB_HASH_DRBG_INCLUDE_PATH)
 
 CCFLAGS= -g -Wall -Werror $(INCLUDES)
 
-INSTALL_BINARIES = 	create_hdr_isbc create_hdr_esbc create_hdr_pbi \
-			create_hdr_cf \
-			sign_img_hash append_sign_hdr \
-			gen_keys gen_otpmk_drbg gen_drv_drbg
+INSTALL_BINARIES = 	create_hdr_isbc create_hdr_esbc \
+			create_hdr_pbi create_hdr_cf \
+			gen_keys gen_otpmk_drbg gen_drv_drbg \
+			gen_sign sign_embed \
 
 # targets that are not files
 .PHONY: all clean
@@ -139,10 +126,10 @@ create_hdr_pbi: ${create_hdr_pbi_OBJS}
 create_hdr_cf: ${create_hdr_cf_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
-sign_img_hash: ${sign_img_hash_OBJS}
+gen_sign: ${gen_sign_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
-append_sign_hdr: ${append_sign_hdr_OBJS}
+sign_embed: ${sign_embed_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
 gen_keys: ${genkeys_OBJS}

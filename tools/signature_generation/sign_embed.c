@@ -32,9 +32,35 @@
 #include <unistd.h>
 
 #include <global.h>
-#include <parse_utils.h>
 
-struct g_data_t gd;
+static int get_file_size(const char *c)
+{
+	FILE *fp;
+	unsigned char buf[IOBLOCK];
+	int bytes = 0;
+
+	fp = fopen(c, "rb");
+	if (fp == NULL) {
+		fprintf(stderr, "Error in opening the file: %s\n", c);
+		return FAILURE;
+	}
+
+	while (!feof(fp)) {
+		/* read some data */
+		bytes += fread(buf, 1, IOBLOCK, fp);
+		if (ferror(fp)) {
+			fprintf(stderr, "Error in reading file\n");
+			fclose(fp);
+			exit(EXIT_FAILURE);
+		} else if (feof(fp) && (bytes == 0)) {
+			break;
+		}
+	}
+
+	fclose(fp);
+	return bytes;
+}
+
 /***************************************************************************
  * Function	:	main
  * Arguments	:	argc - Argument Count
@@ -45,58 +71,41 @@ struct g_data_t gd;
 int main(int argc, char **argv)
 {
 	char ch;
-	int ret, i;
+	int i;
 	uint32_t len;
-	FILE *fp, *fhdr, *fsign;
-	/* Initialization of Structures to 0 */
-	memset(&gd, 0, sizeof(struct g_data_t));
+	char *hdr_file, *sign_file;
+	FILE *fhdr, *fsign;
 
 	/* Check the command line argument */
-	if (argc != 2) {
+	if (argc != 3) {
 		/* Incorrect Usage */
 		printf("\nIncorrect Usage");
-		printf("\nCorrect Usage: %s <input_file>\n", argv[0]);
+		printf("\nCorrect Usage: %s <hdr_file> <sign_file>\n",
+			argv[0]);
 		return 1;
 	} else if ((strcmp(argv[1], "--help") == 0) ||
 		   (strcmp(argv[1], "-h") == 0)) {
 		/* Command Help */
-		printf("\nCorrect Usage: %s <input_file>\n", argv[0]);
+		printf("\nCorrect Usage: %s <hdr_file> <sign_file>\n",
+			argv[0]);
 		return 0;
 	} else {
-		/* Input File passed as Argument */
-		gd.input_file = argv[1];
+		hdr_file = argv[1];
+		sign_file = argv[2];
 	}
-
-	/* Open The Input File and get the names of following:
-	 * OUTPUT_HDR_FILENAME
-	 * RSA_SIGN_FILENAME
-	 */
-	fp = fopen(gd.input_file, "r");
-	if (fp == NULL) {
-		printf("Error in opening the file: %s\n", gd.input_file);
-		return FAILURE;
-	}
-
-	ret = fill_gd_input_file("OUTPUT_HDR_FILENAME", fp);
-	ret = fill_gd_input_file("RSA_SIGN_FILENAME", fp);
-	fclose(fp);
-	if (ret)
-		return ret;
 
 	/* Open the OUTPUT_HDR_FILENAME in 'Append Binary' Mode */
-	fhdr = fopen(gd.hdr_file_name, "ab");
+	fhdr = fopen(hdr_file, "ab");
 	if (fhdr == NULL) {
-		printf("Error in opening the file: %s\n",
-			gd.hdr_file_name);
+		printf("Error in opening the file: %s\n", hdr_file);
 		return FAILURE;
 	}
 
-	len = get_file_size(gd.rsa_sign_file_name);
+	len = get_file_size(sign_file);
 	/* Open the RSA_SIGN_FILENAME in 'Read Binary' Mode */
-	fsign = fopen(gd.rsa_sign_file_name, "rb");
+	fsign = fopen(sign_file, "rb");
 	if (fsign == NULL) {
-		printf("Error in opening the file: %s\n",
-			gd.rsa_sign_file_name);
+		printf("Error in opening the file: %s\n", sign_file);
 		return FAILURE;
 	}
 
@@ -114,6 +123,6 @@ int main(int argc, char **argv)
 	fclose(fsign);
 
 	printf("\n%s is appended with file %s (0x%x)\n\n",
-			gd.hdr_file_name, gd.rsa_sign_file_name, len);
+			hdr_file, sign_file, len);
 	return 0;
 }

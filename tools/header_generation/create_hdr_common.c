@@ -77,9 +77,6 @@ int create_hdr(int argc, char **argv)
 	/* Initialization of Global Structure to 0 */
 	memset(&gd, 0, sizeof(struct g_data_t));
 
-	/* Print the Attribution */
-	crypto_print_attribution();
-
 	/* Check the command line argument */
 	c = 0;
 	option_index = 0;
@@ -96,6 +93,9 @@ int create_hdr(int argc, char **argv)
 		print_usage(argv[0]);
 		return FAILURE;
 	}
+
+	/* Print the Attribution */
+	crypto_print_attribution();
 
 	gd.input_file = argv[optind];
 	printf("\nInput File is %s\n", gd.input_file);
