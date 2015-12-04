@@ -197,6 +197,13 @@ int main(int argc, char *argv[])
 	int i, j, l, ret;
 	enum algorithm hamming_algo;
 
+	printf("\n\t#----------------------------------------------------#");
+	printf("\n\t#-------         --------     --------        -------#");
+	printf("\n\t#------- CST (Code Signing Tool) Version 2.0  -------#");
+	printf("\n\t#-------         --------     --------        -------#");
+	printf("\n\t#----------------------------------------------------#");
+	printf("\n");
+
 	if (argc < 2) {
 		printf("\nError: Wrong Usage\n");
 		usage();

@@ -74,6 +74,13 @@ int create_hdr(int argc, char **argv)
 	int option_index;
 	uint32_t *srk;
 
+	printf("\n\t#----------------------------------------------------#");
+	printf("\n\t#-------         --------     --------        -------#");
+	printf("\n\t#------- CST (Code Signing Tool) Version 2.0  -------#");
+	printf("\n\t#-------         --------     --------        -------#");
+	printf("\n\t#----------------------------------------------------#");
+	printf("\n");
+
 	/* Initialization of Global Structure to 0 */
 	memset(&gd, 0, sizeof(struct g_data_t));
 

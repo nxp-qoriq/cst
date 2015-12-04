@@ -73,6 +73,13 @@ int main(int argc, char **argv)
 	uint8_t img_hash[SHA256_DIGEST_LENGTH];
 	uint8_t rsa_sign[KEY_SIZE_BYTES];
 
+	printf("\n\t#----------------------------------------------------#");
+	printf("\n\t#-------         --------     --------        -------#");
+	printf("\n\t#------- CST (Code Signing Tool) Version 2.0  -------#");
+	printf("\n\t#-------         --------     --------        -------#");
+	printf("\n\t#----------------------------------------------------#");
+	printf("\n");
+
 	while (1) {
 		static struct option long_options[] = {
 			{"help", no_argument, &help_flag, 1},

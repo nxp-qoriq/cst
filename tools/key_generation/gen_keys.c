@@ -135,6 +135,13 @@ int main(int argc, char **argv)
 	char *priv_fname = PRI_KEY_FILE;
 	int c;
 
+	printf("\n\t#----------------------------------------------------#");
+	printf("\n\t#-------         --------     --------        -------#");
+	printf("\n\t#------- CST (Code Signing Tool) Version 2.0  -------#");
+	printf("\n\t#-------         --------     --------        -------#");
+	printf("\n\t#----------------------------------------------------#");
+	printf("\n");
+
 	printf("\n");
 	printf("===============================================================\n");
 	printf("This product includes software developed by the OpenSSL Project\n");

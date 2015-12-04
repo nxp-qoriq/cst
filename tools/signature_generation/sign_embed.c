@@ -39,6 +39,13 @@ static int get_file_size(const char *c)
 	unsigned char buf[IOBLOCK];
 	int bytes = 0;
 
+	printf("\n\t#----------------------------------------------------#");
+	printf("\n\t#-------         --------     --------        -------#");
+	printf("\n\t#------- CST (Code Signing Tool) Version 2.0  -------#");
+	printf("\n\t#-------         --------     --------        -------#");
+	printf("\n\t#----------------------------------------------------#");
+	printf("\n");
+
 	fp = fopen(c, "rb");
 	if (fp == NULL) {
 		fprintf(stderr, "Error in opening the file: %s\n", c);

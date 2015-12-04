@@ -130,6 +130,14 @@ int main(int argc, char *argv[])
 {
 	char otpmk_in[2];
 	int i, l, ret;
+
+	printf("\n\t#----------------------------------------------------#");
+	printf("\n\t#-------         --------     --------        -------#");
+	printf("\n\t#------- CST (Code Signing Tool) Version 2.0  -------#");
+	printf("\n\t#-------         --------     --------        -------#");
+	printf("\n\t#----------------------------------------------------#");
+	printf("\n");
+
 	if (argc == 3 &&
 	    (strlen(argv[1]) == 1 && (*argv[1] == '1' || *argv[1] == '2'))) {
 		bit_ordering_type = atoi(argv[1]);
