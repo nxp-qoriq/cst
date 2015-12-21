@@ -116,6 +116,16 @@ int check_target(char *target_name, uint32_t *targetid)
 	return FAILURE;
 }
 
+static inline void check_field_length(char *field_name, char *field_val)
+{
+	if (strlen(field_val) >= MAX_FNAME_LEN) {
+		printf("Lenght of field %s exceed maximum limit %d\n",
+			field_name, MAX_FNAME_LEN);
+		printf("\nExiting ...\n");
+		exit(EXIT_FAILURE);
+	}
+}
+
 /***************************************************************************
  * Function	:	STR_TO_UL
  * Arguments	:	str - String
@@ -370,6 +380,8 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		if (gd.num_srk_entries >= 1) {
 			i = 0;
 			while (i != gd.num_srk_entries) {
+				check_field_length(field_name,
+					file_field.value[i]);
 				strcpy(gd.pub_fname[i], file_field.value[i]);
 				i++;
 				if (i == MAX_NUM_KEY) {
@@ -385,6 +397,8 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		if (gd.num_pri_key >= 1) {
 			i = 0;
 			while (i != gd.num_pri_key) {
+				check_field_length(field_name,
+					file_field.value[i]);
 				strcpy(gd.pri_fname[i], file_field.value[i]);
 				i++;
 				if (i == MAX_NUM_KEY) {
@@ -407,6 +421,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 
 	case FIELD_IMAGE_1:
 		if (file_field.count >= 2) {
+			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.entries[0].name, file_field.value[0]);
 			val64.whole = STR_TO_ULL(file_field.value[1], 16);
 			gd.entries[0].addr_high = val64.m_halfs.high;
@@ -421,6 +436,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 
 	case FIELD_IMAGE_2:
 		if (file_field.count >= 2) {
+			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.entries[1].name, file_field.value[0]);
 			val64.whole = STR_TO_ULL(file_field.value[1], 16);
 			gd.entries[1].addr_high = val64.m_halfs.high;
@@ -435,6 +451,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 
 	case FIELD_IMAGE_3:
 		if (file_field.count >= 2) {
+			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.entries[2].name, file_field.value[0]);
 			val64.whole = STR_TO_ULL(file_field.value[1], 16);
 			gd.entries[2].addr_high = val64.m_halfs.high;
@@ -449,6 +466,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 
 	case FIELD_IMAGE_4:
 		if (file_field.count >= 2) {
+			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.entries[3].name, file_field.value[0]);
 			val64.whole = STR_TO_ULL(file_field.value[1], 16);
 			gd.entries[3].addr_high = val64.m_halfs.high;
@@ -463,6 +481,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 
 	case FIELD_IMAGE_5:
 		if (file_field.count >= 2) {
+			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.entries[4].name, file_field.value[0]);
 			val64.whole = STR_TO_ULL(file_field.value[1], 16);
 			gd.entries[4].addr_high = val64.m_halfs.high;
@@ -477,6 +496,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 
 	case FIELD_IMAGE_6:
 		if (file_field.count >= 2) {
+			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.entries[5].name, file_field.value[0]);
 			val64.whole = STR_TO_ULL(file_field.value[1], 16);
 			gd.entries[5].addr_high = val64.m_halfs.high;
@@ -491,6 +511,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 
 	case FIELD_IMAGE_7:
 		if (file_field.count >= 2) {
+			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.entries[6].name, file_field.value[0]);
 			val64.whole = STR_TO_ULL(file_field.value[1], 16);
 			gd.entries[6].addr_high = val64.m_halfs.high;
@@ -505,6 +526,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 
 	case FIELD_IMAGE_8:
 		if (file_field.count >= 2) {
+			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.entries[7].name, file_field.value[0]);
 			val64.whole = STR_TO_ULL(file_field.value[1], 16);
 			gd.entries[7].addr_high = val64.m_halfs.high;
@@ -567,36 +589,42 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		break;
 
 	case FIELD_OUTPUT_HDR_FILENAME:
-		if (file_field.count == 1)
+		if (file_field.count == 1) {
+			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.hdr_file_name, file_field.value[0]);
-		else
+		} else
 			strcpy(gd.hdr_file_name, DEFAULT_HDR_FILE_NAME);
 		break;
 
 	case FIELD_IMAGE_HASH_FILENAME:
-		if (file_field.count == 1)
+		if (file_field.count == 1) {
+			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.img_hash_file_name, file_field.value[0]);
-		else
+		} else
 			strcpy(gd.img_hash_file_name, DEFAULT_HASH_FILE_NAME);
 		break;
 
 	case FIELD_RSA_SIGN_FILENAME:
-		if (file_field.count == 1)
+		if (file_field.count == 1) {
+			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.rsa_sign_file_name, file_field.value[0]);
-		else
+		} else
 			strcpy(gd.rsa_sign_file_name, DEFAULT_SIGN_FILE_NAME);
 		break;
 
 	case FIELD_OUTPUT_SG_BIN:
-		if (file_field.count == 1)
+		if (file_field.count == 1) {
+			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.sg_file_name, file_field.value[0]);
-		else
+		} else
 			strcpy(gd.sg_file_name, DEFAULT_SG_FILE_NAME);
 		break;
 
 	case FIELD_RCW_PBI_FILENAME:
-		if (file_field.count == 1)
+		if (file_field.count == 1) {
+			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.rcw_fname, file_field.value[0]);
+		}
 
 		break;
 
