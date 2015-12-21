@@ -25,8 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _BOOT1_SIGN_H_
-#define _BOOT1_SIGN_H_
+#ifndef _GLOBAL_H_
+#define _GLOBAL_H_
 
 #include <stdio.h>
 #include <stdint.h>
@@ -55,6 +55,9 @@ int error_unsupported(void);
 #define MAX_CF_WORD		1024
 
 #define MAX_HDR_SIZE		0x1000
+
+#define MAX_NUM_FSL_UID		2
+#define MAX_NUM_OEM_UID		5
 
 #define ADDR_ALIGN_MASK		0x000001FF
 #define ADDR_ALIGN_OFFSET	0x00000200
@@ -121,10 +124,10 @@ struct g_data_t {
 	uint32_t num_entries;
 	struct sg_input entries[MAX_NUM_SG_ENTRY];
 
-	uint32_t fsluid[2];
-	uint32_t oemuid[5];
-	uint8_t fsluid_flag[2];
-	uint8_t oemuid_flag[5];
+	uint32_t fsluid[MAX_NUM_FSL_UID];
+	uint32_t oemuid[MAX_NUM_OEM_UID];
+	uint8_t fsluid_flag[MAX_NUM_FSL_UID];
+	uint8_t oemuid_flag[MAX_NUM_OEM_UID];
 
 	char hdr_file_name[MAX_FNAME_LEN];
 	char img_hash_file_name[MAX_FNAME_LEN];
