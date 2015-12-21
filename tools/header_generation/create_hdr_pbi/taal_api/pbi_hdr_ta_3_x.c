@@ -401,9 +401,13 @@ int create_header_ta_3_1(void)
 int calc_img_hash_ta_3_x(void)
 {
 	uint8_t ctx[CRYPTO_HASH_CTX_SIZE];
+	uint32_t hdr_start, hdr_size;
 	crypto_hash_init(ctx);
 
-	crypto_hash_update(ctx, gd.hdr_struct, gd.hdr_size);
+	/* Crypto Hash includes all PBI commands and SRK Table */
+	hdr_start = NUM_RCW_WORD * sizeof(uint32_t);
+	hdr_size = (gd.num_pbi_words) * sizeof(uint32_t);
+	crypto_hash_update(ctx, gd.hdr_struct + hdr_start, hdr_size);
 	crypto_hash_update(ctx, gd.key_table, gd.srk_size);
 
 	crypto_hash_final(gd.img_hash, ctx);
