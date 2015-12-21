@@ -5,19 +5,19 @@
 ---------------------------------------------------
 # Specify the platform. [Mandatory]
 # Choose Platform -
-# TRUST 3.0: LS2085
+# TRUST 3.0: LS2080
 # TRUST 3.1: LS2088, LS1088
 PLATFORM=LS2085
 ---------------------------------------------------
 # Specify the Key Information.
 # PUB_KEY [Mandatory] Comma Seperated List
-# Usage: <srk1.pub> <srk2.pub> .....
+# Usage: <srk1.pub>, <srk2.pub> .....
 PUB_KEY=srk.pub
 # KEY_SELECT [Mandatory]
 # USAGE (for TRUST 3.x): (between 1 to 8)
 KEY_SELECT=1
-# PRI_KEY [Mandatory] Single Key Used for Signing
-# USAGE: <srk.pri>
+# PRI_KEY [Mandatory] Comma Seperated List for Signing
+# USAGE: <srk.pri>, <srk2.pri>
 PRI_KEY=srk.pri
 ---------------------------------------------------
 # For PBI Signing
@@ -48,4 +48,4 @@ ISS_FLAG=1
 LW_FLAG=0
 ---------------------------------------------------
 # Specify VERBOSE as 1, if you want to Display Header Information [Optional]
-VERBOSE=1
+VERBOSE=0
