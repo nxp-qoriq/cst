@@ -191,7 +191,7 @@ int update_crc_checksum(void)
 	 */
 	if (pbi_word[gd.num_pbi_words - 2] == CRC_STOP_CMD) {
 		crc = crypto_calculate_crc(pbi_word,
-			(gd.num_pbi_words * sizeof(uint32_t)));
+			((gd.num_pbi_words - 1) * sizeof(uint32_t)));
 		pbi_word[gd.num_pbi_words - 1] = crc;
 	} else if (pbi_word[gd.num_pbi_words - 2] != STOP_CMD) {
 		printf("Error: Invalid PBI. No Stop Command\n");
