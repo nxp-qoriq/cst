@@ -243,6 +243,7 @@ int create_header_ta_1_x_pbl(void)
 	if (fp == NULL) {
 		printf("Error in opening the file: %s\n", gd.hdr_file_name);
 		free(header);
+		return FAILURE;
 	}
 	ret = fwrite(header, 1, hdrlen, fp);
 	fclose(fp);
@@ -259,7 +260,7 @@ int create_header_ta_1_x_pbl(void)
 		if (fp == NULL) {
 			printf("Error in opening the file: %s\n",
 				gd.sg_file_name);
-			free(header);
+			return FAILURE;
 		}
 		ret = fwrite(gd.sg_table_ptr, 1, gd.sg_size, fp);
 		fclose(fp);
@@ -296,6 +297,7 @@ int create_header_ta_1_x_nonpbl(void)
 	if (fp == NULL) {
 		printf("Error in opening the file: %s\n", gd.hdr_file_name);
 		free(header);
+		return FAILURE;
 	}
 	ret = fwrite(header, 1, hdrlen, fp);
 	fclose(fp);
@@ -450,7 +452,7 @@ int dump_hdr_ta_1_x_nonpbl(void)
 			htonl(hdr->key_len));
 
 	printf("\n- UID Information");
-	printf("\n-\t UID Flags = %2x", htons(hdr->uid_flag));
+	printf("\n-\t UID Flags = %2x", htons((uint16_t)hdr->uid_flag));
 	printf("\n-\t FSL UID = %08x", htonl(hdr->fsl_uid_0));
 	printf("\n-\t OEM UID = %08x", htonl(hdr->oem_uid_0));
 	printf("\n- Image Information");

@@ -165,7 +165,7 @@ int fill_structure_ta_1_ta_2_ppc(void)
 		hdr->ie_key_select = htonl(gd.iek_sel);
 	} else if (gd.srk_flag == 1) {
 		hdr->srk_table_offset = htonl(gd.srk_offset);
-		hdr->len_kr.num_keys = htons(gd.num_srk_entries);
+		hdr->len_kr.num_keys = htons((uint16_t)gd.num_srk_entries);
 		hdr->len_kr.key_num_verify = (uint8_t)(gd.srk_sel);
 		hdr->len_kr.srk_table_flag = gd.srk_flag;
 	} else {
@@ -333,6 +333,7 @@ int create_header_ta_2_x(void)
 	if (fp == NULL) {
 		printf("Error in opening the file: %s\n", gd.hdr_file_name);
 		free(header);
+		return FAILURE;
 	}
 	ret = fwrite(header, 1, hdrlen, fp);
 	fclose(fp);
@@ -523,7 +524,7 @@ int dump_hdr_ta_1_ta_2_ppc(void)
 	printf("\n-\t SRK Flag = %x", hdr->len_kr.srk_table_flag);
 	if (hdr->len_kr.srk_table_flag) {
 		printf("\n-\t Number of Keys : %x",
-			htons(hdr->len_kr.num_keys));
+			htons((uint16_t)hdr->len_kr.num_keys));
 		printf("\n-\t Key Select : %x",
 			hdr->len_kr.key_num_verify);
 		printf("\n-\t Key List : ");
@@ -538,7 +539,7 @@ int dump_hdr_ta_1_ta_2_ppc(void)
 	}
 
 	printf("\n- UID Information");
-	printf("\n-\t UID Flags = %02x", htons(hdr->uid_flag));
+	printf("\n-\t UID Flags = %02x", htons((uint16_t)hdr->uid_flag));
 	printf("\n-\t FSL UID = %08x", htonl(hdr->fsl_uid_0));
 	printf("\n-\t OEM UID = %08x", htonl(hdr->oem_uid_0));
 	printf("\n- Image Information");

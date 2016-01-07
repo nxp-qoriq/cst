@@ -113,6 +113,7 @@ int main(int argc, char **argv)
 	fsign = fopen(sign_file, "rb");
 	if (fsign == NULL) {
 		printf("Error in opening the file: %s\n", sign_file);
+		fclose(fhdr);
 		return FAILURE;
 	}
 

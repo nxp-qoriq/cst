@@ -143,8 +143,10 @@ int fill_structure_ta_2_0_nonpbl(void)
 	} else {
 		hdr_secure->srk_table_offset = htonl(gd.srk_offset);
 		/* Set the SRK FLAG in Header */
-		hdr_secure->len_kr.srk_sel = htons(gd.srk_sel | 0x1000);
-		hdr_secure->len_kr.num_srk_entries = htons(gd.num_srk_entries);
+		hdr_secure->len_kr.srk_sel =
+				htons((uint16_t)gd.srk_sel | 0x1000);
+		hdr_secure->len_kr.num_srk_entries =
+				htons((uint16_t)gd.num_srk_entries);
 	}
 
 	hdr_secure->psign_off = htonl(gd.rsa_offset);
@@ -201,6 +203,7 @@ int create_header_ta_1_ta_2(void)
 	if (fp == NULL) {
 		printf("Error in opening the file: %s\n", gd.hdr_file_name);
 		free(header);
+		return FAILURE;
 	}
 	ret = fwrite(header, 1, hdrlen, fp);
 	fclose(fp);

@@ -155,8 +155,8 @@ int fill_structure_ta_3_0(void)
 	hdr->barker[2] = barker[2];
 	hdr->barker[3] = barker[3];
 	hdr->srk_table_offset = gd.srk_offset;
-	hdr->num_keys = gd.num_srk_entries;
-	hdr->key_num_verify = gd.srk_sel;
+	hdr->num_keys = (uint8_t)gd.num_srk_entries;
+	hdr->key_num_verify = (uint8_t)gd.srk_sel;
 	hdr->psign = gd.rsa_offset;
 	hdr->sign_len = gd.rsa_size;
 	hdr->sg_table_addr = gd.sg_offset;
@@ -203,8 +203,8 @@ int fill_structure_ta_3_1(void)
 	hdr->barker[2] = barker[2];
 	hdr->barker[3] = barker[3];
 	hdr->srk_table_offset = gd.srk_offset;
-	hdr->num_keys = gd.num_srk_entries;
-	hdr->key_num_verify = gd.srk_sel;
+	hdr->num_keys = (uint8_t)gd.num_srk_entries;
+	hdr->key_num_verify = (uint8_t)gd.srk_sel;
 	hdr->psign = gd.rsa_offset;
 	hdr->sign_len = gd.rsa_size;
 	hdr->sg_table_addr = gd.sg_offset;
@@ -253,6 +253,7 @@ int create_header_ta_3_x(void)
 	if (fp == NULL) {
 		printf("Error in opening the file: %s\n", gd.hdr_file_name);
 		free(header);
+		return FAILURE;
 	}
 	ret = fwrite(header, 1, hdrlen, fp);
 	fclose(fp);

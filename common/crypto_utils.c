@@ -96,6 +96,7 @@ int crypto_hash_update_file(void *ctx, char *fname)
 		bytes = fread(buf, 1, IOBLOCK, fp);
 		if (ferror(fp)) {
 			fprintf(stderr, "Error in reading file\n");
+			fclose(fp);
 			return FAILURE;
 		} else if (feof(fp) && (bytes == 0)) {
 			break;
@@ -170,6 +171,7 @@ int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr)
 	}
 
 	pub_key = PEM_read_RSAPublicKey(fp, NULL, NULL, NULL);
+	fclose(fp);
 	if (pub_key == NULL) {
 		fprintf(stderr, "Error in key reading %s:\n",
 			fname_pub);

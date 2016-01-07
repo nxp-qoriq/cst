@@ -181,7 +181,7 @@ unsigned long STR_TO_UL(char *str, int base)
  ***************************************************************************/
 unsigned long long STR_TO_ULL(char *str, int base)
 {
-	unsigned long val;
+	unsigned long long val;
 	char *endptr;
 	char *neg;
 

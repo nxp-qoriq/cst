@@ -208,8 +208,6 @@ int create_srk_calc_hash(uint32_t max_keys)
 	uint8_t ctx[CRYPTO_HASH_CTX_SIZE];
 
 	/* Check if Num of Entries and Key Select is Correct */
-	ret = FAILURE;
-
 	if (gd.srk_flag == 0)
 		max_keys = 1;
 
