@@ -107,6 +107,7 @@ INSTALL_BINARIES = 	create_hdr_isbc create_hdr_esbc \
 
 # make targets
 all: $(LIB_HASH_DRBG) ${INSTALL_BINARIES}
+	cp -rf scripts/* ./
 	@echo
 	@echo "#########################################"
 	@echo "# Tools Compiled:"
