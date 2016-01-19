@@ -105,7 +105,12 @@ int create_pbi(uint32_t hdr_size)
 
 	/* Read the RCW Words */
 	for (i = 0; i < NUM_RCW_WORD; i++) {
-		fread(&word, sizeof(word), 1, frcw);
+		ret = fread(&word, sizeof(word), 1, frcw);
+		if (ret == 0) {
+			printf("Error in Reading RCW Words\n");
+			fclose(frcw);
+			return FAILURE;
+		}
 		rcw_word[i] = word;
 	}
 
