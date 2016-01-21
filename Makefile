@@ -95,7 +95,7 @@ INCLUDES = 	-Itools/header_generation/create_hdr_isbc/include/ \
 		-Itaal/include -Icommon/include \
 		-I$(LIB_HASH_DRBG_INCLUDE_PATH)
 
-CCFLAGS= -g -Wall -Werror $(INCLUDES)
+CCFLAGS= -g -Wall -Wno-strict-aliasing -Werror $(INCLUDES)
 
 INSTALL_BINARIES = 	create_hdr_isbc create_hdr_esbc \
 			create_hdr_pbi create_hdr_cf \
