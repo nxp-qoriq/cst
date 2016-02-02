@@ -70,7 +70,9 @@ static parse_struct_t parse_table[] = {
 	{ "OUTPUT_SG_BIN", FIELD_OUTPUT_SG_BIN },
 	{ "ESBC_HDRADDR_SEC_IMAGE", FIELD_ESBC_HDRADDR_SEC_IMAGE },
 	{ "IE_KEY_SEL", FIELD_IE_KEY_SEL },
-	{ "ESBC_HDRADDR", FIELD_ESBC_HDRADDR }
+	{ "ESBC_HDRADDR", FIELD_ESBC_HDRADDR },
+	{ "IE_KEY", FIELD_IE_KEY},
+	{ "IE_REVOC", FIELD_IE_REVOC},
 
 };
 
@@ -269,6 +271,31 @@ void remove_whitespace(char *line)
 	*p2 = 0;
 }
 
+/* Search field_name in line_data. Also the char before and after the
+ * 'field_name' string in 'line_data' must not be alphanumeric or '_'
+ */
+int found_whole_word(const char *line_data, const char *field_name)
+{
+	const char *match_pointer = strstr(line_data, field_name);
+	if (!match_pointer)
+		return 0;
+	/* If match is not found in very start of string,
+	 * check that char previous to field_name string is neither
+	 * alphanumeric nor '_'
+	 */
+	if (line_data != match_pointer--)
+		if (isalnum(*match_pointer) ||
+				(*match_pointer == '_'))
+			return 0;
+	match_pointer += strlen(field_name) + 1;
+	/* Check that char after 'field_name' string in 'line_data'
+	 * is neither alphanumeric nor '_'
+	 */
+	if (isalnum(*match_pointer) ||
+			(*match_pointer == '_'))
+		return 0;
+	return 1;
+}
 
 void find_value_from_file(char *field_name, FILE *fp)
 {
@@ -287,7 +314,8 @@ void find_value_from_file(char *field_name, FILE *fp)
 	while (fread(line_data, 1, line_size, fp)) {
 		*(line_data + line_size) = '\0';
 		remove_whitespace(line_data);
-		if ((strstr(line_data, field_name)) && (*line_data != '#')) {
+		if ((found_whole_word(line_data, field_name)) &&
+				(*line_data != '#')) {
 			get_field_from_file(line_data, field_name);
 			return;
 		}
@@ -360,7 +388,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 	idx = index_from_field(field_name);
 
 	if (idx == FIELD_UNKNOWN_MAX) {
-		printf("\n Invalid Field being parsed");
+		printf("\n Invalid Field being parsed %s\n", field_name);
 		return FAILURE;
 	}
 
@@ -402,6 +430,25 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 				strcpy(gd.pri_fname[i], file_field.value[i]);
 				i++;
 				if (i == MAX_NUM_KEY) {
+					printf("\n Key Number Limit reached");
+					break;
+				}
+			}
+		}
+		break;
+
+	case FIELD_IE_KEY:
+		gd.num_ie_key = file_field.count;
+		if (gd.num_ie_key >= 1) {
+			gd.ie_table_flag = 1;
+			gd.iek_flag = 1;
+			i = 0;
+			while (i != gd.num_ie_key) {
+				check_field_length(field_name,
+					file_field.value[i]);
+				strcpy(gd.iek_fname[i], file_field.value[i]);
+				i++;
+				if (i == MAX_NUM_IEKEY) {
 					printf("\n Key Number Limit reached");
 					break;
 				}
@@ -715,7 +762,21 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 			gd.iek_flag = 1;
 		}
 		break;
+	case FIELD_IE_REVOC:
+		gd.num_iek_revok = file_field.count;
+		for (i = 0; i < file_field.count; i++) {
 
+			if (i == MAX_NUM_IEKEY) {
+				printf("\n IE Key Revok Number Limit reached");
+				break;
+			}
+
+			uint32_t key_revoked = STR_TO_UL(
+				file_field.value[i], 16);
+
+			gd.iek_revok[i] = key_revoked;
+		}
+		break;
 	default:
 		printf("\n Invalid Field being parsed");
 		return FAILURE;

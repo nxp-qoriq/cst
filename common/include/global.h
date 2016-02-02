@@ -38,6 +38,7 @@ int calculate_signature(void);
 int create_img_hash_file(void);
 int append_signature(void);
 int error_unsupported(void);
+int create_ie_file(char *file_name) __attribute__ ((unused));
 
 #define SUCCESS			0
 #define FAILURE			-1
@@ -75,6 +76,12 @@ struct srk_table_t {
 	uint8_t pkey[KEY_SIZE_BYTES];
 };
 
+struct ie_table_t {
+	uint32_t key_revok;
+	uint32_t num_keys;
+	struct srk_table_t srk_table[MAX_NUM_IEKEY];
+};
+
 struct sg_table_t {
 	uint32_t len;
 	uint32_t target;
@@ -109,11 +116,14 @@ struct g_data_t {
 	uint32_t iek_sel;
 	uint32_t num_srk_entries;
 	uint32_t num_pri_key;
+	uint32_t num_ie_key;
 	uint8_t srk_flag;
 	uint8_t srk_hash_flag;
 	char pub_fname[MAX_NUM_KEY][MAX_FNAME_LEN];
 	char pri_fname[MAX_NUM_KEY][MAX_FNAME_LEN];
 	char iek_fname[MAX_NUM_IEKEY][MAX_FNAME_LEN];
+	uint32_t iek_revok[MAX_NUM_IEKEY];
+	uint32_t num_iek_revok;
 	uint8_t *pkey;
 	uint32_t key_len;
 
@@ -148,6 +158,8 @@ struct g_data_t {
 	uint8_t rsa_sign[KEY_SIZE_BYTES];
 
 	struct srk_table_t key_table[MAX_NUM_KEY];
+	struct ie_table_t ie_table;
+	uint32_t ie_table_flag;
 	struct sg_table_t sg_table[MAX_NUM_SG_ENTRY];
 	struct sg_table_ptr_t sg_table_ptr[MAX_NUM_SG_ENTRY];
 	uint32_t img_target;
@@ -163,6 +175,8 @@ struct g_data_t {
 
 	uint32_t srk_offset;
 	uint32_t srk_size;
+	uint32_t ie_table_size;
+	uint32_t ie_table_offset;
 	uint32_t sg_offset;
 	uint32_t sg_size;
 	uint32_t sg_addr;

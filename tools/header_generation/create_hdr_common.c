@@ -371,6 +371,77 @@ int create_img_hash_file(void)
 	return SUCCESS;
 }
 
+/***************************************************************************
+ * Function	:	create_ie_file
+ * Arguments	:	File Name
+ * Return	:	SUCCESS or FAILURE
+ * Description	:	Create IE Key Tabel file
+ ***************************************************************************/
+int create_ie_file(char *file_name)
+{
+	int ret = SUCCESS;
+	uint32_t key_len = 0;
+	uint32_t key_revoked, ie_table_key_revok;
+	int i;
+
+	for (i = 0; i < gd.num_iek_revok; i++) {
+		key_revoked = gd.iek_revok[i];
+		if (key_revoked >= MAX_NUM_IEKEY ||
+			key_revoked == 0) {
+			printf(" Key Revoked :%d: is invalid key number",
+				key_revoked);
+			return FAILURE;
+		} else
+			ie_table_key_revok |= 1 << (gd.iek_revok[i] - 1);
+	}
+
+	if (gd.hton_flag == 0) {
+		gd.ie_table.num_keys = gd.num_ie_key;
+		gd.ie_table.key_revok= ie_table_key_revok;
+	} else {
+		gd.ie_table.num_keys = htonl(gd.num_ie_key);
+		gd.ie_table.key_revok= htonl(ie_table_key_revok);
+	}
+
+	/* Read all the public Keys and Store in SRK Table */
+	for (i = 0; i < gd.num_ie_key; i++) {
+		key_len = 0;
+		ret = crypto_extract_pub_key(gd.iek_fname[i],
+					&key_len,
+				gd.ie_table.srk_table[i].pkey);
+		if (ret != SUCCESS)
+			return ret;
+
+		if (gd.hton_flag == 0)
+			gd.ie_table.srk_table[i].key_len = key_len;
+		else
+			gd.ie_table.srk_table[i].key_len = htonl(key_len);
+	}
+
+	FILE *fp;
+
+	fp = fopen(file_name, "wb");
+
+	if (fp == NULL) {
+		printf("Error in opening the file: %s\n",
+			gd.entries[0].name);
+		return FAILURE;
+	}
+
+	gd.ie_table_size =
+			(char *)&gd.ie_table.srk_table[gd.num_ie_key]
+				 - (char *)&gd.ie_table;
+	ret = fwrite(&gd.ie_table, 1, gd.ie_table_size , fp);
+	fclose(fp);
+
+	if (ret == 0) {
+		printf("Error in Writing to file");
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
+
 /*****************************************************************************
  * Error For Unsupported Platforms
  *****************************************************************************/
