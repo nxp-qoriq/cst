@@ -54,6 +54,7 @@ static char *parse_list[] = {
 	"LW_FLAG",
 	"RCW_PBI_FILENAME",
 	"BOOT1_PTR",
+	"IE_TABLE_ADDR",
 	"VERBOSE"
 };
 
@@ -130,6 +131,14 @@ int create_pbi(uint32_t hdr_size)
 		printf("Error: BOOT1 PTR is not specified\n");
 		fclose(frcw);
 		return FAILURE;
+	}
+
+	if (gd.ie_table_addr != 0) {
+		/* Add PBI Command to Update SCRATCH Register with
+		 * IE Table Address
+		 */
+		pbi_word[gd.num_pbi_words++] = CCSR_W_SCRATCHRW13_CMD;
+		pbi_word[gd.num_pbi_words++] = gd.ie_table_addr;
 	}
 
 	/* Read Other PBI commands

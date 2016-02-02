@@ -73,6 +73,7 @@ static parse_struct_t parse_table[] = {
 	{ "ESBC_HDRADDR", FIELD_ESBC_HDRADDR },
 	{ "IE_KEY", FIELD_IE_KEY},
 	{ "IE_REVOC", FIELD_IE_REVOC},
+	{ "IE_TABLE_ADDR", FIELD_IE_TABLE_ADDR}
 
 };
 
@@ -777,6 +778,13 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 			gd.iek_revok[i] = key_revoked;
 		}
 		break;
+
+	case FIELD_IE_TABLE_ADDR:
+		if (file_field.count == 1)
+			gd.ie_table_addr = STR_TO_UL(file_field.value[0], 16);
+
+		break;
+
 	default:
 		printf("\n Invalid Field being parsed");
 		return FAILURE;
