@@ -381,7 +381,7 @@ int create_ie_file(char *file_name)
 {
 	int ret = SUCCESS;
 	uint32_t key_len = 0;
-	uint32_t key_revoked, ie_table_key_revok;
+	uint32_t key_revoked, ie_table_key_revok = 0;
 	int i;
 
 	for (i = 0; i < gd.num_iek_revok; i++) {
@@ -438,6 +438,49 @@ int create_ie_file(char *file_name)
 		printf("Error in Writing to file");
 		return FAILURE;
 	}
+
+	return SUCCESS;
+}
+
+/***************************************************************************
+ * Function	:	read_file_in_buffer
+ * Arguments	:	Pointer to bugffer, File Name
+ * Return	:	SUCCESS or FAILURE
+ * Description	:	Opens a binary file and places the content in a
+ *			buffer memory
+ ***************************************************************************/
+int read_file_in_buffer(uint8_t *ptr, char *file_name)
+{
+	FILE *fp;
+	size_t bytes, bytes_copied;
+	unsigned char buf[IOBLOCK];
+
+	fp = fopen(file_name, "rb");
+	if (fp == NULL) {
+		printf("Error in opening the IE Table file\n");
+		return FAILURE;
+	}
+
+	/* go to the begenning */
+	fseek(fp, 0L, SEEK_SET);
+	bytes_copied = 0;
+	bytes = 0;
+
+	while (!feof(fp)) {
+		/* read some data */
+		bytes = fread(buf, 1, IOBLOCK, fp);
+		if (ferror(fp)) {
+			printf("Error in reading file\n");
+			fclose(fp);
+			return FAILURE;
+		} else if (feof(fp) && (bytes == 0)) {
+			break;
+		}
+
+		memcpy(ptr + bytes_copied, buf, bytes);
+		bytes_copied += bytes;
+	}
+	fclose(fp);
 
 	return SUCCESS;
 }

@@ -38,7 +38,8 @@ int calculate_signature(void);
 int create_img_hash_file(void);
 int append_signature(void);
 int error_unsupported(void);
-int create_ie_file(char *file_name) __attribute__ ((unused));
+int create_ie_file(char *file_name);
+int read_file_in_buffer(uint8_t *ptr, char *file_name);
 
 #define SUCCESS			0
 #define FAILURE			-1
@@ -70,6 +71,7 @@ int create_ie_file(char *file_name) __attribute__ ((unused));
 #define DEFAULT_HASH_FILE_NAME	"hash.out"
 #define DEFAULT_SIGN_FILE_NAME	"sign.out"
 #define DEFAULT_SG_FILE_NAME	"sg_table.out"
+#define DEFAULT_IE_FILE_NAME	"ie_table.out"
 
 struct srk_table_t {
 	uint32_t key_len;

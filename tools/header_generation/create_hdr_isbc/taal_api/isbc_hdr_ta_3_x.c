@@ -61,6 +61,9 @@ static char *parse_list[] = {
 	"MP_FLAG",
 	"ISS_FLAG",
 	"LW_FLAG",
+	"ESBC_HDRADDR",
+	"IE_KEY",
+	"IE_REVOC",
 	"VERBOSE"
 };
 
@@ -88,7 +91,9 @@ static void calculate_offset_size(void)
 	/* Calculate the offsets of blocks aligne to boundry 0x200 */
 	gd.srk_offset = OFFSET_ALIGN(gd.hdr_size);
 	gd.sg_offset = OFFSET_ALIGN(gd.srk_offset + gd.srk_size);
-	gd.rsa_offset = OFFSET_ALIGN(gd.sg_offset + gd.sg_size);
+
+	gd.ie_table_offset = OFFSET_ALIGN(gd.sg_offset + gd.sg_size);
+	gd.rsa_offset = OFFSET_ALIGN(gd.ie_table_offset + gd.ie_table_size);
 }
 
 static uint8_t get_misc_flags(void)
@@ -135,6 +140,29 @@ int fill_structure_ta_3_0(void)
 	struct isbc_hdr_ta_3_0 *hdr = (struct isbc_hdr_ta_3_0 *)gd.hdr_struct;
 	memset(hdr, 0, sizeof(struct isbc_hdr_ta_3_0));
 
+	if(gd.iek_flag == 1) {
+		ret = create_ie_file(DEFAULT_IE_FILE_NAME);
+		if (ret != SUCCESS)
+			return ret;
+		gd.ie_table_size = get_file_size(DEFAULT_IE_FILE_NAME);
+		gd.num_entries++;
+	}
+
+	/* Calculate Offsets and Size */
+	gd.hdr_size = sizeof(struct isbc_hdr_ta_3_0);
+	calculate_offset_size();
+
+	if(gd.iek_flag == 1) {
+		/* Shift the SG Entries as First entry would be IEK Table */
+		for (i = 0; i < gd.num_entries - 1; i++)
+			gd.entries[i + 1] = gd.entries[i];
+
+		strcpy(gd.entries[0].name, DEFAULT_IE_FILE_NAME);
+		gd.entries[0].addr_high = 0;
+		gd.entries[0].addr_low = gd.hdr_addr + gd.ie_table_offset;
+		gd.entries[0].dst_addr = 0xFFFFFFFF;
+	}
+
 	/* Create the SG Table */
 	for (i = 0; i < gd.num_entries; i++) {
 		ret = get_file_size(gd.entries[i].name);
@@ -144,10 +172,6 @@ int fill_structure_ta_3_0(void)
 		gd.sg_table[i].src_addr_low = gd.entries[i].addr_low;
 		gd.sg_table[i].dst_addr = gd.entries[i].dst_addr;
 	}
-
-	/* Calculate Offsets and Size */
-	gd.hdr_size = sizeof(struct isbc_hdr_ta_3_0);
-	calculate_offset_size();
 
 	/* Pouplate the fields in Header */
 	hdr->barker[0] = barker[0];
@@ -183,6 +207,29 @@ int fill_structure_ta_3_1(void)
 	struct isbc_hdr_ta_3_1 *hdr = (struct isbc_hdr_ta_3_1 *)gd.hdr_struct;
 	memset(hdr, 0, sizeof(struct isbc_hdr_ta_3_0));
 
+	if(gd.iek_flag == 1) {
+		ret = create_ie_file(DEFAULT_IE_FILE_NAME);
+		if (ret != SUCCESS)
+			return ret;
+		gd.ie_table_size = get_file_size(DEFAULT_IE_FILE_NAME);
+		gd.num_entries++;
+	}
+
+	/* Calculate Offsets and Size */
+	gd.hdr_size = sizeof(struct isbc_hdr_ta_3_1);
+	calculate_offset_size();
+
+	if(gd.iek_flag == 1) {
+		/* Shift the SG Entries as First entry would be IEK Table */
+		for (i = 0; i < gd.num_entries - 1; i++)
+			gd.entries[i + 1] = gd.entries[i];
+
+		strcpy(gd.entries[0].name, DEFAULT_IE_FILE_NAME);
+		gd.entries[0].addr_high = 0;
+		gd.entries[0].addr_low = gd.hdr_addr + gd.ie_table_offset;
+		gd.entries[0].dst_addr = 0xFFFFFFFF;
+	}
+
 	/* Create the SG Table */
 	for (i = 0; i < gd.num_entries; i++) {
 		ret = get_file_size(gd.entries[i].name);
@@ -192,10 +239,6 @@ int fill_structure_ta_3_1(void)
 		gd.sg_table[i].src_addr_low = gd.entries[i].addr_low;
 		gd.sg_table[i].src_addr_high = gd.entries[i].addr_high;
 	}
-
-	/* Calculate Offsets and Size */
-	gd.hdr_size = sizeof(struct isbc_hdr_ta_3_1);
-	calculate_offset_size();
 
 	/* Pouplate the fields in Header */
 	hdr->barker[0] = barker[0];
@@ -247,6 +290,13 @@ int create_header_ta_3_x(void)
 	memcpy(header, gd.hdr_struct, gd.hdr_size);
 	memcpy(header + gd.srk_offset, gd.key_table, gd.srk_size);
 	memcpy(header + gd.sg_offset, gd.sg_table, gd.sg_size);
+
+	if(gd.iek_flag == 1) {
+		ret = read_file_in_buffer(header + gd.ie_table_offset,
+					  gd.entries[0].name);
+		if (ret != SUCCESS)
+			return ret;
+	}
 
 	/* Create the header file */
 	fp = fopen(gd.hdr_file_name, "wb");

@@ -55,6 +55,9 @@ static char *parse_list[] = {
 	"IMAGE_TARGET",
 	"OUTPUT_SG_BIN",
 	"SG_TABLE_ADDR",
+	"ESBC_HDRADDR",
+	"IE_KEY",
+	"IE_REVOC",
 	"VERBOSE"
 };
 
@@ -106,13 +109,23 @@ int fill_structure_ta_1_x_pbl(void)
 		(struct isbc_hdr_ta_1_x_pbl *)gd.hdr_struct;
 	memset(hdr, 0, sizeof(struct isbc_hdr_ta_1_x_pbl));
 
+	if(gd.iek_flag == 1) {
+		ret = create_ie_file(DEFAULT_IE_FILE_NAME);
+		if (ret != SUCCESS)
+			return ret;
+		gd.ie_table_size = get_file_size(DEFAULT_IE_FILE_NAME);
+		gd.num_entries++;
+	}
+
 	/* Calculate Offsets and Size */
 	gd.hdr_size = sizeof(struct isbc_hdr_ta_1_x_pbl);
 	gd.rsa_size = gd.key_len / 2;
 
 	/* Calculate the offsets of blocks aligne to boundry 0x200 */
 	gd.srk_offset = OFFSET_ALIGN(gd.hdr_size);
-	gd.rsa_offset = OFFSET_ALIGN(gd.srk_offset + gd.key_len);
+
+	gd.ie_table_offset = OFFSET_ALIGN(gd.srk_offset + gd.key_len);
+	gd.rsa_offset = OFFSET_ALIGN(gd.ie_table_offset + gd.ie_table_size);
 
 	if ((gd.sg_flag == 0) && (gd.num_entries > 1)) {
 		printf("Error !!! SG Table Address is not Specified\n");
@@ -120,6 +133,17 @@ int fill_structure_ta_1_x_pbl(void)
 	}
 
 	hdr->sg_flag = htonl((uint32_t)gd.sg_flag);
+
+	if(gd.iek_flag == 1) {
+		/* Shift the SG Entries as First entry would be IEK Table */
+		for (i = 0; i < gd.num_entries - 1; i++)
+			gd.entries[i + 1] = gd.entries[i];
+
+		strcpy(gd.entries[0].name, DEFAULT_IE_FILE_NAME);
+		gd.entries[0].addr_high = 0;
+		gd.entries[0].addr_low = gd.hdr_addr + gd.ie_table_offset;
+		gd.entries[0].dst_addr = 0xFFFFFFFF;
+	}
 
 	if (gd.sg_flag == 1) {
 		/* Create the SG Table */
@@ -237,6 +261,13 @@ int create_header_ta_1_x_pbl(void)
 
 	memcpy(header, gd.hdr_struct, gd.hdr_size);
 	memcpy(header + gd.srk_offset, gd.pkey, gd.key_len);
+
+	if(gd.iek_flag == 1) {
+		ret = read_file_in_buffer(header + gd.ie_table_offset,
+					  gd.entries[0].name);
+		if (ret != SUCCESS)
+			return ret;
+	}
 
 	/* Create the header file */
 	fp = fopen(gd.hdr_file_name, "wb");
