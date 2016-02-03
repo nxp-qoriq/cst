@@ -781,7 +781,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 
 	case FIELD_IE_TABLE_ADDR:
 		if (file_field.count == 1)
-			gd.ie_table_addr = STR_TO_UL(file_field.value[0], 16);
+			gd.ie_table_addr = STR_TO_ULL(file_field.value[0], 16);
 
 		break;
 

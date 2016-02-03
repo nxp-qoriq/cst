@@ -179,7 +179,7 @@ struct g_data_t {
 	uint32_t srk_size;
 	uint32_t ie_table_size;
 	uint32_t ie_table_offset;
-	uint32_t ie_table_addr;
+	uint64_t ie_table_addr;
 	uint32_t sg_offset;
 	uint32_t sg_size;
 	uint32_t sg_addr;

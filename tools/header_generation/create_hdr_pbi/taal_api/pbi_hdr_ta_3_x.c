@@ -137,8 +137,15 @@ int create_pbi(uint32_t hdr_size)
 		/* Add PBI Command to Update SCRATCH Register with
 		 * IE Table Address
 		 */
+		/* Lower Address */
 		pbi_word[gd.num_pbi_words++] = CCSR_W_SCRATCHRW13_CMD;
-		pbi_word[gd.num_pbi_words++] = gd.ie_table_addr;
+		pbi_word[gd.num_pbi_words++] =
+			(uint32_t)(gd.ie_table_addr);
+
+		/* Higher Address */
+		pbi_word[gd.num_pbi_words++] = CCSR_W_SCRATCHRW14_CMD;
+		pbi_word[gd.num_pbi_words++] =
+			(uint32_t)(gd.ie_table_addr >> 32);
 	}
 
 	/* Read Other PBI commands
