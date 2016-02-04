@@ -165,6 +165,12 @@ int fill_structure_ta_2_0(void)
 			gd.entries[i + 1] = gd.entries[i];
 
 		strcpy(gd.entries[0].name, DEFAULT_IE_FILE_NAME);
+		if (gd.hdr_addr == 0) {
+			printf("Error !!! Header Address not specified"
+				" though IE enabled\n");
+			return FAILURE;
+		}
+		/* IE Table is first entry in SG Table */
 		gd.entries[0].addr_high = 0;
 		gd.entries[0].addr_low = gd.hdr_addr + gd.ie_table_offset;
 		gd.entries[0].dst_addr = 0xFFFFFFFF;

@@ -152,6 +152,11 @@ int create_hdr(int argc, char **argv)
 			printf("\nImage Hash:\n");
 			for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
 				printf("%02x", gd.img_hash[i]);
+			if (gd.ie_table_size != 0) {
+					printf(
+					"\nIE Table Absolute Address: %x\n",
+					gd.entries[0].addr_low);
+			}
 		}
 
 		printf("\n\n************************************************");
