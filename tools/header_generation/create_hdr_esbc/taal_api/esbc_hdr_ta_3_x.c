@@ -260,7 +260,7 @@ int calc_img_hash_ta_3_1(void)
 /****************************************************************************
  * API's for Calculating SRK Hash
  ****************************************************************************/
-static int calc_srk_hash_ta_3_x()
+static int calc_srk_hash_ta_3_x(uint32_t max_keys)
 {
 	int ret;
 	if (gd.iek_flag == 1) {
@@ -280,7 +280,7 @@ static int calc_srk_hash_ta_3_x()
 	}
 
 	gd.srk_flag = 1;
-	return (create_srk_calc_hash(MAX_SRK_TA_3_X));
+	return (create_srk_calc_hash(max_keys));
 }
 
 int calc_srk_hash_ta_3_0(void)
