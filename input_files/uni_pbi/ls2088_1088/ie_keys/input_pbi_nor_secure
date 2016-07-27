@@ -2,7 +2,6 @@
  * Freescale Proprietary.
  */
 
-ESBC=1
 ---------------------------------------------------
 # Specify the platform. [Mandatory]
 # Choose Platform -
@@ -20,11 +19,15 @@ KEY_SELECT=1
 # PRI_KEY [Mandatory] Single Key Used for Signing
 # USAGE: <srk.pri>
 PRI_KEY=srk.pri
+#IE_TABLE_ADDR [optional] Used by Uboot to get IE Table Address
+#Can be 64 bit
+IE_TABLE_ADDR=580020a00
 ---------------------------------------------------
-# Specify the IMAGE Information [Mandatory]
-# USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
-# Address can be 64 bit
-IMAGE_1={bootscript,a3900000,ffffffff}
+# For PBI Signing
+# Name of RCW + PBI file [Mandatory]
+RCW_PBI_FILENAME= rcw.bin
+# Address of ISBC (Boot1) CSF Header [Mandatory]
+BOOT1_PTR=30020000
 ---------------------------------------------------
 # Specify OEM AND FSL ID to be populated in header. [Optional]
 # e.g FSL_UID_0=11111111
@@ -38,7 +41,7 @@ OEM_UID_4=
 ---------------------------------------------------
 # Specify the output file names [Optional].
 # Default Values chosen in Tool
-OUTPUT_HDR_FILENAME=hdr_bs.out
+OUTPUT_HDR_FILENAME=rcw_sec.bin
 IMAGE_HASH_FILENAME=
 RSA_SIGN_FILENAME=
 ---------------------------------------------------
@@ -48,4 +51,4 @@ ISS_FLAG=1
 LW_FLAG=0
 ---------------------------------------------------
 # Specify VERBOSE as 1, if you want to Display Header Information [Optional]
-VERBOSE=1
+VERBOSE=0

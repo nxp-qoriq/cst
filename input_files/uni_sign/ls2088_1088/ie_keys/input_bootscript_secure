@@ -13,15 +13,16 @@ PLATFORM=LS2088
 # Specify the Key Information.
 # PUB_KEY [Mandatory] Comma Seperated List
 # Usage: <srk1.pub> <srk2.pub> .....
-PUB_KEY=srk.pub
-# KEY_SELECT [Mandatory]
-# USAGE (for TRUST 3.x): (between 1 to 8)
-KEY_SELECT=1
+PUB_KEY=iekey1.pub
+# IE_KEY_SEL [Mandatory]
+# USAGE (for TRUST 3.x): (between 1 to 32)
+IE_KEY_SEL=1
 # PRI_KEY [Mandatory] Single Key Used for Signing
 # USAGE: <srk.pri>
-PRI_KEY=srk.pri
+PRI_KEY=iekey1.pri
 ---------------------------------------------------
-# Specify the IMAGE Information [Mandatory]
+# Specify IMAGE, Max 8 images are possible.
+# DST_ADDR is required only for Non-PBL Platform. [Mandatory]
 # USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
 # Address can be 64 bit
 IMAGE_1={bootscript,a3900000,ffffffff}
@@ -42,10 +43,5 @@ OUTPUT_HDR_FILENAME=hdr_bs.out
 IMAGE_HASH_FILENAME=
 RSA_SIGN_FILENAME=
 ---------------------------------------------------
-# Specify The Flags. (0 or 1) - [Optional]
-MP_FLAG=0
-ISS_FLAG=1
-LW_FLAG=0
----------------------------------------------------
 # Specify VERBOSE as 1, if you want to Display Header Information [Optional]
-VERBOSE=1
+VERBOSE=0

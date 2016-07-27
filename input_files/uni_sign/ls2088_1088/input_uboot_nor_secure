@@ -12,7 +12,7 @@ PLATFORM=LS2088
 # Entry Point/Image start address field in the header.[Mandatory]
 # (default=ADDRESS of first file specified in images)
 # Address can be 64 bit
-ENTRY_POINT=30008000
+ENTRY_POINT=30100000
 ---------------------------------------------------
 # Specify the Key Information.
 # PUB_KEY [Mandatory] Comma Seperated List
@@ -29,7 +29,7 @@ PRI_KEY=srk.pri
 # DST_ADDR is required only for Non-PBL Platform. [Mandatory]
 # USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
 # Address can be 64 bit
-IMAGE_1={u-boot.bin,30008000,ffffffff}
+IMAGE_1={u-boot.bin,30100000,ffffffff}
 IMAGE_2={,,}
 IMAGE_3={,,}
 IMAGE_4={,,}
