@@ -69,6 +69,7 @@ static ta_struct_t ta_table[] = {
 
 	{ "LS1043", TA_2_1_ARM8 },
 	{ "LS1012", TA_2_1_ARM8 },
+	{ "LS1046", TA_2_1_ARM8 },
 
 	{ "LS2080", TA_3_0 },
 	{ "LS2085", TA_3_0 },
