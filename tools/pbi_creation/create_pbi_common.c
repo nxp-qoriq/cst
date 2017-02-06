@@ -292,18 +292,20 @@ int get_copy_cmd(char *file_name)
 int add_cpy_cmd(FILE *fp_rcw_pbi_op)
 {
 #define OFFSET_MASK	0x00ffffff
-#define WRITE_CMD_BASE	0x81000000
-#define MAX_PBI_DATA_LEN_BYTE	(4 * MAX_PBI_DATA_LEN_WORD)
+	uint32_t WRITE_CMD_BASE = 0x81000000;
+	uint32_t MAX_PBI_DATA_LEN_BYTE = 64;
 	uint32_t ALTCBAR_ADDRESS = BYTE_SWAP_32(0x09570158);
 	uint32_t WAIT_CMD_WRITE_ADDRESS = BYTE_SWAP_32(0x096100c0);
 	uint32_t WAIT_CMD = BYTE_SWAP_32(0x000FFFFF);
 	int ret, size, i;
+	uint32_t j, file_size;
 	uint32_t pbi_cmd, altcbar;
 	uint8_t pbi_data[MAX_PBI_DATA_LEN_BYTE];
 	uint32_t dst_offset;
 
 	FILE *fp_img;
 	for (i = 0; i < gd.cp_cmd_count; i++) {
+		MAX_PBI_DATA_LEN_BYTE = 64;
 		altcbar = gd.cp_cmd[i].dst;
 		dst_offset = gd.cp_cmd[i].dst;
 		fp_img = fopen(gd.cp_cmd[i].img_name, "rb");
@@ -312,7 +314,7 @@ int add_cpy_cmd(FILE *fp_rcw_pbi_op)
 			       gd.cp_cmd[i].img_name);
 			return FAILURE;
 		}
-
+		file_size = get_file_size(gd.cp_cmd[i].img_name);
 		altcbar = 0xfff00000 & altcbar;
 		altcbar = BYTE_SWAP_32(altcbar >> 16);
 		ret = fwrite(&ALTCBAR_ADDRESS, sizeof(ALTCBAR_ADDRESS),
@@ -323,26 +325,59 @@ int add_cpy_cmd(FILE *fp_rcw_pbi_op)
 		ret = fwrite(&WAIT_CMD, sizeof(WAIT_CMD), 1, fp_rcw_pbi_op);
 
 		do {
+			if (file_size == 0)
+				break;
+			if (file_size < 64) {
+				for (j = 32 ; j >= 1; j /= 2) {
+					if (file_size >= j) {
+						MAX_PBI_DATA_LEN_BYTE = j;
+						 break;
+					}
+				}
+			}
 			memset(pbi_data, 0, MAX_PBI_DATA_LEN_BYTE);
 			size = fread(&pbi_data, MAX_PBI_DATA_LEN_BYTE,
 				     1, fp_img);
 
+			switch (MAX_PBI_DATA_LEN_BYTE) {
+			case 32:
+				WRITE_CMD_BASE = 0xC1000000;
+				break;
+			case 16:
+				WRITE_CMD_BASE = 0xA1000000;
+				break;
+			case 8:
+				WRITE_CMD_BASE = 0x91000000;
+				break;
+			case 4:
+				WRITE_CMD_BASE = 0x89000000;
+				break;
+			case 2:
+				WRITE_CMD_BASE = 0x85000000;
+				break;
+			case 1:
+				WRITE_CMD_BASE = 0x82000000;
+				break;
+			default:
+				WRITE_CMD_BASE = 0x81000000;
+			}
 			dst_offset &= OFFSET_MASK;
 			pbi_cmd = WRITE_CMD_BASE | dst_offset;
 			pbi_cmd = BYTE_SWAP_32(pbi_cmd);
 			ret = fwrite(&pbi_cmd, sizeof(pbi_cmd), 1,
 				     fp_rcw_pbi_op);
 			if (ret == 0) {
-				printf("Error in Writing PBI ACS Data\n");
+				printf("Error in Writing PBI ACS CMD\n");
 				return FAILURE;
 			}
-			ret = fwrite(&pbi_data, sizeof(pbi_data), 1,
+			ret = fwrite(&pbi_data,  MAX_PBI_DATA_LEN_BYTE, 1,
 				     fp_rcw_pbi_op);
 			if (ret == 0) {
 				printf("Error in Writing PBI ACS Data\n");
 				return FAILURE;
 			}
 			dst_offset += MAX_PBI_DATA_LEN_BYTE;
+			file_size -= MAX_PBI_DATA_LEN_BYTE;
 		} while (size);
 	}
 	return SUCCESS;
