@@ -32,6 +32,9 @@
 
 extern struct g_data_t gd;
 uint8_t barker[] = {0x12, 0x19, 0x20, 0x01};
+extern char line_data[];
+extern struct input_field file_field;
+
 
 /****************************************************************************
  * API's for PARSING INPUT FILES
@@ -73,6 +76,92 @@ int parse_input_file_ta_3_1(void)
 /****************************************************************************
  * API's for Filling STRUCTURES
  ****************************************************************************/
+
+/***************************************************************************
+ * Function	:	add_blk_cpy_cmd
+ * Arguments	:	pbi_word - pointer to pbi commands
+ * Return	:	SUCCESS or FAILURE
+ * Description	:	Add pbi commands for block copy cmd in pbi_words
+ ***************************************************************************/
+int add_blk_cpy_cmd(uint32_t *pbi_word)
+{
+#define BLK_CPY_HDR 0x80000040
+	uint32_t file_size, new_file_size;
+	uint32_t align = 4;
+	int i;
+	for (i = 0; i < gd.cp_cmd_count; i++) {
+		file_size = get_file_size(gd.cp_cmd[i].img_name);
+		new_file_size = (file_size+(file_size % align));
+		pbi_word[gd.num_pbi_words++] = BLK_CPY_HDR;
+		pbi_word[gd.num_pbi_words++] = gd.cp_cmd[i].src_off;
+		pbi_word[gd.num_pbi_words++] = gd.cp_cmd[i].dst;
+		pbi_word[gd.num_pbi_words++] = new_file_size;
+	}
+	return SUCCESS;
+}
+
+/***************************************************************************
+ * Function	:	get_blk_cpy_cmd
+ * Arguments	:	file_name - Name of input file
+ * Return	:	SUCCESS or FAILURE
+ * Description	:	Fill global data structure corresponding
+ *			to block copy commands
+ ***************************************************************************/
+int get_blk_cpy_cmd(char *file_name)
+{
+	int i, line_size = 0;
+	char *field_name = "COPY_CMD";
+	FILE *fp;
+	fp = fopen(file_name, "r");
+	if (fp == NULL) {
+		printf("Error in opening the file: %s\n", file_name);
+		return FAILURE;
+	}
+	file_field.value[0] = NULL;
+	file_field.value[1] = NULL;
+	file_field.value[2] = NULL;
+	file_field.count = 0;
+
+	fseek(fp, 0, SEEK_SET);
+	line_size = cal_line_size(fp);
+	fseek(fp, -line_size, SEEK_CUR);
+
+	while (fread(line_data, 1, line_size, fp)) {
+		*(line_data + line_size) = '\0';
+		remove_whitespace(line_data);
+		if ((strstr(line_data, field_name)) && (*line_data != '#')) {
+			get_field_from_file(line_data, field_name);
+			if (file_field.count == 3) {
+				gd.cp_cmd[gd.cp_cmd_count].src_off =
+				STR_TO_UL(file_field.value[0], 16);
+				gd.cp_cmd[gd.cp_cmd_count].dst =
+				STR_TO_UL(file_field.value[1], 16);
+				strcpy(gd.cp_cmd[gd.cp_cmd_count].img_name,
+					file_field.value[2]);
+				gd.cp_cmd_count++;
+				if (gd.cp_cmd_count >= MAX_CP_CMD) {
+					printf("Error:Only %d COPY CMD Pairs\n"
+					"Allowed\n", MAX_CP_CMD);
+					fclose(fp);
+					return FAILURE;
+				}
+			} else {
+				printf("Error:Wrong Format in Input File\n"
+				"Usage: COPY_CMD = (SRC, DEST, SIZE)\n");
+				fclose(fp);
+				return FAILURE;
+			}
+		}
+		line_size = cal_line_size(fp);
+		fseek(fp, -line_size, SEEK_CUR);
+	}
+	for (i = 0; i < gd.cp_cmd_count; i++)
+		printf("\nACS Write CMD : src offset %x dst_offset %x"
+			" and image name %s\n", gd.cp_cmd[i].src_off,
+			gd.cp_cmd[i].dst, gd.cp_cmd[i].img_name);
+	fclose(fp);
+	return SUCCESS;
+}
 int create_pbi(uint32_t hdr_size)
 {
 	int ret, i;
@@ -147,6 +236,12 @@ int create_pbi(uint32_t hdr_size)
 		pbi_word[gd.num_pbi_words++] =
 			(uint32_t)(gd.ie_table_addr >> 32);
 	}
+	ret = get_blk_cpy_cmd(gd.input_file);
+	if (ret != SUCCESS)
+		return ret;
+	ret = add_blk_cpy_cmd(pbi_word);
+	if (ret != SUCCESS)
+		return ret;
 
 	/* Read Other PBI commands
 	 * pbi_len indicates no. of PBI words */

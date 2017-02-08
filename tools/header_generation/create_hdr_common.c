@@ -38,7 +38,9 @@
 #include <crypto_utils.h>
 
 extern struct g_data_t gd;
+struct input_field file_field;
 
+extern char line_data[];
 static struct option long_options[] = {
 	{"verbose", no_argument, &gd.verbose_flag, 1},
 	{"hash", no_argument, &gd.option_srk_hash, 1},
@@ -58,6 +60,134 @@ static void print_usage(char *tool)
 	printf("\t--help       Show the Help for Tool Usage.\n");
 	printf("\n<input_file>   Contains all information required by tool");
 	printf("\n\n");
+}
+
+/***************************************************************************
+ * Function	:	get_apnd_img
+ * Arguments	:	file_name - name of the input file
+ * Return	:	SUCCESS or FAILURE$
+ * Description	:	fill global data structure with data
+ *			of images to be appended$
+ ***************************************************************************/
+int add_apnd_img(void)
+{
+#define BUFFER_SIZE             1024
+#define APPEND_IMAGE_PAD        0xff
+	FILE *fp_rcw_pbi_op;
+	int i, j, size, ret;
+	uint32_t image_offset, file_len;
+	char *image_name;
+	uint8_t data_buffer[BUFFER_SIZE], padding[BUFFER_SIZE];
+	FILE *fp_img;
+	fp_rcw_pbi_op = fopen(gd.hdr_file_name, "ab");
+	if (fp_rcw_pbi_op == NULL) {
+		printf("Error in opening the file: %s\n",
+		gd.hdr_file_name);
+		return FAILURE;
+	}
+	if (gd.ap_count != 0)
+		printf("\n\nImages to be appended\n");
+	memset(padding, APPEND_IMAGE_PAD, BUFFER_SIZE);
+
+	for (i = 0; i < gd.ap_count; i++) {
+		image_offset = gd.ap_file[i].offset;
+		image_name = gd.ap_file[i].name;
+		printf("Image Offset: %08x, Image Name: %s\n",
+		image_offset, image_name);
+
+		/* Get file size */
+		fseek(fp_rcw_pbi_op, 0L, SEEK_END);
+		file_len = ftell(fp_rcw_pbi_op);
+
+		if (image_offset < file_len) {
+			printf("Error Image offset: %08x less than\n"
+			"file length: %08x\n", image_offset, file_len);
+			return FAILURE;
+		}
+
+		/* Append padding */
+		for (j = (image_offset - file_len); j > 0; j -= BUFFER_SIZE) {
+			ret = fwrite(&padding, ((j >= BUFFER_SIZE) ?
+			BUFFER_SIZE : j), 1, fp_rcw_pbi_op);
+			if (ret == 0) {
+				printf("Error in Appending Padding\n");
+				return FAILURE;
+			}
+		}
+
+		fp_img = fopen(image_name, "rb");
+		if (fp_img == NULL) {
+			printf("Error in opening the file: %s\n", image_name);
+			return FAILURE;
+		}
+
+		while ((size = fread(&data_buffer, 1, BUFFER_SIZE, fp_img))) {
+			ret = fwrite(&data_buffer, 1, size, fp_rcw_pbi_op);
+			if (ret == 0) {
+				printf("Error in Appending Image\n");
+				return FAILURE;
+			}
+		}
+		fclose(fp_img);
+	}
+
+	return SUCCESS;
+}
+/***************************************************************************
+ * Function	:	get_apnd_img
+ * Arguments	:	file_name - name of the input file
+ * Return	:	SUCCESS or FAILURE$
+ * Description	:	fill global data structure with data
+ *			of images to be appended$
+ ***************************************************************************/
+int get_apnd_img(char *file_name)
+{
+	int line_size = 0;
+	char *field_name = "APPEND_IMAGES";
+	FILE *fp;
+	fp = fopen(file_name, "r");
+	if (fp == NULL) {
+		printf("Error in opening the file: %s\n", file_name);
+		return FAILURE;
+	}
+	file_field.value[0] = NULL;
+	file_field.value[1] = NULL;
+	file_field.value[2] = NULL;
+	file_field.count = 0;
+	fseek(fp, 0, SEEK_SET);
+	line_size = cal_line_size(fp);
+	fseek(fp, -line_size, SEEK_CUR);
+
+	while (fread(line_data, 1, line_size, fp)) {
+		*(line_data + line_size) = '\0';
+		remove_whitespace(line_data);
+		if ((strstr(line_data, field_name)) && (*line_data != '#')) {
+			get_field_from_file(line_data, field_name);
+			if (file_field.count == 2) {
+				strcpy(gd.ap_file[gd.ap_count].name,
+				file_field.value[0]);
+				gd.ap_file[gd.ap_count].offset =
+				STR_TO_UL(file_field.value[1], 16);
+				gd.ap_count++;
+				if (gd.ap_count >= MAX_AP_FILE) {
+					printf("Error:Only %d APPEND IMG  Pairs\n"
+					"Allowed\n", MAX_AP_FILE);
+					fclose(fp);
+					return FAILURE;
+				}
+			} else {
+				printf("Error:Wrong Format in Input File\n"
+				"Usage: APPEND_IMG = (FILE_NAME, OFFSET\n");
+				fclose(fp);
+				return FAILURE;
+			}
+		}
+		line_size = cal_line_size(fp);
+		fseek(fp, -line_size, SEEK_CUR);
+	}
+
+	fclose(fp);
+	return SUCCESS;
 }
 
 /***************************************************************************
@@ -195,7 +325,12 @@ int create_hdr(int argc, char **argv)
 	} else {
 		printf("\nSRK (Public Key) Hash Not Available");
 	}
-
+	ret = get_apnd_img(gd.input_file);
+	if (ret != SUCCESS)
+		return ret;
+	ret = add_apnd_img();
+	if (ret != SUCCESS)
+		return ret;
 	printf("\n\n");
 	return SUCCESS;
 }
