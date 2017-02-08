@@ -7,12 +7,7 @@
 # Choose Platform -
 # TRUST 3.0: LS2085
 # TRUST 3.1: LS2088, LS1088
-PLATFORM=LS2088
----------------------------------------------------
-# Entry Point/Image start address field in the header.[Mandatory]
-# (default=ADDRESS of first file specified in images)
-# Address can be 64 bit
-ENTRY_POINT=30100000
+PLATFORM=LS1088
 ---------------------------------------------------
 # Specify the Key Information.
 # PUB_KEY [Mandatory] Comma Seperated List
@@ -24,25 +19,15 @@ KEY_SELECT=1
 # PRI_KEY [Mandatory] Single Key Used for Signing
 # USAGE: <srk.pri>
 PRI_KEY=srk.pri
-# IE_KEY [Mandatory] Comma Seperated List
-#IE_REVOC [Optional] Comma Seperated List
-IE_KEY=iekey1.pub,iekey2.pub,iekey3.pub
-#ESBC_HDRADDR [Mandatory] 32bit Address of ESBC Header
-#Used to Calculate IE Table Address
-ESBC_HDRADDR=30c00000
+#IE_TABLE_ADDR [optional] Used by Uboot to get IE Table Address
+#Can be 64 bit
+IE_TABLE_ADDR=410c00a00
 ---------------------------------------------------
-# Specify IMAGE, Max 8 images are possible.
-# DST_ADDR is required only for Non-PBL Platform. [Mandatory]
-# USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
-# Address can be 64 bit
-IMAGE_1={u-boot.bin,30100000,ffffffff}
-IMAGE_2={,,}
-IMAGE_3={,,}
-IMAGE_4={,,}
-IMAGE_5={,,}
-IMAGE_6={,,}
-IMAGE_7={,,}
-IMAGE_8={,,}
+# For PBI Signing
+# Name of RCW + PBI file [Mandatory]
+RCW_PBI_FILENAME= rcw.bin
+# Address of ISBC (Boot1) CSF Header [Mandatory]
+BOOT1_PTR=20c00000
 ---------------------------------------------------
 # Specify OEM AND FSL ID to be populated in header. [Optional]
 # e.g FSL_UID_0=11111111
@@ -56,7 +41,7 @@ OEM_UID_4=
 ---------------------------------------------------
 # Specify the output file names [Optional].
 # Default Values chosen in Tool
-OUTPUT_HDR_FILENAME=hdr_uboot.out
+OUTPUT_HDR_FILENAME=rcw_sec.bin
 IMAGE_HASH_FILENAME=
 RSA_SIGN_FILENAME=
 ---------------------------------------------------
@@ -66,4 +51,4 @@ ISS_FLAG=1
 LW_FLAG=0
 ---------------------------------------------------
 # Specify VERBOSE as 1, if you want to Display Header Information [Optional]
-VERBOSE=0
+VERBOSE=1
