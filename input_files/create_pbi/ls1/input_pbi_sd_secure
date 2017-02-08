@@ -1,0 +1,33 @@
+/* Copyright (c) 2016 Freescale Semiconductor, Inc.
+ * Freescale Proprietary.
+ */
+----------------------------------------------------------------------------
+# For PBI Creation
+# Name of RCW + PBI file [Mandatory]
+RCW_PBI_FILENAME= rcw_pbi.bin
+----------------------------------------------------------------------------
+# Specify the output file name [Optional].
+# Default Values chosen in Tool
+OUTPUT_RCW_PBI_FILENAME=rcw_pbi_sec.bin
+----------------------------------------------------------------------------
+# Specify the RCW Fields. (0 or 1) - [Optional]
+PLATFORM=LS1020
+SB_EN=1
+BOOT_HO=0
+BOOT1_PTR=10014000
+----------------------------------------------------------------------------
+# Specify the PBI commands - [Optional]
+# Arguments: Command, Data (Split up into 32 bit words)
+# Split u-boot-spl.bin in PBI commads
+# Argument: COPY_CMD = (src_offset, dest_offset, Image name)
+COPY_CMD = {ffffffff, 10000000,u-boot-spl.bin;}
+# Split hdr_uboot_spl.out in PBI commads
+COPY_CMD={ffffffff,10014000,hdr_uboot_spl.out;}
+----------------------------------------------------------------------------
+# Specify the Images to be appended
+# Arguments: APPEND_IMAGES=(Image name, Offset from start)
+APPEND_IMAGES={u-boot.bin,0001D000;}
+APPEND_IMAGES={hdr_uboot.out,0011D000;}
+APPEND_IMAGES={hdr_bs.out, 00120000;}
+APPEND_IMAGES={bootscript,00128000;}
+----------------------------------------------------------------------------

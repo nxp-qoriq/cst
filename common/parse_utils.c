@@ -34,6 +34,8 @@ extern struct g_data_t gd;
 static parse_struct_t parse_table[] = {
 	{ "PLATFORM", FIELD_PLATFORM },
 	{ "ENTRY_POINT", FIELD_ENTRY_POINT },
+	{ "BOOT_HO", FIELD_BOOT_HO },
+	{ "SB_EN", FIELD_SB_EN },
 	{ "PUB_KEY", FIELD_PUB_KEY },
 	{ "KEY_SELECT", FIELD_KEY_SELECT },
 	{ "IMAGE_1", FIELD_IMAGE_1 },
@@ -73,7 +75,8 @@ static parse_struct_t parse_table[] = {
 	{ "ESBC_HDRADDR", FIELD_ESBC_HDRADDR },
 	{ "IE_KEY", FIELD_IE_KEY},
 	{ "IE_REVOC", FIELD_IE_REVOC},
-	{ "IE_TABLE_ADDR", FIELD_IE_TABLE_ADDR}
+	{ "IE_TABLE_ADDR", FIELD_IE_TABLE_ADDR},
+	{ "OUTPUT_RCW_PBI_FILENAME", FIELD_OUTPUT_RCW_PBI_FILENAME }
 
 };
 
@@ -119,7 +122,7 @@ int check_target(char *target_name, uint32_t *targetid)
 	return FAILURE;
 }
 
-static inline void check_field_length(char *field_name, char *field_val)
+inline void check_field_length(char *field_name, char *field_val)
 {
 	if (strlen(field_val) >= MAX_FNAME_LEN) {
 		printf("Lenght of field %s exceed maximum limit %d\n",
@@ -673,13 +676,18 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.rcw_fname, file_field.value[0]);
 		}
+		break;
+	case FIELD_OUTPUT_RCW_PBI_FILENAME:
+		 if (file_field.count == 1) {
+			check_field_length(field_name, file_field.value[0]);
+			strcpy(gd.rcw_op_fname, file_field.value[0]);
+		}
 
 		break;
 
 	case FIELD_BOOT1_PTR:
 		if (file_field.count == 1)
 			gd.boot1_ptr = STR_TO_UL(file_field.value[0], 16);
-
 		break;
 
 	case FIELD_MP_FLAG:
@@ -699,7 +707,18 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 			gd.lw_flag = STR_TO_UL(file_field.value[0], 16);
 
 		break;
-
+	case FIELD_BOOT_HO:
+		if (file_field.count == 1) {
+			gd.bootho_flag = 1;
+			gd.boot_ho = STR_TO_UL(file_field.value[0], 16);
+		}
+		break;
+	case FIELD_SB_EN:
+		if (file_field.count == 1) {
+			gd.sben_flag = 1;
+			gd.sb_en = STR_TO_UL(file_field.value[0], 16);
+		}
+		break;
 	case FIELD_VERBOSE:
 		if (file_field.count == 1)
 			gd.verbose_flag |= STR_TO_UL(file_field.value[0], 16);
