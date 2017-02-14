@@ -49,10 +49,10 @@ static void print_usage(char *tool)
 {
 	printf("\nCorrect Usage of Tool is:\n");
 	printf("\n%s [options] <input_file>\n", tool);
-	printf("\t--verbose    Display header Info after Creation\n");
+	printf("\t--verbose    Display header Info after Creation. This option is invalid for TA2 platform\n");
 	printf("\t--hash       Print the SRK(Public key) hash. This option is invalid for TA2 platform\n");
 	printf("\t--img_hash   Header is generated without Signature.\n");
-	printf("\t             Image Hash is stored in a separate file. This option is invalid for TA2 platform \n");
+	printf("\t             Image Hash is stored in a separate file. This option is invalid for TA2 platform\n");
 	printf("\t--help       Show the Help for Tool Usage.\n");
 	printf("\n<input_file>   Contains all information required by tool");
 	printf("\n\n");

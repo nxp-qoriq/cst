@@ -76,7 +76,7 @@ int read_file_in_buffer(uint8_t *ptr, char *file_name);
 #define DEFAULT_SIGN_FILE_NAME	"sign.out"
 #define DEFAULT_SG_FILE_NAME	"sg_table.out"
 #define DEFAULT_IE_FILE_NAME	"ie_table.out"
-
+#define DEFAULT_OUTPUT_RCW_FILE_NAME "rcw_pbi_sec.bin"
 struct srk_table_t {
 	uint32_t key_len;
 	uint8_t pkey[KEY_SIZE_BYTES];

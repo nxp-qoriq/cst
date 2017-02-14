@@ -10,14 +10,14 @@ RCW_PBI_FILENAME= rcw_pbi.bin
 # Default Values chosen in Tool
 OUTPUT_RCW_PBI_FILENAME=rcw_pbi_sec.bin
 ----------------------------------------------------------------------------
-# Specify the RCW Fields. (0 or 1) - [Optional]
+# Specify the platform
 PLATFORM=LS1020
+# Specify the RCW Fields. (0 or 1) - [Optional]
 SB_EN=1
-BOOT_HO=0
+BOOT_HO=1
 BOOT1_PTR=10014000
 ----------------------------------------------------------------------------
 # Specify the PBI commands - [Optional]
-# Arguments: Command, Data (Split up into 32 bit words)
 # Split u-boot-spl.bin in PBI commads
 # Argument: COPY_CMD = (src_offset, dest_offset, Image name)
 COPY_CMD = {ffffffff, 10000000,u-boot-spl.bin;}

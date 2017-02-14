@@ -105,11 +105,11 @@ int rcw_sben_boot_ho(FILE *fp_rcw_pbi_ip, FILE *fp_rcw_pbi_op)
 	file_len = ftell(fp_rcw_pbi_ip);
 	fseek(fp_rcw_pbi_ip, 0L, SEEK_SET);
 	if (gd.sben_flag != 1) {
-		printf("\n SB_EN field missing\n");
+		printf("\nError: SB_EN field not found in input file\nUsage: SB_EN = <0/1>\n");
 		exit(1);
 	}
 	if (gd.bootho_flag != 1) {
-		printf("\nBOOT_HO field missing\n");
+		printf("\nError: BOOT_HO field not found in input file\nUsage: BOOT_HO = <0/1>\n");
 		exit(1);
 	}
 	if (file_len < NUM_RCW_WORD * sizeof(uint32_t)) {
@@ -139,6 +139,8 @@ int rcw_sben_boot_ho(FILE *fp_rcw_pbi_ip, FILE *fp_rcw_pbi_op)
 			return FAILURE;
 		}
 	}
+	printf("\nSB_EN = %x\n", gd.sb_en);
+	printf("\nBOOT_HO = %x\n", gd.boot_ho);
 	return SUCCESS;
 }
 
@@ -164,13 +166,15 @@ int get_bootptr(FILE *fp_rcw_pbi_op)
 		ret = fwrite(&gd.boot1_ptr, sizeof(gd.boot1_ptr),
 			     1, fp_rcw_pbi_op);
 	} else {
-		printf("\nboot_loc ptr missing\n");
+		printf("\nError: Boot location pointer (BOOT1_PTR) field not found in input file\n"
+			"Usage: BOOT1_PTR = <ADDR>\n\n");
 		exit(1);
 	}
 	if (ret == 0) {
 		printf("Error in Writing PBI Words\n");
 		return FAILURE;
 	}
+	printf("\nBOOT1_PTR = %x\n", BYTE_SWAP_32(gd.boot1_ptr));
 	return SUCCESS;
 }
 
@@ -260,7 +264,7 @@ int get_copy_cmd(char *file_name)
 				       file_field.value[2]);
 				gd.cp_cmd_count++;
 				if (gd.cp_cmd_count >= MAX_CP_CMD) {
-					printf("Error:Only %d COPY CMD Pairs\n"
+					printf("Error:Only %d COPY CMD Pairs "
 					       "Allowed\n", MAX_CP_CMD);
 					fclose(fp);
 					return FAILURE;
@@ -276,7 +280,7 @@ int get_copy_cmd(char *file_name)
 		fseek(fp, -line_size, SEEK_CUR);
 	}
 	for (i = 0; i < gd.cp_cmd_count; i++) {
-		printf("\nACS Write COMMAND : offset %x and image name %s\n",
+		printf("\nACS Write COMMAND : offset %x and image name %s",
 		       gd.cp_cmd[i].dst, gd.cp_cmd[i].img_name);
 	}
 	fclose(fp);
@@ -435,6 +439,7 @@ int get_ap_img(char *file_name)
 		line_size = cal_line_size(fp);
 		fseek(fp, -line_size, SEEK_CUR);
 	}
+
 	fclose(fp);
 	return SUCCESS;
 }
@@ -449,27 +454,32 @@ int add_ap_img(FILE *fp_rcw_pbi_op)
 {
 #define BUFFER_SIZE             1024
 #define APPEND_IMAGE_PAD        0xff
+/* Since image is appended to rcw, which is loaded at 8th
+sector in SD, the images have to be appended to rcw at
+1000 bytes less than the actual offset*/
+#define APND_IMG_OFF		0x1000
 
 	int i, j, size, ret;
 	uint32_t image_offset, file_len;
 	char *image_name;
 	uint8_t data_buffer[BUFFER_SIZE], padding[BUFFER_SIZE];
 	FILE *fp_img;
-	printf("\nImages to be appended\n");
+	if (gd.ap_count != 0)
+		printf("\n\nImages to be appended\n");
 	memset(padding, APPEND_IMAGE_PAD, BUFFER_SIZE);
 
 	for (i = 0; i < gd.ap_count; i++) {
-		image_offset = (gd.ap_file[i].offset - 0x1000);
-		image_name = gd.ap_file[i].name;
 		printf("Image Offset: %08x, Image Name: %s\n",
-		       image_offset, image_name);
+		       gd.ap_file[i].offset,  gd.ap_file[i].name);
+		image_offset = (gd.ap_file[i].offset - APND_IMG_OFF);
+		image_name = gd.ap_file[i].name;
 
 		/* Get file size */
 		fseek(fp_rcw_pbi_op, 0L, SEEK_END);
 		file_len = ftell(fp_rcw_pbi_op);
 
 		if (image_offset < file_len) {
-			printf("Error Image offset: %08x less than\n"
+			printf("Error Image offset: %08x less than "
 			       "file length: %08x\n", image_offset, file_len);
 			return FAILURE;
 		}

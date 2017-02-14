@@ -681,7 +681,8 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		 if (file_field.count == 1) {
 			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.rcw_op_fname, file_field.value[0]);
-		}
+		} else
+			strcpy(gd.rcw_op_fname, DEFAULT_OUTPUT_RCW_FILE_NAME);
 
 		break;
 
