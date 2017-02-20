@@ -32,6 +32,7 @@
 #include <stdint.h>
 
 int create_hdr(int argc, char **argv);
+int create_pbi_ta2(int argc, char **argv);
 int create_srk_calc_hash(uint32_t max_keys);
 int parse_input_file(char **list, uint32_t num_list);
 int calculate_signature(void);
@@ -56,6 +57,9 @@ int read_file_in_buffer(uint8_t *ptr, char *file_name);
 #define KEY_SIZE_BYTES		1024
 #define MAX_CF_WORD		1024
 
+#define MAX_CP_CMD		10
+#define MAX_AP_FILE		10
+
 #define MAX_HDR_SIZE		0x1000
 
 #define MAX_NUM_FSL_UID		2
@@ -72,7 +76,7 @@ int read_file_in_buffer(uint8_t *ptr, char *file_name);
 #define DEFAULT_SIGN_FILE_NAME	"sign.out"
 #define DEFAULT_SG_FILE_NAME	"sg_table.out"
 #define DEFAULT_IE_FILE_NAME	"ie_table.out"
-
+#define DEFAULT_OUTPUT_RCW_FILE_NAME "rcw_pbi_sec.bin"
 struct srk_table_t {
 	uint32_t key_len;
 	uint8_t pkey[KEY_SIZE_BYTES];
@@ -111,6 +115,17 @@ struct cf_word_t {
 	uint32_t data;
 };
 
+struct cp_cmd_t {
+	uint32_t src_off;
+	uint32_t dst;
+	char img_name[MAX_FNAME_LEN];
+};
+
+struct ap_file_t {
+	char name[MAX_FNAME_LEN];
+	uint32_t offset;
+};
+
 struct g_data_t {
 	char *input_file;
 
@@ -119,6 +134,10 @@ struct g_data_t {
 	uint32_t num_srk_entries;
 	uint32_t num_pri_key;
 	uint32_t num_ie_key;
+	uint32_t boot_ho;
+	uint32_t sb_en;
+	uint8_t bootho_flag;
+	uint8_t sben_flag;
 	uint8_t srk_flag;
 	uint8_t srk_hash_flag;
 	char pub_fname[MAX_NUM_KEY][MAX_FNAME_LEN];
@@ -130,7 +149,11 @@ struct g_data_t {
 	uint32_t key_len;
 
 	char rcw_fname[MAX_FNAME_LEN];
-
+	char rcw_op_fname[MAX_FNAME_LEN];
+	struct cp_cmd_t cp_cmd[MAX_CP_CMD];
+	struct ap_file_t ap_file[MAX_AP_FILE];
+	uint32_t ap_count;
+	uint32_t cp_cmd_count;
 	uint32_t entry_addr_low;
 	uint32_t entry_addr_high;
 	uint32_t num_entries;
@@ -188,7 +211,6 @@ struct g_data_t {
 
 	struct cf_word_t cf_word[MAX_CF_WORD];
 	uint32_t cf_count;
-
 	uint32_t hdr_addr;
 	uint32_t hdr_addr_sec;
 

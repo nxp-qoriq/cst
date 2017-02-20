@@ -49,16 +49,22 @@ struct input_field {
 
 unsigned long STR_TO_UL(char *str, int base);
 unsigned long long STR_TO_ULL(char *str, int base);
+int cal_line_size(FILE *fp);
+void get_field_from_file(char *line, char *field_name);
+void remove_whitespace(char *line);
 void find_value_from_file(char *field_name, FILE *fp);
 int find_cfw_from_file(char *file_name);
 int fill_gd_input_file(char *field_name, FILE *fp);
 int get_file_size(const char *file_name);
+inline void check_field_length(char *field_name, char *field_val);
 
 enum input_field_t {
 	FIELD_PLATFORM = 0,
 	FIELD_ENTRY_POINT,
 	FIELD_PUB_KEY,
 	FIELD_KEY_SELECT,
+	FIELD_BOOT_HO,
+	FIELD_SB_EN,
 	FIELD_IMAGE_1,
 	FIELD_IMAGE_2,
 	FIELD_IMAGE_3,
@@ -83,6 +89,7 @@ enum input_field_t {
 	FIELD_IMAGE_HASH_FILENAME,
 	FIELD_RSA_SIGN_FILENAME,
 	FIELD_RCW_PBI_FILENAME,
+	FIELD_OUTPUT_RCW_PBI_FILENAME,
 	FIELD_BOOT1_PTR,
 	FIELD_SEC_IMAGE,
 	FIELD_WP_FLAG,

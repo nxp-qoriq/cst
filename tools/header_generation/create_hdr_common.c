@@ -47,7 +47,7 @@ static struct option long_options[] = {
 	{0, 0, 0, 0}
 };
 
-void print_usage(char *tool)
+static void print_usage(char *tool)
 {
 	printf("\nCorrect Usage of Tool is:\n");
 	printf("\n%s [options] <input_file>\n", tool);

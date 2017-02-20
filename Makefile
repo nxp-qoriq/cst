@@ -64,6 +64,7 @@ create_hdr_pbi_SRCS = $(wildcard common/*.c) \
 		$(wildcard taal/*.c) \
 		$(wildcard tools/header_generation/*.c) \
 		$(wildcard tools/header_generation/create_hdr_pbi/*.c) \
+		$(wildcard tools/pbi_creation/*.c) \
 		$(wildcard tools/header_generation/create_hdr_pbi/taal_api/*.c)
 
 create_hdr_pbi_OBJS = $(basename $(create_hdr_pbi_SRCS))
@@ -86,6 +87,7 @@ vpath %.c 	common/ taal/ tools/header_generation/ \
 		tools/header_generation/create_hdr_pbi/ tools/header_generation/create_hdr_pbi/taal_api/ \
 		tools/header_generation/create_hdr_cf/ tools/header_generation/create_hdr_cf/taal_api/ \
 		tools/key_generation/ \
+		tools/pbi_creation/ \
 		tools/signature_generation \
 
 INCLUDES = 	-Itools/header_generation/create_hdr_isbc/include/ \
