@@ -56,7 +56,6 @@ void find_value_from_file(char *field_name, FILE *fp);
 int find_cfw_from_file(char *file_name);
 int fill_gd_input_file(char *field_name, FILE *fp);
 int get_file_size(const char *file_name);
-inline void check_field_length(char *field_name, char *field_val);
 
 enum input_field_t {
 	FIELD_PLATFORM = 0,
