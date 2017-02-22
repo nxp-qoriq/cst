@@ -43,6 +43,7 @@ static char *parse_list[] = {
 	"RCW_PBI_FILENAME",
 	"OUTPUT_RCW_PBI_FILENAME",
 	"BOOT1_PTR",
+	"BOOT_SRC",
 };
 
 #define MAX_PBI_DATA_LEN_WORD	16
@@ -471,7 +472,10 @@ sector in SD, the images have to be appended to rcw at
 	for (i = 0; i < gd.ap_count; i++) {
 		printf("Image Offset: %08x, Image Name: %s\n",
 		       gd.ap_file[i].offset,  gd.ap_file[i].name);
-		image_offset = (gd.ap_file[i].offset - APND_IMG_OFF);
+		if (strncmp(gd.boot_src, "SD_BOOT", 6) == 0)
+			image_offset = (gd.ap_file[i].offset - APND_IMG_OFF);
+		else
+			image_offset = gd.ap_file[i].offset;
 		image_name = gd.ap_file[i].name;
 
 		/* Get file size */

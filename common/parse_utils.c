@@ -34,6 +34,7 @@ extern struct g_data_t gd;
 static parse_struct_t parse_table[] = {
 	{ "PLATFORM", FIELD_PLATFORM },
 	{ "ENTRY_POINT", FIELD_ENTRY_POINT },
+	{ "BOOT_SRC", FIELD_BOOT_SRC },
 	{ "BOOT_HO", FIELD_BOOT_HO },
 	{ "SB_EN", FIELD_SB_EN },
 	{ "PUB_KEY", FIELD_PUB_KEY },
@@ -669,6 +670,14 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 			strcpy(gd.sg_file_name, file_field.value[0]);
 		} else
 			strcpy(gd.sg_file_name, DEFAULT_SG_FILE_NAME);
+		break;
+
+	case FIELD_BOOT_SRC:
+		if (file_field.count == 1) {
+			check_field_length(field_name, file_field.value[0]);
+			strcpy(gd.boot_src, file_field.value[0]);
+			printf("gd.boot_src %s", gd.boot_src);
+		}
 		break;
 
 	case FIELD_RCW_PBI_FILENAME:

@@ -169,6 +169,8 @@ struct g_data_t {
 	char rsa_sign_file_name[MAX_FNAME_LEN];
 	char sg_file_name[MAX_FNAME_LEN];
 
+	char boot_src[MAX_FNAME_LEN];
+
 	uint8_t hton_flag;
 	uint8_t mp_flag;
 	uint8_t iss_flag;

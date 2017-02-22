@@ -1,11 +1,12 @@
-/* Copyright (c) 2013 Freescale Semiconductor, Inc.
- * All rights reserved.
+/*
+ * Copyright 2016 NXP
+ * NXP Proprietary.
  */
 
 ---------------------------------------------------
 # Specify the platform. [Mandatory]
 # Choose Platform - 1010/1040/2041/3041/4080/5020/5040/9131/9132/9164/4240/C290/LS1
-PLATFORM=LS1
+PLATFORM=LS1043
 # ESBC Flag. Specify ESBC=0 to sign u-boot and ESBC=1 to sign ESBC images.(default is 0)
 ESBC=1
 ---------------------------------------------------
