@@ -123,7 +123,7 @@ int check_target(char *target_name, uint32_t *targetid)
 	return FAILURE;
 }
 
-inline void check_field_length(char *field_name, char *field_val)
+static inline void check_field_length(char *field_name, char *field_val)
 {
 	if (strlen(field_val) >= MAX_FNAME_LEN) {
 		printf("Lenght of field %s exceed maximum limit %d\n",
