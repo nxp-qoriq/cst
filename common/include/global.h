@@ -147,7 +147,8 @@ struct g_data_t {
 	uint32_t num_iek_revok;
 	uint8_t *pkey;
 	uint32_t key_len;
-
+	
+	uint32_t add_stop_cmd;
 	char rcw_fname[MAX_FNAME_LEN];
 	char rcw_op_fname[MAX_FNAME_LEN];
 	struct cp_cmd_t cp_cmd[MAX_CP_CMD];

@@ -47,7 +47,9 @@ static char *parse_list[] = {
 };
 
 #define MAX_PBI_DATA_LEN_WORD	16
-#define CRC_STOP_CMD	0x08610040
+#define CRC_STOP_CMD_ARM	0x08610040
+#define CRC_STOP_CMD_POWERPC	0x08138040
+
 #define BYTE_SWAP_32(word)	((((word) & 0xff000000) >> 24) | \
 		(((word) & 0x00ff0000) >>  8) | \
 		(((word) & 0x0000ff00) <<  8) | \
@@ -189,7 +191,7 @@ int add_pbi_stop_cmd(FILE *fp_rcw_pbi_op)
 {
 #define PBI_CRC_POLYNOMIAL	0x04c11db7
 	int ret;
-	int32_t pbi_stop_cmd = BYTE_SWAP_32(CRC_STOP_CMD);
+	int32_t pbi_stop_cmd = BYTE_SWAP_32(gd.add_stop_cmd);
 	uint32_t pbi_crc = 0xffffffff, i, j, c;
 	uint32_t crc_table[256];
 	uint8_t data;
@@ -530,6 +532,7 @@ int create_pbi_ta2(int argc, char **argv)
 	int ret;
 	FILE *fp_rcw_pbi_ip, *fp_rcw_pbi_op;
 	uint32_t word;
+	enum cfg_taal cfg_taal;
 	printf("\n\t#----------------------------------------------------#");
 	printf("\n\t#-------         --------     --------        -------#");
 	printf("\n\t#------- CST (Code Signing Tool) Version 2.0  -------#");
@@ -558,11 +561,22 @@ int create_pbi_ta2(int argc, char **argv)
 	}
 
 	printf("\nInput File is %s\n", gd.input_file);
+	
+	
+	cfg_taal = get_ta_from_file(gd.input_file);
+	switch (cfg_taal)  {
+	case TA_2_0_PBL:
+		gd.add_stop_cmd = CRC_STOP_CMD_POWERPC;
+		break;
+	default :	
+		gd.add_stop_cmd = CRC_STOP_CMD_ARM;
+		break;
+	}
 
 	/* modify rcw field based on sben and boot_ho */
 	ret = rcw_sben_boot_ho(fp_rcw_pbi_ip, fp_rcw_pbi_op);
 	ret = fread(&word, sizeof(word), 1, fp_rcw_pbi_ip);
-	while (BYTE_SWAP_32(word) != CRC_STOP_CMD) {
+	while (BYTE_SWAP_32(word) != gd.add_stop_cmd) {
 		ret = fwrite(&word, sizeof(word), 1, fp_rcw_pbi_op);
 		if (ret == 0) {
 			printf("Error in Writing PBI Words\n");
@@ -574,6 +588,7 @@ int create_pbi_ta2(int argc, char **argv)
 			return FAILURE;
 		}
 	}
+
 	/* Add command to set boot_loc ptr */
 	ret = get_bootptr(fp_rcw_pbi_op);
 	if (ret != SUCCESS)
