@@ -14,7 +14,7 @@ OUTPUT_RCW_PBI_FILENAME=u-boot-with-spl-pbl-sec.bin
 #specify the boot src
 BOOT_SRC=SD_BOOT
 # Specify the platform
-PLATFORM=LS1020
+PLATFORM=LS1043
 # Specify the RCW Fields. (0 or 1) - [Optional]
 SB_EN=1
 BOOT_HO=1

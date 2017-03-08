@@ -113,6 +113,7 @@ int main(int argc, char **argv)
 	}
 	switch (cfg_taal) {
 	case TA_2_0_PBL:
+	case TA_2_1_ARM8:
 	case TA_2_1_ARM7:
 		ret = create_pbi_ta2(argc, argv);
 		break;

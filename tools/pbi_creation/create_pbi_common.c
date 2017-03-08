@@ -191,7 +191,7 @@ int add_pbi_stop_cmd(FILE *fp_rcw_pbi_op)
 {
 #define PBI_CRC_POLYNOMIAL	0x04c11db7
 	int ret;
-	int32_t pbi_stop_cmd = BYTE_SWAP_32(gd.add_stop_cmd);
+	int32_t pbi_stop_cmd = BYTE_SWAP_32(gd.stop_cmd);
 	uint32_t pbi_crc = 0xffffffff, i, j, c;
 	uint32_t crc_table[256];
 	uint8_t data;
@@ -562,21 +562,20 @@ int create_pbi_ta2(int argc, char **argv)
 
 	printf("\nInput File is %s\n", gd.input_file);
 	
-	
 	cfg_taal = get_ta_from_file(gd.input_file);
 	switch (cfg_taal)  {
 	case TA_2_0_PBL:
-		gd.add_stop_cmd = CRC_STOP_CMD_POWERPC;
+		gd.stop_cmd = CRC_STOP_CMD_POWERPC;
 		break;
 	default :	
-		gd.add_stop_cmd = CRC_STOP_CMD_ARM;
+		gd.stop_cmd = CRC_STOP_CMD_ARM;
 		break;
 	}
 
 	/* modify rcw field based on sben and boot_ho */
 	ret = rcw_sben_boot_ho(fp_rcw_pbi_ip, fp_rcw_pbi_op);
 	ret = fread(&word, sizeof(word), 1, fp_rcw_pbi_ip);
-	while (BYTE_SWAP_32(word) != gd.add_stop_cmd) {
+	while (BYTE_SWAP_32(word) != gd.stop_cmd) {
 		ret = fwrite(&word, sizeof(word), 1, fp_rcw_pbi_op);
 		if (ret == 0) {
 			printf("Error in Writing PBI Words\n");
