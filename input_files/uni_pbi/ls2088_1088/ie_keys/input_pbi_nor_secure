@@ -21,13 +21,13 @@ KEY_SELECT=1
 PRI_KEY=srk.pri
 #IE_TABLE_ADDR [optional] Used by Uboot to get IE Table Address
 #Can be 64 bit
-IE_TABLE_ADDR=580c00a00
+IE_TABLE_ADDR=5806c0a00
 ---------------------------------------------------
 # For PBI Signing
 # Name of RCW + PBI file [Mandatory]
 RCW_PBI_FILENAME= rcw.bin
 # Address of ISBC (Boot1) CSF Header [Mandatory]
-BOOT1_PTR=30c00000
+BOOT1_PTR=306c0000
 ---------------------------------------------------
 # Specify OEM AND FSL ID to be populated in header. [Optional]
 # e.g FSL_UID_0=11111111

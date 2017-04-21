@@ -2,13 +2,12 @@
  * Copyright 2017 NXP
  */
 
-ESBC=1
 ---------------------------------------------------
 # Specify the platform. [Mandatory]
 # Choose Platform -
 # TRUST 3.0: LS2085
 # TRUST 3.1: LS2088, LS1088
-PLATFORM=LS2088
+PLATFORM=LS1088
 ---------------------------------------------------
 # Specify the Key Information.
 # PUB_KEY [Mandatory] Comma Seperated List
@@ -21,10 +20,11 @@ KEY_SELECT=1
 # USAGE: <srk.pri>
 PRI_KEY=srk.pri
 ---------------------------------------------------
-# Specify the IMAGE Information [Mandatory]
-# USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
-# Address can be 64 bit
-IMAGE_1={bootscript,a0e00000,ffffffff}
+# For PBI Signing
+# Name of RCW + PBI file [Mandatory]
+RCW_PBI_FILENAME=rcw.bin
+# Address of ISBC (Boot1) CSF Header [Mandatory]
+BOOT1_PTR=206c0000
 ---------------------------------------------------
 # Specify OEM AND FSL ID to be populated in header. [Optional]
 # e.g FSL_UID_0=11111111
@@ -38,7 +38,7 @@ OEM_UID_4=
 ---------------------------------------------------
 # Specify the output file names [Optional].
 # Default Values chosen in Tool
-OUTPUT_HDR_FILENAME=hdr_bs.out
+OUTPUT_HDR_FILENAME=rcw_sec.bin
 IMAGE_HASH_FILENAME=
 RSA_SIGN_FILENAME=
 ---------------------------------------------------

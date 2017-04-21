@@ -29,13 +29,13 @@ PRI_KEY=srk.pri
 IE_KEY=iekey1.pub,iekey2.pub,iekey3.pub
 #ESBC_HDRADDR [Mandatory] 32bit Address of ESBC Header
 #Used to Calculate IE Table Address
-ESBC_HDRADDR=30c00000
+ESBC_HDRADDR=306c0000
 ---------------------------------------------------
 # Specify IMAGE, Max 8 images are possible.
 # DST_ADDR is required only for Non-PBL Platform. [Mandatory]
 # USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
 # Address can be 64 bit
-IMAGE_1={u-boot.bin,30100000,ffffffff}
+IMAGE_1={u-boot-dtb.bin,30100000,ffffffff}
 IMAGE_2={,,}
 IMAGE_3={,,}
 IMAGE_4={,,}
