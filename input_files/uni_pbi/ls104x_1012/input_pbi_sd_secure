@@ -1,0 +1,31 @@
+/*
+ * Copyright 2017 NXP
+ */
+----------------------------------------------------------------------------
+# For PBI Creation
+# Name of RCW + PBI file [Mandatory]
+RCW_PBI_FILENAME= u-boot-with-spl-pbl.bin
+----------------------------------------------------------------------------
+# Specify the output file name [Optional].
+# Default Values chosen in Tool
+OUTPUT_RCW_PBI_FILENAME=u-boot-with-spl-pbl-sec.bin
+----------------------------------------------------------------------------
+#specify the boot src
+BOOT_SRC=SD_BOOT
+# Specify the platform
+PLATFORM=LS1043
+# Specify the RCW Fields. (0 or 1) - [Optional]
+SB_EN=1
+BOOT_HO=1
+BOOT1_PTR=10017000
+----------------------------------------------------------------------------
+# Specify the PBI commands - [Optional]
+# Argument: COPY_CMD = (src_offset, dest_offset, Image name)
+# Split hdr_uboot_spl.out in PBI commads
+COPY_CMD={ffffffff,10017000,hdr_uboot_spl.out;}
+----------------------------------------------------------------------------
+# Specify the Images to be appended
+# Arguments: APPEND_IMAGES=(Image name, Offset from start)
+APPEND_IMAGES={u-boot-dtb.bin,00022000;}
+APPEND_IMAGES={hdr_uboot.out,00122000;}
+----------------------------------------------------------------------------
