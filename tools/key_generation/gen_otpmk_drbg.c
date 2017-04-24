@@ -67,8 +67,10 @@ void print_otpmk_bit_order1()
 		       OTPMK_SIZE_BYTES - 1 + (OTPMK_REG_NO - 1 -
 					       i / 4) * OTPMK_SIZE_BYTES,
 		       (OTPMK_REG_NO - 1 - i / 4) * OTPMK_SIZE_BYTES,
-		       otpmk_hex[i], otpmk_hex[i + 1], otpmk_hex[i + 2],
-		       otpmk_hex[i + 3]);
+		       otpmk_hex[(OTPMK_SIZE_BYTES - 1) - i],
+		       otpmk_hex[(OTPMK_SIZE_BYTES - 1) - (i + 1)],
+		       otpmk_hex[(OTPMK_SIZE_BYTES - 1) - (i + 2)],
+		       otpmk_hex[(OTPMK_SIZE_BYTES - 1) - (i + 3)]);
 	}
 
 }
@@ -89,8 +91,10 @@ void print_otpmk_bit_order2()
 		       OTPMK_REG_NO - i - 1,
 		       ((i + 1) * OTPMK_SIZE_BYTES) - 1,
 		       i * OTPMK_SIZE_BYTES,
-		       otpmk_hex[j], otpmk_hex[j + 1], otpmk_hex[j + 2],
-		       otpmk_hex[j + 3]);
+		       otpmk_hex[(OTPMK_SIZE_BYTES - 1) - j],
+		       otpmk_hex[(OTPMK_SIZE_BYTES - 1) - (j + 1)],
+		       otpmk_hex[(OTPMK_SIZE_BYTES - 1) - (j + 2)],
+		       otpmk_hex[(OTPMK_SIZE_BYTES - 1) - (j + 3)]);
 		j = j + 4;
 	}
 
@@ -154,11 +158,10 @@ int main(int argc, char *argv[])
 				otpmk_in[0] = argv[2][i + 0];
 				otpmk_in[1] = argv[2][i + 1];
 				l = i / 2;
-				otpmk_hex[l] = strtoul(otpmk_in, NULL, 16);
-
-				/* Create the OTPMK Key using hash_drbg lib */
-				otpmk_make_code_word_256(otpmk_hex);
+				otpmk_hex[(OTPMK_SIZE_BYTES - 1) - l] = strtoul(otpmk_in, NULL, 16);
 			}
+			/* Create the OTPMK Key using hash_drbg lib */
+			otpmk_make_code_word_256(otpmk_hex);
 		} else {
 			printf("\nError: Invalid Input key Length\n");
 			usage();
@@ -198,7 +201,7 @@ int main(int argc, char *argv[])
 
 
 	printf("\nOTPMK[255:0] is:\n");
-	for (i = 0; i < OTPMK_SIZE_BYTES; i++)
+	for (i = (OTPMK_SIZE_BYTES - 1); i >= 0; i--)
 		printf("%.2x", otpmk_hex[i]);
 
 	printf("\n");
