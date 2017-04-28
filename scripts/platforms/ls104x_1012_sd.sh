@@ -32,16 +32,16 @@
 #-----------------------------------------------------------------------------
 
 # Sign u-boot spl image
-./uni_sign input_files/uni_sign/ls104x_1012/sd/input_spl_uboot_secure
+./uni_sign input_files/uni_sign/ls104x_1012/sd_nand/input_spl_uboot_secure
 
 # Sign u-boot image
-./uni_sign input_files/uni_sign/ls104x_1012/sd/input_uboot_secure
+./uni_sign input_files/uni_sign/ls104x_1012/sd_nand/input_uboot_secure
 
 # Sign bootscript image
-./uni_sign input_files/uni_sign/ls104x_1012/sd/input_bootscript_secure
+./uni_sign input_files/uni_sign/ls104x_1012/sd_nand/input_bootscript_secure
 
 # Sign ppa image
-./uni_sign input_files/uni_sign/ls104x_1012/sd/input_ppa_secure
+./uni_sign input_files/uni_sign/ls104x_1012/sd_nand/input_ppa_secure
 
 # Sign uImage.bin
 ./uni_sign input_files/uni_sign/ls104x_1012/input_uimage_secure
