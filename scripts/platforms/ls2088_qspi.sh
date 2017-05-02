@@ -35,22 +35,22 @@
 ./uni_pbi input_files/uni_pbi/ls2088_1088/input_pbi_qspi_secure
 
 # Sign u-boot image
-./uni_sign input_files/uni_sign/ls2088_1088/qspi/input_uboot_secure
+./uni_sign input_files/uni_sign/ls2088_1088/qspi_ls2088/input_uboot_secure
 
 # Sign bootscript image
-./uni_sign input_files/uni_sign/ls2088_1088/qspi/input_bootscript_secure
+./uni_sign input_files/uni_sign/ls2088_1088/qspi_ls2088/input_bootscript_secure
 
 # Sign PPA image
-./uni_sign input_files/uni_sign/ls2088_1088/qspi/input_ppa_secure
+./uni_sign input_files/uni_sign/ls2088_1088/qspi_ls2088/input_ppa_secure
 
 # Sign mc image
-./uni_sign input_files/uni_sign/ls2088_1088/qspi/input_mc_secure
+./uni_sign input_files/uni_sign/ls2088_1088/qspi_ls2088/input_mc_secure
 
 # Sign dpc image
-./uni_sign input_files/uni_sign/ls2088_1088/qspi/input_dpc_secure
+./uni_sign input_files/uni_sign/ls2088_1088/qspi_ls2088/input_dpc_secure
 
 # Sign dpl image
-./uni_sign input_files/uni_sign/ls2088_1088/qspi/input_dpl_secure
+./uni_sign input_files/uni_sign/ls2088_1088/qspi_ls2088/input_dpl_secure
 
 # Sign uImage.bin
 ./uni_sign input_files/uni_sign/ls2088_1088/input_uimage_secure

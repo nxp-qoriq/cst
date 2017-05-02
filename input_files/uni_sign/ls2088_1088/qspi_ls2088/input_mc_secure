@@ -1,0 +1,47 @@
+/* Copyright (c) 2015 Freescale Semiconductor, Inc.
+ * Copyright 2017 NXP
+ */
+
+ESBC=1
+---------------------------------------------------
+# Specify the platform. [Mandatory]
+# Choose Platform -
+# TRUST 3.0: LS2085
+# TRUST 3.1: LS2088, LS1088
+PLATFORM=LS2088
+---------------------------------------------------
+# Specify the Key Information.
+# PUB_KEY [Mandatory] Comma Seperated List
+# Usage: <srk1.pub> <srk2.pub> .....
+PUB_KEY=srk.pub
+# KEY_SELECT [Mandatory]
+# USAGE (for TRUST 3.x): (between 1 to 8)
+KEY_SELECT=1
+# PRI_KEY [Mandatory] Single Key Used for Signing
+# USAGE: <srk.pri>
+PRI_KEY=srk.pri
+---------------------------------------------------
+# Specify IMAGE, Max 8 images are possible.
+# DST_ADDR is required only for Non-PBL Platform. [Mandatory]
+# USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
+# Address can be 64 bit
+IMAGE_1={mc.itb,20A00000,ffffffff}
+---------------------------------------------------
+# Specify OEM AND FSL ID to be populated in header. [Optional]
+# e.g FSL_UID_0=11111111
+FSL_UID_0=
+FSL_UID_1=
+OEM_UID_0=
+OEM_UID_1=
+OEM_UID_2=
+OEM_UID_3=
+OEM_UID_4=
+---------------------------------------------------
+# Specify the output file names [Optional].
+# Default Values chosen in Tool
+OUTPUT_HDR_FILENAME=hdr_mc.out
+IMAGE_HASH_FILENAME=
+RSA_SIGN_FILENAME=
+---------------------------------------------------
+# Specify VERBOSE as 1, if you want to Display Header Information [Optional]
+VERBOSE=1

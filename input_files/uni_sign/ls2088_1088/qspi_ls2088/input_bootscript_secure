@@ -1,5 +1,5 @@
 /* Copyright (c) 2015 Freescale Semiconductor, Inc.
- * Freescale Proprietary.
+ * Copyright 2017 NXP
  */
 
 ESBC=1
@@ -8,7 +8,7 @@ ESBC=1
 # Choose Platform -
 # TRUST 3.0: LS2085
 # TRUST 3.1: LS2088, LS1088
-PLATFORM=LS1088
+PLATFORM=LS2088
 ---------------------------------------------------
 # Specify the Key Information.
 # PUB_KEY [Mandatory] Comma Seperated List
@@ -21,11 +21,10 @@ KEY_SELECT=1
 # USAGE: <srk.pri>
 PRI_KEY=srk.pri
 ---------------------------------------------------
-# Specify IMAGE, Max 8 images are possible.
-# DST_ADDR is required only for Non-PBL Platform. [Mandatory]
+# Specify the IMAGE Information [Mandatory]
 # USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
 # Address can be 64 bit
-IMAGE_1={ppa.itb,410a00000,ffffffff}
+IMAGE_1={bootscript,a0600000,ffffffff}
 ---------------------------------------------------
 # Specify OEM AND FSL ID to be populated in header. [Optional]
 # e.g FSL_UID_0=11111111
@@ -39,9 +38,14 @@ OEM_UID_4=
 ---------------------------------------------------
 # Specify the output file names [Optional].
 # Default Values chosen in Tool
-OUTPUT_HDR_FILENAME=hdr_ppa.out
+OUTPUT_HDR_FILENAME=hdr_bs.out
 IMAGE_HASH_FILENAME=
 RSA_SIGN_FILENAME=
 ---------------------------------------------------
+# Specify The Flags. (0 or 1) - [Optional]
+MP_FLAG=0
+ISS_FLAG=1
+LW_FLAG=0
+---------------------------------------------------
 # Specify VERBOSE as 1, if you want to Display Header Information [Optional]
-VERBOSE=0
+VERBOSE=1
