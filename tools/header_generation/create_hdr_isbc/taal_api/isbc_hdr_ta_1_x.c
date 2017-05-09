@@ -260,7 +260,8 @@ int create_header_ta_1_x_pbl(void)
 	header = malloc(hdrlen);
 	if (header == NULL) {
 		printf("Error in allocating memory of %d bytes\n", hdrlen);
-		return FAILURE;
+		ret = FAILURE;
+		goto exit;
 	}
 
 	memset(header, 0, hdrlen);
@@ -272,23 +273,23 @@ int create_header_ta_1_x_pbl(void)
 		ret = read_file_in_buffer(header + gd.ie_table_offset,
 					  gd.entries[0].name);
 		if (ret != SUCCESS)
-			return ret;
+			goto exit;
 	}
 
 	/* Create the header file */
 	fp = fopen(gd.hdr_file_name, "wb");
 	if (fp == NULL) {
 		printf("Error in opening the file: %s\n", gd.hdr_file_name);
-		free(header);
-		return FAILURE;
+		ret = FAILURE;
+		goto exit;
 	}
 	ret = fwrite(header, 1, hdrlen, fp);
 	fclose(fp);
-	free(header);
 
 	if (ret == 0) {
 		printf("Error in Writing to file");
-		return FAILURE;
+		ret = FAILURE;
+		goto exit;
 	}
 
 	/* Create the SG Table */
@@ -297,17 +298,21 @@ int create_header_ta_1_x_pbl(void)
 		if (fp == NULL) {
 			printf("Error in opening the file: %s\n",
 				gd.sg_file_name);
-			return FAILURE;
+			ret = FAILURE;
+			goto exit;
 		}
 		ret = fwrite(gd.sg_table_ptr, 1, gd.sg_size, fp);
 		fclose(fp);
 		if (ret == 0) {
 			printf("Error in Writing to file");
-			return FAILURE;
+			ret = FAILURE;
+			goto exit;
 		}
 	}
-
-	return SUCCESS;
+	ret = SUCCESS;
+exit:
+	free(header);
+	return ret;
 }
 
 int create_header_ta_1_x_nonpbl(void)
@@ -320,7 +325,8 @@ int create_header_ta_1_x_nonpbl(void)
 	header = malloc(hdrlen);
 	if (header == NULL) {
 		printf("Error in allocating memory of %d bytes\n", hdrlen);
-		return FAILURE;
+		ret = FAILURE;
+		goto exit;
 	}
 
 	memset(header, 0, hdrlen);
@@ -333,19 +339,22 @@ int create_header_ta_1_x_nonpbl(void)
 	fp = fopen(gd.hdr_file_name, "wb");
 	if (fp == NULL) {
 		printf("Error in opening the file: %s\n", gd.hdr_file_name);
-		free(header);
-		return FAILURE;
+		ret = FAILURE;
+		goto exit;
 	}
 	ret = fwrite(header, 1, hdrlen, fp);
 	fclose(fp);
-	free(header);
 
 	if (ret == 0) {
 		printf("Error in Writing to file");
-		return FAILURE;
+		ret = FAILURE;
+		goto exit;
 	}
+	ret = SUCCESS;
 
-	return SUCCESS;
+exit:
+	free(header);
+	return ret;
 }
 
 /****************************************************************************

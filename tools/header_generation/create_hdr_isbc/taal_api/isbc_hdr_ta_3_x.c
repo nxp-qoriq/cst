@@ -288,7 +288,8 @@ int create_header_ta_3_x(void)
 	header = malloc(hdrlen);
 	if (header == NULL) {
 		printf("Error in allocating memory of %d bytes\n", hdrlen);
-		return FAILURE;
+		ret = FAILURE;
+		goto exit;
 	}
 
 	memset(header, 0, hdrlen);
@@ -301,26 +302,28 @@ int create_header_ta_3_x(void)
 		ret = read_file_in_buffer(header + gd.ie_table_offset,
 					  gd.entries[0].name);
 		if (ret != SUCCESS)
-			return ret;
+			goto exit;
 	}
 
 	/* Create the header file */
 	fp = fopen(gd.hdr_file_name, "wb");
 	if (fp == NULL) {
 		printf("Error in opening the file: %s\n", gd.hdr_file_name);
-		free(header);
-		return FAILURE;
+		ret = FAILURE;
+		goto exit;
 	}
 	ret = fwrite(header, 1, hdrlen, fp);
 	fclose(fp);
-	free(header);
 
 	if (ret == 0) {
 		printf("Error in Writing to file");
-		return FAILURE;
+		ret = FAILURE;
+		goto exit;
 	}
-
-	return SUCCESS;
+	ret = SUCCESS;
+exit:
+	free(header);
+	return ret;
 }
 
 int create_header_ta_3_0(void)

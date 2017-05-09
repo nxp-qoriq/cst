@@ -195,7 +195,6 @@ int add_pbi_stop_cmd(FILE *fp_rcw_pbi_op)
 	uint32_t pbi_crc = 0xffffffff, i, j, c;
 	uint32_t crc_table[256];
 	uint8_t data;
-
 	ret = fwrite(&pbi_stop_cmd, sizeof(pbi_stop_cmd),
 	1, fp_rcw_pbi_op);
 	if (ret == 0) {
@@ -213,7 +212,7 @@ int add_pbi_stop_cmd(FILE *fp_rcw_pbi_op)
 
 	fseek(fp_rcw_pbi_op, 0L, SEEK_SET);
 
-	while (fread(&data, 1, 1, fp_rcw_pbi_op))
+	while ((ret = fread(&data, 1, 1, fp_rcw_pbi_op)))
 		pbi_crc =
 		crc_table[((pbi_crc >> 24) ^ (data)) & 0xff] ^ (pbi_crc << 8);
 
@@ -237,6 +236,7 @@ int add_pbi_stop_cmd(FILE *fp_rcw_pbi_op)
 int get_copy_cmd(char *file_name)
 {
 	int i, line_size = 0;
+	int ret;
 	char *field_name = "COPY_CMD";
 	FILE *fp;
 	fp = fopen(file_name, "r");
@@ -251,9 +251,10 @@ int get_copy_cmd(char *file_name)
 
 	fseek(fp, 0, SEEK_SET);
 	line_size = cal_line_size(fp);
-	fseek(fp, -line_size, SEEK_CUR);
-
-	while (fread(line_data, 1, line_size, fp)) {
+	ret = fseek(fp, -line_size, SEEK_CUR);
+	if (ret != 0)
+		printf("Error in reading the file\n");
+	while ((ret = fread(line_data, 1, line_size, fp))) {
 		*(line_data + line_size) = '\0';
 		remove_whitespace(line_data);
 		if ((strstr(line_data, field_name)) && (*line_data != '#')) {
@@ -280,7 +281,9 @@ int get_copy_cmd(char *file_name)
 			}
 		}
 		line_size = cal_line_size(fp);
-		fseek(fp, -line_size, SEEK_CUR);
+		ret = fseek(fp, -line_size, SEEK_CUR);
+		if (ret != 0)
+			printf("Error in reading the file\n");
 	}
 	for (i = 0; i < gd.cp_cmd_count; i++) {
 		printf("\nACS Write COMMAND : offset %x and image name %s",
@@ -375,17 +378,21 @@ int add_cpy_cmd(FILE *fp_rcw_pbi_op)
 				     fp_rcw_pbi_op);
 			if (ret == 0) {
 				printf("Error in Writing PBI ACS CMD\n");
+				fclose(fp_img);
 				return FAILURE;
 			}
 			ret = fwrite(&pbi_data,  MAX_PBI_DATA_LEN_BYTE, 1,
 				     fp_rcw_pbi_op);
 			if (ret == 0) {
 				printf("Error in Writing PBI ACS Data\n");
+				fclose(fp_img);
 				return FAILURE;
 			}
 			dst_offset += MAX_PBI_DATA_LEN_BYTE;
 			file_size -= MAX_PBI_DATA_LEN_BYTE;
 		} while (size);
+
+	fclose(fp_img);
 	}
 	return SUCCESS;
 }
@@ -400,6 +407,7 @@ int add_cpy_cmd(FILE *fp_rcw_pbi_op)
 int get_ap_img(char *file_name)
 {
 	int line_size = 0;
+	int ret, ret_val;
 	char *field_name = "APPEND_IMAGES";
 	FILE *fp;
 	fp = fopen(file_name, "r");
@@ -413,9 +421,10 @@ int get_ap_img(char *file_name)
 	file_field.count = 0;
 	fseek(fp, 0, SEEK_SET);
 	line_size = cal_line_size(fp);
-	fseek(fp, -line_size, SEEK_CUR);
-
-	while (fread(line_data, 1, line_size, fp)) {
+	ret_val = fseek(fp, -line_size, SEEK_CUR);
+	if (ret_val != 0)
+		printf("Error in reading the file\n");
+	while ((ret = fread(line_data, 1, line_size, fp))) {
 		*(line_data + line_size) = '\0';
 		remove_whitespace(line_data);
 		if ((strstr(line_data, field_name)) && (*line_data != '#')) {
@@ -440,7 +449,9 @@ int get_ap_img(char *file_name)
 			}
 		}
 		line_size = cal_line_size(fp);
-		fseek(fp, -line_size, SEEK_CUR);
+		ret_val = fseek(fp, -line_size, SEEK_CUR);
+		if (ret_val != 0)
+			printf("Error in reading the file\n");
 	}
 
 	fclose(fp);
@@ -509,6 +520,7 @@ sector in SD, the images have to be appended to rcw at
 			ret = fwrite(&data_buffer, 1, size, fp_rcw_pbi_op);
 			if (ret == 0) {
 				printf("Error in Appending Image\n");
+				fclose(fp_img);
 				return FAILURE;
 			}
 		}
@@ -557,6 +569,7 @@ int create_pbi_ta2(int argc, char **argv)
 	fp_rcw_pbi_op = fopen(gd.rcw_op_fname, "wb+");
 	if (fp_rcw_pbi_op == NULL) {
 		printf("Error in opening the file: %s\n", gd.rcw_op_fname);
+		fclose(fp_rcw_pbi_ip);
 		return FAILURE;
 	}
 
@@ -579,41 +592,47 @@ int create_pbi_ta2(int argc, char **argv)
 		ret = fwrite(&word, sizeof(word), 1, fp_rcw_pbi_op);
 		if (ret == 0) {
 			printf("Error in Writing PBI Words\n");
-			return FAILURE;
+                        ret = FAILURE;
+                        goto exit;
 		}
 		ret = fread(&word, sizeof(word), 1, fp_rcw_pbi_ip);
 		if (ret == 0) {
 			printf("Error in Reading PBI Words\n");
-			return FAILURE;
+                        ret = FAILURE;
+                        goto exit;
 		}
 	}
 
 	/* Add command to set boot_loc ptr */
 	ret = get_bootptr(fp_rcw_pbi_op);
 	if (ret != SUCCESS)
-		return ret;
+		goto exit;
 	/* Get acs write command and fill global data structure */
 	ret = get_copy_cmd(gd.input_file);
 	if (ret != SUCCESS)
-		return ret;
+		goto exit;
 	/* Write acs write commands to output file */
 	ret = add_cpy_cmd(fp_rcw_pbi_op);
 	if (ret != SUCCESS)
-		return ret;
+		goto exit;
 	/* Add stop command after adding pbi commands */
 	ret = add_pbi_stop_cmd(fp_rcw_pbi_op);
 	if (ret != SUCCESS)
-		return ret;
+		goto exit;
 	/* get data for images to be appended and fill data struct */
 	ret = get_ap_img(gd.input_file);
 	if (ret != SUCCESS)
-		return ret;
+		goto exit;
 	/* append images to the output file */
 	ret = add_ap_img(fp_rcw_pbi_op);
 	if (ret != SUCCESS)
-		return ret;
+		goto exit;
 
 	printf("\n\n");
-	return SUCCESS;
+	ret = SUCCESS;
+exit:
+	fclose(fp_rcw_pbi_op);
+	fclose(fp_rcw_pbi_ip);
+	return ret;
 }
 

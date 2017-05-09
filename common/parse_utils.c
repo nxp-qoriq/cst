@@ -306,7 +306,7 @@ void find_value_from_file(char *field_name, FILE *fp)
 {
 	int line_size = 0;
 	int i = 0;
-
+	uint32_t ret = 0;
 	for (i = 0; i < 64; i++)
 		file_field.value[i] = NULL;
 
@@ -314,9 +314,10 @@ void find_value_from_file(char *field_name, FILE *fp)
 
 	fseek(fp, 0, SEEK_SET);
 	line_size = cal_line_size(fp);
-	fseek(fp, -line_size, SEEK_CUR);
-
-	while (fread(line_data, 1, line_size, fp)) {
+	ret = fseek(fp, -line_size, SEEK_CUR);
+	if (ret != 0)
+		printf("Error in readeing the file\n");
+	while ((ret = fread(line_data, 1, line_size, fp))) {
 		*(line_data + line_size) = '\0';
 		remove_whitespace(line_data);
 		if ((found_whole_word(line_data, field_name)) &&
@@ -326,7 +327,10 @@ void find_value_from_file(char *field_name, FILE *fp)
 		}
 		line_size = cal_line_size(fp);
 
-		fseek(fp, -line_size, SEEK_CUR);
+		ret = fseek(fp, -line_size, SEEK_CUR);
+		if (ret != 0)
+			printf("Error in readeing the file\n");
+
 	}
 	file_field.count = 0;
 }
@@ -336,6 +340,7 @@ int find_cfw_from_file(char *file_name)
 	int line_size = 0;
 	char *field_name = "CF_WORD";
 	FILE *fp;
+	uint32_t ret = 0;
 	fp = fopen(file_name, "r");
 	if (fp == NULL) {
 		printf("Error in opening the file: %s\n", file_name);
@@ -350,9 +355,11 @@ int find_cfw_from_file(char *file_name)
 
 	fseek(fp, 0, SEEK_SET);
 	line_size = cal_line_size(fp);
-	fseek(fp, -line_size, SEEK_CUR);
+	ret = fseek(fp, -line_size, SEEK_CUR);
+	if (ret != 0)
+		printf("Error in readeing the file\n");
 
-	while (fread(line_data, 1, line_size, fp)) {
+	while ((ret = fread(line_data, 1, line_size, fp))) {
 		*(line_data + line_size) = '\0';
 		remove_whitespace(line_data);
 		if ((strstr(line_data, field_name)) && (*line_data != '#')) {
@@ -377,7 +384,9 @@ int find_cfw_from_file(char *file_name)
 			}
 		}
 		line_size = cal_line_size(fp);
-		fseek(fp, -line_size, SEEK_CUR);
+		ret = fseek(fp, -line_size, SEEK_CUR);
+		if (ret != 0)
+			printf("Error in readeing the file\n");
 	}
 
 	fclose(fp);

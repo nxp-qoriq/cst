@@ -33,11 +33,11 @@
 
 #include <global.h>
 
-static int get_file_size(const char *c)
+static uint32_t get_file_size(const char *c)
 {
 	FILE *fp;
 	unsigned char buf[IOBLOCK];
-	int bytes = 0;
+	uint32_t bytes = 0;
 
 	printf("\n\t#----------------------------------------------------#");
 	printf("\n\t#-------         --------     --------        -------#");
@@ -77,7 +77,7 @@ static int get_file_size(const char *c)
  ***************************************************************************/
 int main(int argc, char **argv)
 {
-	char ch;
+	int ch;
 	int i;
 	uint32_t len;
 	char *hdr_file, *sign_file;
