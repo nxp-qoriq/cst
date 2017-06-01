@@ -37,8 +37,11 @@
 # Sign u-boot image
 ./uni_sign input_files/uni_sign/ls1/sd_nand/input_uboot_secure
 
+# Sign kernel image
+./uni_sign input_files/uni_sign/ls1/input_kernel_secure
+
 # Sign bootscript image
-./uni_sign input_files/uni_sign/ls1/sd_nand/input_bootscript_secure
+./uni_sign input_files/uni_sign/ls1/input_bootscript_secure
 
 # Sign uImage.bin
 ./uni_sign input_files/uni_sign/ls1/input_uimage_secure
@@ -56,3 +59,4 @@ fi
 touch secboot_hdrs.bin
 dd if=bootscript of=secboot_hdrs.bin bs=1K seek=0
 dd if=hdr_bs.out of=secboot_hdrs.bin bs=1K seek=256
+dd if=hdr_kernel.out of=secboot_hdrs.bin bs=1K seek=2048

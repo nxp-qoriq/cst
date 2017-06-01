@@ -35,7 +35,10 @@
 ./uni_sign input_files/uni_sign/ls104x_1012/nor/input_uboot_secure
 
 # Sign bootscript image
-./uni_sign input_files/uni_sign/ls104x_1012/nor/input_bootscript_secure
+./uni_sign input_files/uni_sign/ls104x_1012/input_bootscript_secure
+
+# Sign kernel image
+./uni_sign input_files/uni_sign/ls104x_1012/input_kernel_secure
 
 # Sign ppa image
 ./uni_sign input_files/uni_sign/ls104x_1012/nor/input_ppa_secure
@@ -55,3 +58,4 @@ dd if=bootscript of=secboot_hdrs.bin bs=1K seek=0
 dd if=hdr_bs.out of=secboot_hdrs.bin bs=1K seek=256
 dd if=hdr_ppa.out of=secboot_hdrs.bin bs=1K seek=512
 dd if=hdr_uboot.out of=secboot_hdrs.bin bs=1K seek=768
+dd if=hdr_kernel.out of=secboot_hdrs.bin bs=1K seek=2048

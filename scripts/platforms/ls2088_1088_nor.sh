@@ -38,7 +38,10 @@
 ./uni_sign input_files/uni_sign/ls2088_1088/nor/input_uboot_secure
 
 # Sign bootscript image
-./uni_sign input_files/uni_sign/ls2088_1088/nor/input_bootscript_secure
+./uni_sign input_files/uni_sign/ls2088_1088/input_bootscript_secure
+
+# Sign kernel image
+./uni_sign input_files/uni_sign/ls2088_1088/input_kernel_secure
 
 # Sign ppa image
 ./uni_sign input_files/uni_sign/ls2088_1088/nor/input_ppa_secure
@@ -70,3 +73,4 @@ dd if=hdr_uboot.out of=secboot_hdrs.bin bs=1K seek=768
 dd if=hdr_mc.out of=secboot_hdrs.bin bs=1K seek=1024
 dd if=hdr_dpc.out of=secboot_hdrs.bin bs=1K seek=1280
 dd if=hdr_dpl.out of=secboot_hdrs.bin bs=1K seek=1536
+dd if=hdr_kernel.out of=secboot_hdrs.bin bs=1K seek=2048

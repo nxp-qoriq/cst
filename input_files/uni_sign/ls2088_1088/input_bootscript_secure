@@ -24,7 +24,7 @@ PRI_KEY=srk.pri
 # Specify the IMAGE Information [Mandatory]
 # USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
 # Address can be 64 bit
-IMAGE_1={bootscript,a0600000,ffffffff}
+IMAGE_1={bootscript,80000000,ffffffff}
 ---------------------------------------------------
 # Specify OEM AND FSL ID to be populated in header. [Optional]
 # e.g FSL_UID_0=11111111

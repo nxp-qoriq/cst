@@ -1,17 +1,17 @@
-/* Copyright (c) 2016 Freescale Semiconductor, Inc.
- * All rights reserved.
+/*
+ * Copyright 2017 NXP
  */
 
 ---------------------------------------------------
 # Specify the platform. [Mandatory]
 # Choose Platform - 1010/1040/2041/3041/4080/5020/5040/9131/9132/9164/4240/C290/LS1
-PLATFORM=LS1012
+PLATFORM=LS1043
 # ESBC Flag. Specify ESBC=0 to sign u-boot and ESBC=1 to sign ESBC images.(default is 0)
 ESBC=1
 ---------------------------------------------------
 # Entry Point/Image start address field in the header.[Mandatory]
 # (default=ADDRESS of first file specified in images)
-ENTRY_POINT=40600000
+ENTRY_POINT=80000000
 ---------------------------------------------------
 # Specify the file name of the keys seperated by comma.
 # The number of files and key select should lie between 1 and 4 for 1040 and C290.
@@ -37,7 +37,7 @@ IMAGE_TARGET=
 ---------------------------------------------------
 # Specify IMAGE, Max 8 images are possible. DST_ADDR is required only for Non-PBL Platform. [Mandatory]
 # USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
-IMAGE_1={bootscript,40600000,ffffffff}
+IMAGE_1={bootscript,80000000,ffffffff}
 IMAGE_2={,,}
 IMAGE_3={,,}
 IMAGE_4={,,}
