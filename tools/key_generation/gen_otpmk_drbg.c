@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <otpmk.h>
+#include <getopt.h>
 
 #define OTPMK_SIZE_BITS 256
 #define OTPMK_SIZE_BYTES (OTPMK_SIZE_BITS/8)
@@ -121,19 +122,28 @@ int check_string(char *str)
 void usage()
 {
 	printf("\n");
-	printf("Usage : ./gen_otpmk_drbg <bit_order> [string]\n");
-	printf("<bit_order> : (1 or 2) OTPMK Bit Ordering Scheme in SFP\n");
-	printf("\t1 : BSC913x, P1010, P3, P4, P5, C29x\n");
-	printf("\t2 : T1, T2, T4, B4, LSx\n");
-	printf("<string> : 32 byte string\n");
-	printf("\ne.g. gen_otpmk_drbg 1 11111111222222223333333344444444"
-			"55555555666666667777777788888888\n");
+	printf("Usage : ./gen_otpmk_drbg --b <bit_order> [--s <string>] [--u]\n");
+	printf("--b <bit_order>\t: (1 or 2) OTPMK Bit Ordering Scheme in SFP\n");
+	printf("\t\t  1 : BSC913x, P1010, P3, P4, P5, C29x\n");
+	printf("\t\t  2 : T1, T2, T4, B4, LSx\n");
+	printf("--s <string>\t: 32 byte optional string ()\n");
+	printf("\t\t  Generate otpmk using <string> as string\n");
+	printf("--u\t\t: urand option flag\n");
+	printf("\t\t  Gen otpmk using entropy from /dev/urandom\n");
+	printf("\t\t  Default gen otpmk using entropy from /dev/random\n");
+	printf("--h\t\t: Help\n");
+	printf("\ne.g. gen_otpmk_drbg --b 1 --s 11111111222222223333333344444444"
+			"55555555666666667777777788888888");
+	printf("\ne.g. gen_otpmk_drbg -b 1 --u");
+	printf("\ne.g. gen_otpmk_drbg -b 1\n");
 }
 
 int main(int argc, char *argv[])
 {
 	char otpmk_in[2];
-	int i, l, ret;
+	int c, i, l, ret;
+	char *string;
+	char urand_flag = 0;
 
 	printf("\n\t#----------------------------------------------------#");
 	printf("\n\t#-------         --------     --------        -------#");
@@ -142,21 +152,79 @@ int main(int argc, char *argv[])
 	printf("\n\t#----------------------------------------------------#");
 	printf("\n");
 
-	if (argc == 3 &&
-	    (strlen(argv[1]) == 1 && (*argv[1] == '1' || *argv[1] == '2'))) {
-		bit_ordering_type = atoi(argv[1]);
+	while (1) {
+		static struct option long_options[] = {
+		{"help", no_argument,       0, 'h'},
+		{"urand", no_argument,       0, 'u'},
+		/* These options don't set a flag.
+		 * We distinguish them by their indices. */
+		{"bit_order",  required_argument, 0, 'b'},
+		{"string",  required_argument, 0, 's'},
+		{0, 0, 0, 0}
+		};
+		int option_index = 0;
+
+		c = getopt_long(argc, argv, "h:u:b:s",
+				long_options, &option_index);
+
+		/* Detect the end of the options. */
+		if (c == -1)
+			break;
+
+		switch (c) {
+		case 'h':
+		usage();
+		exit(0);
+
+		case 'b':
+		bit_ordering_type = atol(optarg);
+		break;
+
+		case 's':
+		string = optarg;
+		break;
+
+		case 'u':
+		urand_flag = 1;
+		break;
+
+		case '?':
+		/* getopt_long already printed an error message. */
+		printf("?");
+		exit(0);
+		break;
+
+		default:
+		usage();
+		exit(0);
+		}
+	}
+
+	if ((bit_ordering_type != 1) && (bit_ordering_type != 2)) {
+		usage();
+		exit(0);
+	}
+
+	if (string && (urand_flag == 1)) {
+		printf("\nError: Incorrect usage of cmd line options, "
+			"urand flag has no usage along with string !!\n");
+		usage();
+		exit(0);
+	}
+
+	if (string) {
 		/*check length of hexadecimal string*/
-		if (strlen(argv[2]) == 2 * OTPMK_SIZE_BYTES) {
+		if (strlen(string) == 2 * OTPMK_SIZE_BYTES) {
 			/*check if string is valid hexadecimal string*/
-			ret = check_string(argv[2]);
+			ret = check_string(string);
 			if (ret == -1) {
 				printf("\nError: Input key is not having"
 					"valid hexadecimal character\n");
 				return -1;
 			}
 			for (i = 0; i < 2 * OTPMK_SIZE_BYTES; i += 2) {
-				otpmk_in[0] = argv[2][i + 0];
-				otpmk_in[1] = argv[2][i + 1];
+				otpmk_in[0] = string[i + 0];
+				otpmk_in[1] = string[i + 1];
 				l = i / 2;
 				otpmk_hex[(OTPMK_SIZE_BYTES - 1) - l] = strtoul(otpmk_in, NULL, 16);
 			}
@@ -167,38 +235,28 @@ int main(int argc, char *argv[])
 			usage();
 			exit(1);
 		}
-	} else if (argc == 2) {
-		if ((strcmp(argv[1], "--help") == 0)
-			|| (strcmp(argv[1], "-h") == 0)) {
-			usage();
-			exit(0);
-		} else if (strlen(argv[1]) == 1 &&
-			   (*argv[1] == '1' || *argv[1] == '2')) {
-			printf("\nInput string not provided");
-			printf("\nGenerating a random string");
-			printf("\n-------------------------------------------");
-			printf("\n* Hash_DRBG library invoked");
-			printf("\n* Seed being taken from /dev/random");
-			printf("\n-------------------------------------------");
-			bit_ordering_type = *argv[1] - 48;
+	} else {
+		printf("\nInput string not provided");
+		printf("\nGenerating a random string");
+		printf("\n-------------------------------------------");
+		printf("\n* Hash_DRBG library invoked");
 
-			/* Generate Random OTPMK using hash_drbg lib */
-			ret = otpmk_get_rand_256(otpmk_hex, 0);
-			if (ret != 0) {
-				printf("\nRandom bytes generation failed\n");
-				exit(1);
-			}
-		} else {
-			printf("\nError: Wrong Usage\n");
-			usage();
+		/* Generate Random OTPMK using hash_drbg lib */
+		if (urand_flag == 1) {
+			printf("\n* Seed being taken from /dev/urandom");
+		}
+		else {
+			printf("\n* Seed being taken from /dev/random");
+		}
+
+		printf("\n-------------------------------------------");
+		ret = otpmk_get_rand_256(otpmk_hex, 0, urand_flag);
+
+		if (ret != 0) {
+			printf("\nRandom bytes generation failed\n");
 			exit(1);
 		}
-	} else {
-		printf("\nError: Wrong Usage\n");
-		usage();
-		exit(1);
 	}
-
 
 	printf("\nOTPMK[255:0] is:\n");
 	for (i = (OTPMK_SIZE_BYTES - 1); i >= 0; i--)

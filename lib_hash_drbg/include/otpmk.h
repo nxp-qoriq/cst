@@ -50,8 +50,8 @@
 
 #define uint8_t  unsigned char
 
-int  otpmk_get_rand_bits_256(uint8_t* otpmk_bits, int with_f);
-int  otpmk_get_rand_256(uint8_t* otpmk, int with_f);
+int  otpmk_get_rand_bits_256(uint8_t* otpmk_bits, int with_f, uint8_t uran);
+int  otpmk_get_rand_256(uint8_t* otpmk, int with_f, uint8_t uran);
 void otpmk_make_code_word_256(uint8_t* otpmk);
 int  otpmk_check_code_word_256(uint8_t* otpmk);
 

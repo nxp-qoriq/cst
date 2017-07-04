@@ -20,13 +20,6 @@ CFLAGS = -g -Wall -Wno-overlength-strings -I$(LIB_HASH_DRBG_INCLUDE_PATH)
 TPM_REQUIRED ?= -DTPM_REQUIRED=0
 
 #
-# If no TPM is used, and /dev/random does not generate enough entropy, quickly enough,
-#  then you can use /dev/urandom, which will never block.
-# This is not recommended, but uncommenting the following will use /dev/urandom.
-#
-# USE_URANDOM = -DUSE_URANDOM
-
-#
 # How many OTPMK values should be generated per seed when a TPM is not present?
 #
 RESEED_MAX_LONG ?= -DRESEED_MAX_LONG=10000

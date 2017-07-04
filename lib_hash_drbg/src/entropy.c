@@ -86,6 +86,11 @@ typedef unsigned char      uint8_t;
 static FILE* fp = 0;
 
 /*
+ * Selects either from /dev/urandom or /dev/random to get entropy.
+ */
+uint8_t urandom;
+
+/*
  * Get entropy by reading /dev/random
  * Parameters:
  * uint8_t* entropy     - byte buffer to store entropy
@@ -98,13 +103,14 @@ static FILE* fp = 0;
 int
 get_entropy(uint8_t* entropy, uint32_t entropy_len)
 {
-#ifdef USE_URANDOM
-    const char* filename = "/dev/urandom";
-#else
-    const char* filename = "/dev/random";
-#endif
+    const char* filename;
     uint32_t i;
     int c;
+
+    if (urandom == 1)
+        filename = "/dev/urandom";
+    else
+        filename = "/dev/random";
 
     /*
      * If /dev/random is not open, then open it for reading

@@ -54,6 +54,11 @@
 #include "otpmk.h"
 
 /*
+ * Selects either from /dev/urandom or /dev/random to get entropy.
+ */
+extern uint8_t urandom;
+
+/*
  * Generate a 256-bit formatted, random otpmk value,  as 256 bits
  *
  * Parameters:
@@ -61,13 +66,14 @@
  *                       One bit per uint8_t
  * int with_f          - 0: all bits are random
  *                       1: four bits are forced to 1
+ * uint8_t uran   - use /dev/urandom or /dev/random for entropy
  *
  * Return code:
  *  0 - All is well
  * >0 - Error occurred somewhere
  */
 int
-otpmk_get_rand_bits_256(uint8_t* otpmk_bits, int with_f)
+otpmk_get_rand_bits_256(uint8_t* otpmk_bits, int with_f, uint8_t uran)
 {
     int ret_code;
     uint8_t otpmk[32];
@@ -75,7 +81,7 @@ otpmk_get_rand_bits_256(uint8_t* otpmk_bits, int with_f)
     /*
      * Get the 256-bit otpmk code word as a byte array
      */
-    ret_code = otpmk_get_rand_256(otpmk, with_f);
+    ret_code = otpmk_get_rand_256(otpmk, with_f, uran);
     if (ret_code == SUCCESS) {
         bytes_to_bits(otpmk, otpmk_bits, 256);
     }
@@ -91,15 +97,18 @@ otpmk_get_rand_bits_256(uint8_t* otpmk_bits, int with_f)
  * uint8_t* otpmk - 32 byte buffer to hold the random code word
  * int with_f     - 0: all bits are random
  *                  1: four bits are forced to 1
+ * uint8_t uran   - use /dev/urandom or /dev/random for entropy
  *
  * Return code:
  *  0 - All is well
  * >0 - Error occurred somewhere
  */
 int
-otpmk_get_rand_256(uint8_t* otpmk, int with_f)
+otpmk_get_rand_256(uint8_t* otpmk, int with_f, uint8_t uran)
 {
     int ret_code;
+
+    urandom = uran;
 
     /*
      * Get 32 bytes of random data
