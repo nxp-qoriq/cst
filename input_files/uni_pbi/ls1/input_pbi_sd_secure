@@ -17,12 +17,12 @@ PLATFORM=LS1020
 # Specify the RCW Fields. (0 or 1) - [Optional]
 SB_EN=1
 BOOT_HO=1
-BOOT1_PTR=10014000
+BOOT1_PTR=10016000
 ----------------------------------------------------------------------------
 # Specify the PBI commands - [Optional]
 # Argument: COPY_CMD = (src_offset, dest_offset, Image name)
 # Split hdr_uboot_spl.out in PBI commads
-COPY_CMD={ffffffff,10014000,hdr_uboot_spl.out;}
+COPY_CMD={ffffffff,10016000,hdr_uboot_spl.out;}
 ----------------------------------------------------------------------------
 # Specify the Images to be appended
 # Arguments: APPEND_IMAGES=(Image name, Offset from start)
