@@ -40,6 +40,11 @@
 # Sign bootscript image
 ./uni_sign input_files/uni_sign/ls2088_1088/input_bootscript_secure
 
+# Sign bootscript for decapsulation
+if [ -f bootscript_dec ]; then
+    ./uni_sign input_files/uni_sign/ls2088_1088/input_bootscript_secure_dec
+fi
+
 # Sign kernel image
 ./uni_sign input_files/uni_sign/ls2088_1088/input_kernel_secure
 
