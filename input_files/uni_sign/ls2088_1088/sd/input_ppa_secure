@@ -2,12 +2,13 @@
  * Copyright 2017 NXP
  */
 
+ESBC=1
 ---------------------------------------------------
 # Specify the platform. [Mandatory]
 # Choose Platform -
 # TRUST 3.0: LS2085
 # TRUST 3.1: LS2088, LS1088
-PLATFORM=LS2088
+PLATFORM=LS1088
 ---------------------------------------------------
 # Specify the Key Information.
 # PUB_KEY [Mandatory] Comma Seperated List
@@ -20,11 +21,11 @@ KEY_SELECT=1
 # USAGE: <srk.pri>
 PRI_KEY=srk.pri
 ---------------------------------------------------
-# For PBI Signing
-# Name of RCW + PBI file [Mandatory]
-RCW_PBI_FILENAME=rcw.bin
-# Address of ISBC (Boot1) CSF Header [Mandatory]
-BOOT1_PTR=1801f000
+# Specify IMAGE, Max 8 images are possible.
+# DST_ADDR is required only for Non-PBL Platform. [Mandatory]
+# USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
+# Address can be 64 bit
+IMAGE_1={ppa.itb,80400000,ffffffff}
 ---------------------------------------------------
 # Specify OEM AND FSL ID to be populated in header. [Optional]
 # e.g FSL_UID_0=11111111
@@ -38,24 +39,9 @@ OEM_UID_4=
 ---------------------------------------------------
 # Specify the output file names [Optional].
 # Default Values chosen in Tool
-OUTPUT_HDR_FILENAME=rcw_sec.bin
+OUTPUT_HDR_FILENAME=hdr_ppa.out
 IMAGE_HASH_FILENAME=
 RSA_SIGN_FILENAME=
 ---------------------------------------------------
-# Specify The Flags. (0 or 1) - [Optional]
-MP_FLAG=0
-ISS_FLAG=1
-LW_FLAG=0
----------------------------------------------------
 # Specify VERBOSE as 1, if you want to Display Header Information [Optional]
-VERBOSE=1
----------------------------------------------------
-#Block copy commands to write uboot-spl and its header to OCRAM
-COPY_CMD={00080000,1801f000,hdr_uboot_spl.out}
----------------------------------------------------
-# Specify the Images to be appended
-# Arguments: APPEND_IMAGES=(Image name, Offset from start)
-APPEND_IMAGES={hdr_uboot_spl.out,0007f000;}
-APPEND_IMAGES={u-boot-spl.bin,000ff000;}
-APPEND_IMAGES={u-boot-dtb.bin,00115000;}
-APPEND_IMAGES={hdr_uboot.out,00215000;}
+VERBOSE=0
