@@ -37,6 +37,9 @@
 # Sign bootscript image
 ./uni_sign input_files/uni_sign/ls1/input_bootscript_secure
 
+# Generating SRK hash
+./uni_sign --hash input_files/uni_sign/ls1/input_bootscript_secure > srk_hash.txt
+
 # Sign kernel
 ./uni_sign input_files/uni_sign/ls1/input_kernel_secure
 

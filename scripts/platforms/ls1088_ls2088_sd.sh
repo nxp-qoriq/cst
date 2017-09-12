@@ -44,6 +44,9 @@
 # Sign bootscript image
 ./uni_sign input_files/uni_sign/ls2088_1088/input_bootscript_secure
 
+# Sign bootscript image
+./uni_sign --hash input_files/uni_sign/ls2088_1088/input_bootscript_secure > srk_hash.txt
+
 # Sign bootscript for decapsulation
 if [ -f bootscript_dec ]; then
     ./uni_sign input_files/uni_sign/ls2088_1088/input_bootscript_secure_dec
