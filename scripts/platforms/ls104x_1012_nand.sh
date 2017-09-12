@@ -40,6 +40,11 @@
 # Sign bootscript image
 ./uni_sign input_files/uni_sign/ls104x_1012/sd_nand/input_bootscript_secure
 
+# Sign bootscript for decapsulation
+if [ -f bootscript_dec ]; then
+    ./uni_sign input_files/uni_sign/ls104x_1012/input_bootscript_secure_dec
+fi
+
 # Sign ppa image
 ./uni_sign input_files/uni_sign/ls104x_1012/sd_nand/input_ppa_secure
 
