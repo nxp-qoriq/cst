@@ -473,10 +473,10 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 	case FIELD_KEY_SELECT:
 		if (file_field.count == 1) {
 			gd.srk_sel = STR_TO_UL(file_field.value[0], 16);
-			gd.srk_flag = 1;
 		} else {
 			gd.srk_sel = 1;
 		}
+			gd.srk_flag = 1;
 
 		break;
 
