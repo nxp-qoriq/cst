@@ -64,11 +64,11 @@ fi
 ./uni_pbi input_files/uni_pbi/ls104x_1012/input_pbi_sd_secure
 
 # Concatenate secure boot headers
-if [ -f secboot_hdrs.bin ]; then
-    rm secboot_hdrs.bin
+if [ -f secboot_hdrs_sdboot.bin ]; then
+    rm secboot_hdrs_sdboot.bin
 fi
-touch secboot_hdrs.bin
-dd if=bootscript of=secboot_hdrs.bin bs=1K seek=0
-dd if=hdr_bs.out of=secboot_hdrs.bin bs=1K seek=256
-dd if=hdr_ppa.out of=secboot_hdrs.bin bs=1K seek=512
-dd if=hdr_kernel.out of=secboot_hdrs.bin bs=1K seek=2048
+touch secboot_hdrs_sdboot.bin
+dd if=bootscript of=secboot_hdrs_sdboot.bin bs=1K seek=0
+dd if=hdr_bs.out of=secboot_hdrs_sdboot.bin bs=1K seek=256
+dd if=hdr_ppa.out of=secboot_hdrs_sdboot.bin bs=1K seek=512
+dd if=hdr_kernel.out of=secboot_hdrs_sdboot.bin bs=1K seek=2048
