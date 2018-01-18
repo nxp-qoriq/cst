@@ -624,13 +624,3 @@ int read_file_in_buffer(uint8_t *ptr, char *file_name)
 
 	return SUCCESS;
 }
-
-/*****************************************************************************
- * Error For Unsupported Platforms
- *****************************************************************************/
-int error_unsupported(void)
-{
-	printf("\nError !!! ");
-	printf("This tool is not applicable for the Platform specified\n");
-	return FAILURE;
-}

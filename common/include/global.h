@@ -38,7 +38,6 @@ int parse_input_file(char **list, uint32_t num_list);
 int calculate_signature(void);
 int create_img_hash_file(void);
 int append_signature(void);
-int error_unsupported(void);
 int create_ie_file(char *file_name);
 int read_file_in_buffer(uint8_t *ptr, char *file_name);
 
