@@ -81,6 +81,14 @@ create_hdr_cf_OBJS = $(basename $(create_hdr_cf_SRCS))
 create_hdr_cf_OBJS := $(notdir $(create_hdr_cf_OBJS))
 create_hdr_cf_OBJS := $(create_hdr_cf_OBJS:%=%.o)
 
+gen_fusescr_SRCS = $(wildcard common/*.c) \
+		$(wildcard taal/*.c) \
+		$(wildcard tools/fuse_provisioning/*.c)
+
+gen_fusescr_OBJS = $(basename $(gen_fusescr_SRCS))
+gen_fusescr_OBJS := $(notdir $(gen_fusescr_OBJS))
+gen_fusescr_OBJS := $(gen_fusescr_OBJS:%=%.o)
+
 vpath %.c 	common/ taal/ tools/header_generation/ \
 		tools/header_generation/create_hdr_isbc/ tools/header_generation/create_hdr_isbc/taal_api/ \
 		tools/header_generation/create_hdr_esbc/ tools/header_generation/create_hdr_esbc/taal_api/ \
@@ -88,12 +96,14 @@ vpath %.c 	common/ taal/ tools/header_generation/ \
 		tools/header_generation/create_hdr_cf/ tools/header_generation/create_hdr_cf/taal_api/ \
 		tools/key_generation/ \
 		tools/pbi_creation/ \
-		tools/signature_generation \
+		tools/signature_generation/ \
+		tools/fuse_provisioning \
 
 INCLUDES = 	-Itools/header_generation/create_hdr_isbc/include/ \
 		-Itools/header_generation/create_hdr_esbc/include/ \
 		-Itools/header_generation/create_hdr_pbi/include/ \
 		-Itools/header_generation/create_hdr_cf/include/ \
+		-Itools/fuse_provisioning/include/ \
 		-Itaal/include -Icommon/include \
 		-I$(LIB_HASH_DRBG_INCLUDE_PATH)
 
@@ -102,7 +112,7 @@ CCFLAGS= -g -Wall -Wno-strict-aliasing -Werror $(INCLUDES)
 INSTALL_BINARIES = 	create_hdr_isbc create_hdr_esbc \
 			create_hdr_pbi create_hdr_cf \
 			gen_keys gen_otpmk_drbg gen_drv_drbg \
-			gen_sign sign_embed \
+			gen_sign sign_embed gen_fusescr \
 
 # targets that are not files
 .PHONY: all clean
@@ -143,6 +153,9 @@ gen_otpmk_drbg: ${genotpmk_OBJS} $(LIB_HASH_DRBG)
 
 gen_drv_drbg: ${gendrv_OBJS} $(LIB_HASH_DRBG)
 	${LD} ${LDFLAGS} -o $@ $^
+
+gen_fusescr: ${gen_fusescr_OBJS}
+	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
 $(LIB_HASH_DRBG):
 	@echo "#########################################"

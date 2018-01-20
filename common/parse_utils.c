@@ -77,8 +77,44 @@ static parse_struct_t parse_table[] = {
 	{ "IE_KEY", FIELD_IE_KEY},
 	{ "IE_REVOC", FIELD_IE_REVOC},
 	{ "IE_TABLE_ADDR", FIELD_IE_TABLE_ADDR},
-	{ "OUTPUT_RCW_PBI_FILENAME", FIELD_OUTPUT_RCW_PBI_FILENAME }
-
+	{ "OUTPUT_RCW_PBI_FILENAME", FIELD_OUTPUT_RCW_PBI_FILENAME },
+	{ "POVDD_GPIO", FIELD_POVDD_GPIO },
+	{ "OTPMK_FLAGS", FIELD_OTPMK_FLAGS },
+	{ "OTPMK_0", FIELD_OTPMK_0 },
+	{ "OTPMK_1", FIELD_OTPMK_1 },
+	{ "OTPMK_2", FIELD_OTPMK_2 },
+	{ "OTPMK_3", FIELD_OTPMK_3 },
+	{ "OTPMK_4", FIELD_OTPMK_4 },
+	{ "OTPMK_5", FIELD_OTPMK_5 },
+	{ "OTPMK_6", FIELD_OTPMK_6 },
+	{ "OTPMK_7", FIELD_OTPMK_7 },
+	{ "SRKH_0", FIELD_SRKH_0 },
+	{ "SRKH_1", FIELD_SRKH_1 },
+	{ "SRKH_2", FIELD_SRKH_2 },
+	{ "SRKH_3", FIELD_SRKH_3 },
+	{ "SRKH_4", FIELD_SRKH_4 },
+	{ "SRKH_5", FIELD_SRKH_5 },
+	{ "SRKH_6", FIELD_SRKH_6 },
+	{ "SRKH_7", FIELD_SRKH_7 },
+	{ "DCV_0", FIELD_DCV_0 },
+	{ "DCV_1", FIELD_DCV_1 },
+	{ "DRV_0", FIELD_DRV_0 },
+	{ "DRV_1", FIELD_DRV_1 },
+	{ "MC_ERA", FIELD_MC_ERA },
+	{ "WP", FIELD_WP },
+	{ "ITS", FIELD_ITS },
+	{ "NSEC", FIELD_NSEC },
+	{ "ZD", FIELD_ZD },
+	{ "K0", FIELD_K0 },
+	{ "K1", FIELD_K1 },
+	{ "K2", FIELD_K2 },
+	{ "K3", FIELD_K3 },
+	{ "K4", FIELD_K4 },
+	{ "K5", FIELD_K5 },
+	{ "K6", FIELD_K6 },
+	{ "FR0", FIELD_FR0 },
+	{ "FR1", FIELD_FR1 },
+	{ "OUTPUT_FUSE_FILENAME", FIELD_OUTPUT_FUSE_FILENAME }
 };
 
 #define NUM_FIELDS (sizeof(parse_table) / sizeof(parse_struct_t))
@@ -398,6 +434,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 	int i, ret = SUCCESS;
 	DWord val64;
 	enum input_field_t idx;
+	uint32_t flags = 0;
 
 	idx = index_from_field(field_name);
 
@@ -618,6 +655,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		if (file_field.count == 1) {
 			gd.oemuid[0] = STR_TO_UL(file_field.value[0], 16);
 			gd.oemuid_flag[0] = 1;
+			gd.flags |= (0x1 << FLAG_OUID0_SHIFT);
 		}
 		break;
 
@@ -625,6 +663,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		if (file_field.count == 1) {
 			gd.oemuid[1] = STR_TO_UL(file_field.value[0], 16);
 			gd.oemuid_flag[1] = 1;
+			gd.flags |= (0x1 << FLAG_OUID1_SHIFT);
 		}
 		break;
 
@@ -632,6 +671,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		if (file_field.count == 1) {
 			gd.oemuid[2] = STR_TO_UL(file_field.value[0], 16);
 			gd.oemuid_flag[2] = 1;
+			gd.flags |= (0x1 << FLAG_OUID2_SHIFT);
 		}
 		break;
 
@@ -639,6 +679,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		if (file_field.count == 1) {
 			gd.oemuid[3] = STR_TO_UL(file_field.value[0], 16);
 			gd.oemuid_flag[3] = 1;
+			gd.flags |= (0x1 << FLAG_OUID3_SHIFT);
 		}
 		break;
 
@@ -646,6 +687,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		if (file_field.count == 1) {
 			gd.oemuid[4] = STR_TO_UL(file_field.value[0], 16);
 			gd.oemuid_flag[4] = 1;
+			gd.flags |= (0x1 << FLAG_OUID4_SHIFT);
 		}
 		break;
 
@@ -820,6 +862,266 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 	case FIELD_IE_TABLE_ADDR:
 		if (file_field.count == 1)
 			gd.ie_table_addr = STR_TO_ULL(file_field.value[0], 16);
+
+		break;
+
+	case FIELD_POVDD_GPIO:
+		if (file_field.count == 1) {
+			gd.povdd_gpio = STR_TO_UL(file_field.value[0], 16);
+			gd.flags |= (0x1 << FLAG_POVDD_SHIFT);
+		} else
+			gd.povdd_gpio = -1;
+		break;
+
+	case FIELD_OTPMK_FLAGS:
+		if (file_field.count == 1) {
+			flags = STR_TO_UL(file_field.value[0], 2);
+			gd.flags |= ((flags & FLAG_OTPMK_MASK)
+					<< FLAG_OTPMK_SHIFT);
+		}
+		break;
+
+	case FIELD_OTPMK_0:
+		if (file_field.count == 1)
+			gd.otpmk[0] = STR_TO_UL(file_field.value[0], 16);
+		break;
+
+	case FIELD_OTPMK_1:
+		if (file_field.count == 1)
+			gd.otpmk[1] = STR_TO_UL(file_field.value[0], 16);
+		break;
+
+	case FIELD_OTPMK_2:
+		if (file_field.count == 1)
+			gd.otpmk[2] = STR_TO_UL(file_field.value[0], 16);
+		break;
+
+	case FIELD_OTPMK_3:
+		if (file_field.count == 1)
+			gd.otpmk[3] = STR_TO_UL(file_field.value[0], 16);
+		break;
+
+	case FIELD_OTPMK_4:
+		if (file_field.count == 1)
+			gd.otpmk[4] = STR_TO_UL(file_field.value[0], 16);
+		break;
+
+	case FIELD_OTPMK_5:
+		if (file_field.count == 1)
+			gd.otpmk[5] = STR_TO_UL(file_field.value[0], 16);
+		break;
+
+	case FIELD_OTPMK_6:
+		if (file_field.count == 1)
+			gd.otpmk[6] = STR_TO_UL(file_field.value[0], 16);
+		break;
+
+	case FIELD_OTPMK_7:
+		if (file_field.count == 1)
+			gd.otpmk[7] = STR_TO_UL(file_field.value[0], 16);
+		break;
+
+	case FIELD_SRKH_0:
+		if (file_field.count == 1) {
+			gd.srkh[0] = STR_TO_UL(file_field.value[0], 16);
+			gd.flags |= (0x1 << FLAG_SRKH_SHIFT);
+		}
+		break;
+
+	case FIELD_SRKH_1:
+		if (file_field.count == 1) {
+			gd.srkh[1] = STR_TO_UL(file_field.value[0], 16);
+			gd.flags |= (0x1 << FLAG_SRKH_SHIFT);
+		}
+		break;
+
+	case FIELD_SRKH_2:
+		if (file_field.count == 1) {
+			gd.srkh[2] = STR_TO_UL(file_field.value[0], 16);
+			gd.flags |= (0x1 << FLAG_SRKH_SHIFT);
+		}
+		break;
+
+	case FIELD_SRKH_3:
+		if (file_field.count == 1) {
+			gd.srkh[3] = STR_TO_UL(file_field.value[0], 16);
+			gd.flags |= (0x1 << FLAG_SRKH_SHIFT);
+		}
+		break;
+
+	case FIELD_SRKH_4:
+		if (file_field.count == 1) {
+			gd.srkh[4] = STR_TO_UL(file_field.value[0], 16);
+			gd.flags |= (0x1 << FLAG_SRKH_SHIFT);
+		}
+		break;
+
+	case FIELD_SRKH_5:
+		if (file_field.count == 1) {
+			gd.srkh[5] = STR_TO_UL(file_field.value[0], 16);
+			gd.flags |= (0x1 << FLAG_SRKH_SHIFT);
+		}
+		break;
+
+	case FIELD_SRKH_6:
+		if (file_field.count == 1) {
+			gd.srkh[6] = STR_TO_UL(file_field.value[0], 16);
+			gd.flags |= (0x1 << FLAG_SRKH_SHIFT);
+		}
+		break;
+
+	case FIELD_SRKH_7:
+		if (file_field.count == 1) {
+			gd.srkh[7] = STR_TO_UL(file_field.value[0], 16);
+			gd.flags |= (0x1 << FLAG_SRKH_SHIFT);
+		}
+		break;
+
+	case FIELD_DCV_0:
+		if (file_field.count == 1) {
+			gd.dcv[0] = STR_TO_UL(file_field.value[0], 16);
+			gd.flags |= (0x1 << FLAG_DCV0_SHIFT);
+		}
+		break;
+
+	case FIELD_DCV_1:
+		if (file_field.count == 1) {
+			gd.dcv[1] = STR_TO_UL(file_field.value[0], 16);
+			gd.flags |= (0x1 << FLAG_DCV1_SHIFT);
+		}
+		break;
+
+	case FIELD_DRV_0:
+		if (file_field.count == 1) {
+			gd.drv[0] = STR_TO_UL(file_field.value[0], 16);
+			gd.flags |= (0x1 << FLAG_DRV0_SHIFT);
+		}
+		break;
+
+	case FIELD_DRV_1:
+		if (file_field.count == 1) {
+			gd.drv[1] = STR_TO_UL(file_field.value[0], 16);
+			gd.flags |= (0x1 << FLAG_DRV1_SHIFT);
+		}
+		break;
+
+	case FIELD_MC_ERA:
+		if (file_field.count == 1) {
+			gd.mc_era = STR_TO_UL(file_field.value[0], 16);
+			gd.flags |= (0x1 << FLAG_MC_SHIFT);
+		}
+		break;
+
+	case FIELD_WP:
+		if (file_field.count == 1) {
+			i = STR_TO_UL(file_field.value[0], 16);
+			gd.scb = gd.scb | ((i & 0x1) << SCB_WP_SHIFT);
+			gd.flags |= (0x1 << FLAG_SYSCFG_SHIFT);
+		}
+		break;
+
+	case FIELD_ITS:
+		if (file_field.count == 1) {
+			i = STR_TO_UL(file_field.value[0], 16);
+			gd.scb = gd.scb | ((i & 0x1) << SCB_ITS_SHIFT);
+			gd.flags |= (0x1 << FLAG_SYSCFG_SHIFT);
+		}
+		break;
+
+	case FIELD_NSEC:
+		if (file_field.count == 1) {
+			i = STR_TO_UL(file_field.value[0], 16);
+			gd.scb = gd.scb | ((i & 0x1) << SCB_NSEC_SHIFT);
+			gd.flags |= (0x1 << FLAG_SYSCFG_SHIFT);
+		}
+		break;
+
+	case FIELD_ZD:
+		if (file_field.count == 1) {
+			i = STR_TO_UL(file_field.value[0], 16);
+			gd.scb = gd.scb | ((i & 0x1) << SCB_ZD_SHIFT);
+			gd.flags |= (0x1 << FLAG_SYSCFG_SHIFT);
+		}
+		break;
+
+	case FIELD_K0:
+		if (file_field.count == 1) {
+			i = STR_TO_UL(file_field.value[0], 16);
+			gd.scb = gd.scb | ((i & 0x1) << SCB_K0_SHIFT);
+			gd.flags |= (0x1 << FLAG_SYSCFG_SHIFT);
+		}
+		break;
+
+	case FIELD_K1:
+		if (file_field.count == 1) {
+			i = STR_TO_UL(file_field.value[0], 16);
+			gd.scb = gd.scb | ((i & 0x1) << SCB_K1_SHIFT);
+			gd.flags |= (0x1 << FLAG_SYSCFG_SHIFT);
+		}
+		break;
+
+	case FIELD_K2:
+		if (file_field.count == 1) {
+			i = STR_TO_UL(file_field.value[0], 16);
+			gd.scb = gd.scb | ((i & 0x1) << SCB_K2_SHIFT);
+			gd.flags |= (0x1 << FLAG_SYSCFG_SHIFT);
+		}
+		break;
+
+	case FIELD_K3:
+		if (file_field.count == 1) {
+			i = STR_TO_UL(file_field.value[0], 16);
+			gd.scb = gd.scb | ((i & 0x1) << SCB_K3_SHIFT);
+			gd.flags |= (0x1 << FLAG_SYSCFG_SHIFT);
+		}
+		break;
+
+	case FIELD_K4:
+		if (file_field.count == 1) {
+			i = STR_TO_UL(file_field.value[0], 16);
+			gd.scb = gd.scb | ((i & 0x1) << SCB_K4_SHIFT);
+			gd.flags |= (0x1 << FLAG_SYSCFG_SHIFT);
+		}
+		break;
+
+	case FIELD_K5:
+		if (file_field.count == 1) {
+			i = STR_TO_UL(file_field.value[0], 16);
+			gd.scb = gd.scb | ((i & 0x1) << SCB_K5_SHIFT);
+			gd.flags |= (0x1 << FLAG_SYSCFG_SHIFT);
+		}
+		break;
+
+	case FIELD_K6:
+		if (file_field.count == 1) {
+			i = STR_TO_UL(file_field.value[0], 16);
+			gd.scb = gd.scb | ((i & 0x1) << SCB_K6_SHIFT);
+			gd.flags |= (0x1 << FLAG_SYSCFG_SHIFT);
+		}
+		break;
+
+	case FIELD_FR0:
+		if (file_field.count == 1) {
+			i = STR_TO_UL(file_field.value[0], 16);
+			gd.scb = gd.scb | ((i & 0x1) << SCB_FR0_SHIFT);
+			gd.flags |= (0x1 << FLAG_SYSCFG_SHIFT);
+		}
+		break;
+
+	case FIELD_FR1:
+		if (file_field.count == 1) {
+			i = STR_TO_UL(file_field.value[0], 16);
+			gd.scb = gd.scb | ((i & 0x1) << SCB_FR1_SHIFT);
+			gd.flags |= (0x1 << FLAG_SYSCFG_SHIFT);
+		}
+		break;
+
+	case FIELD_OUTPUT_FUSE_FILENAME:
+		 if (file_field.count == 1) {
+			check_field_length(field_name, file_field.value[0]);
+			strcpy(gd.fuse_op_fname, file_field.value[0]);
+		} else
+			strcpy(gd.fuse_op_fname, DEFAULT_OUTPUT_RCW_FILE_NAME);
 
 		break;
 

@@ -75,7 +75,9 @@ int read_file_in_buffer(uint8_t *ptr, char *file_name);
 #define DEFAULT_SIGN_FILE_NAME	"sign.out"
 #define DEFAULT_SG_FILE_NAME	"sg_table.out"
 #define DEFAULT_IE_FILE_NAME	"ie_table.out"
-#define DEFAULT_OUTPUT_RCW_FILE_NAME "rcw_pbi_sec.bin"
+#define DEFAULT_OUTPUT_RCW_FILE_NAME  "rcw_pbi_sec.bin"
+#define DEFAULT_OUTPUT_FUSE_FILE_NAME "fuse_scr.bin"
+
 struct srk_table_t {
 	uint32_t key_len;
 	uint8_t pkey[KEY_SIZE_BYTES];
@@ -220,6 +222,45 @@ struct g_data_t {
 	int option_img_hash;
 	int verbose_flag;
 	int help_flag;
+
+#define FLAG_POVDD_SHIFT	0
+#define FLAG_SYSCFG_SHIFT	1
+#define FLAG_SRKH_SHIFT		2
+#define FLAG_MC_SHIFT		3
+#define FLAG_DCV0_SHIFT		4
+#define FLAG_DCV1_SHIFT		5
+#define FLAG_DRV0_SHIFT		6
+#define FLAG_DRV1_SHIFT		7
+#define FLAG_OUID0_SHIFT	8
+#define FLAG_OUID1_SHIFT	9
+#define FLAG_OUID2_SHIFT	10
+#define FLAG_OUID3_SHIFT	11
+#define FLAG_OUID4_SHIFT	12
+#define FLAG_OTPMK_SHIFT	16
+#define FLAG_OTPMK_MASK		0xF
+	uint32_t flags;
+	int povdd_gpio;
+	uint32_t otpmk[8];
+	uint32_t srkh[8];
+	uint32_t dcv[2];
+	uint32_t drv[2];
+	uint16_t mc_era;
+
+#define SCB_WP_SHIFT		0
+#define SCB_ITS_SHIFT		2
+#define SCB_NSEC_SHIFT		4
+#define SCB_ZD_SHIFT		5
+#define SCB_K0_SHIFT		15
+#define SCB_K1_SHIFT		14
+#define SCB_K2_SHIFT		13
+#define SCB_K3_SHIFT		12
+#define SCB_K4_SHIFT		11
+#define SCB_K5_SHIFT		10
+#define SCB_K6_SHIFT		9
+#define SCB_FR0_SHIFT		30
+#define SCB_FR1_SHIFT		31
+	uint32_t scb;
+	char fuse_op_fname[MAX_FNAME_LEN];
 };
 
 #endif
