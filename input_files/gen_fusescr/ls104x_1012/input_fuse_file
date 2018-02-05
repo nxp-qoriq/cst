@@ -54,6 +54,13 @@ DCV_1=
 DRV_0=
 DRV_1=
 ---------------------------------------------------
+# Specify Debug Level in binary form. [Optional]
+# 000 -> Wide open: Debug portals are enabled unconditionally.
+# 001 -> Conditionally open via challenge response, without notification.
+# 01x -> Conditionally open via challenge response, with notification.
+# 1xx -> Closed. All debug portals are disabled.
+DBG_LVL=
+---------------------------------------------------
 # System Configuration register bits in binary form [Optional]
 # WP (OEM write protect)
 # ITS (Intent to Secure)

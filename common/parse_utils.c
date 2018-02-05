@@ -101,6 +101,7 @@ static parse_struct_t parse_table[] = {
 	{ "DRV_0", FIELD_DRV_0 },
 	{ "DRV_1", FIELD_DRV_1 },
 	{ "MC_ERA", FIELD_MC_ERA },
+	{ "DBG_LVL", FIELD_DBG_LVL },
 	{ "WP", FIELD_WP },
 	{ "ITS", FIELD_ITS },
 	{ "NSEC", FIELD_NSEC },
@@ -1009,6 +1010,13 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		if (file_field.count == 1) {
 			gd.mc_era = STR_TO_UL(file_field.value[0], 16);
 			gd.flags |= (0x1 << FLAG_MC_SHIFT);
+		}
+		break;
+
+	case FIELD_DBG_LVL:
+		if (file_field.count == 1) {
+			gd.dbg_lvl = STR_TO_UL(file_field.value[0], 2);
+			gd.flags |= (0x1 << FLAG_DBG_LVL_SHIFT);
 		}
 		break;
 

@@ -74,6 +74,7 @@ static char *parse_list[] = {
 	"DRV_0",
 	"DRV_1",
 	"MC_ERA",
+	"DBG_LVL",
 	"WP",
 	"ITS",
 	"NSEC",
@@ -169,8 +170,8 @@ int fill_fuse_structure(void)
 	fuse_hdr.drv[0] = gd.drv[0];
 	fuse_hdr.drv[1] = gd.drv[1];
 
-	/* Populate MC ERA and System configuration fields */
-	fuse_hdr.mc = ((uint32_t)gd.mc_era) << 16;
+	/* Populate OSPR1 and OSPR0 (System configuration) fields */
+	fuse_hdr.ospr1 = (((uint32_t)gd.mc_era) << 16) | (uint32_t)gd.dbg_lvl;
 	fuse_hdr.sc = gd.scb;
 
 	return SUCCESS;

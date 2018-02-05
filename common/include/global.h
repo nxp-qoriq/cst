@@ -236,6 +236,7 @@ struct g_data_t {
 #define FLAG_OUID2_SHIFT	10
 #define FLAG_OUID3_SHIFT	11
 #define FLAG_OUID4_SHIFT	12
+#define FLAG_DBG_LVL_SHIFT	13
 #define FLAG_OTPMK_SHIFT	16
 #define FLAG_OTPMK_MASK		0xF
 	uint32_t flags;
@@ -245,6 +246,7 @@ struct g_data_t {
 	uint32_t dcv[2];
 	uint32_t drv[2];
 	uint16_t mc_era;
+	uint8_t dbg_lvl;
 
 #define SCB_WP_SHIFT		0
 #define SCB_ITS_SHIFT		2

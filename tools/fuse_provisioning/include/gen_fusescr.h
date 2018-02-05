@@ -44,8 +44,8 @@ struct fuse_hdr_t {
 	uint32_t dcv[2];		/* 0x60-0x67 Debug Challenge */
 	uint32_t drv[2];		/* 0x68-0x6F Debug Response */
 
-	uint32_t mc;			/* 0x70 Monotonic Counter */
-	uint32_t sc;			/* 0x74 System Configuration */
+	uint32_t ospr1;			/* 0x70 OSPR1 */
+	uint32_t sc;			/* 0x74 OSPR0 (System Configuration) */
 
 	uint32_t reserved[2];		/* 0x78-0x7F Reserved */
 };

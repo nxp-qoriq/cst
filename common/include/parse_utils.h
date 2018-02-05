@@ -127,6 +127,7 @@ enum input_field_t {
 	FIELD_DRV_0,
 	FIELD_DRV_1,
 	FIELD_MC_ERA,
+	FIELD_DBG_LVL,
 	FIELD_WP,
 	FIELD_ITS,
 	FIELD_NSEC,
