@@ -37,7 +37,7 @@
 ./uni_sign input_files/uni_sign/ls104x_1012/input_bootscript_secure
 
 # Generating SRK hash
-./uni_sign --hash input_files/uni_sign/ls104x_1012/ls1012afrwy/input_bootscript_secure > srk_hash.txt
+./uni_sign --hash input_files/uni_sign/ls104x_1012/input_bootscript_secure > srk_hash.txt
 
 # Sign bootscript for decapsulation
 if [ -f bootscript_dec ]; then
