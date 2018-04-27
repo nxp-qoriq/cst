@@ -10,7 +10,7 @@ ESBC=1
 ---------------------------------------------------
 # Entry Point/Image start address field in the header.[Mandatory]
 # (default=ADDRESS of first file specified in images)
-ENTRY_POINT=96000000
+ENTRY_POINT=81000000
 ---------------------------------------------------
 # Specify the file name of the keys seperated by comma.
 # The number of files and key select should lie between 1 and 4 for 1040 and C290.
@@ -36,7 +36,7 @@ IMAGE_TARGET=
 ---------------------------------------------------
 # Specify IMAGE, Max 8 images are possible. DST_ADDR is required only for Non-PBL Platform. [Mandatory]
 # USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
-IMAGE_1={uImage.bin,96000000,ffffffff}
+IMAGE_1={uImage.bin,81000000,ffffffff}
 IMAGE_2={,,}
 IMAGE_3={,,}
 IMAGE_4={,,}
