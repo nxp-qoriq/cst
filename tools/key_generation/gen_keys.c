@@ -54,12 +54,27 @@
 
 static int generate_rsa_keys(const unsigned int n, FILE *fpri, FILE *fpub)
 {
-	RSA *srk;
+	RSA *srk = NULL;
+	BIGNUM *public_exponent = NULL;
 	int ret = 0;
 
-	srk = RSA_generate_key(n, RSA_F4, NULL, NULL);
+	/* Allocate space for RSA structure */
+	srk = RSA_new();
 
 	if (srk == NULL) {
+		return -1;
+	}
+
+	public_exponent = BN_new();
+	if (public_exponent == NULL || !BN_set_word(public_exponent, RSA_F4)) {
+		BN_free(public_exponent);
+		return -1;
+	}
+
+	ret = RSA_generate_key_ex(srk, n, public_exponent, NULL);
+	if (!ret) {
+		RSA_free(srk);
+		BN_free(public_exponent);
 		return -1;
 	}
 
@@ -67,6 +82,7 @@ static int generate_rsa_keys(const unsigned int n, FILE *fpri, FILE *fpub)
 
 	if (!ret) {
 		RSA_free(srk);
+		BN_free(public_exponent);
 		return -1;
 	}
 
@@ -74,6 +90,7 @@ static int generate_rsa_keys(const unsigned int n, FILE *fpri, FILE *fpub)
 
 	if (!ret) {
 		RSA_free(srk);
+		BN_free(public_exponent);
 		return -1;
 	}
 
@@ -105,6 +122,7 @@ static int generate_rsa_keys(const unsigned int n, FILE *fpri, FILE *fpub)
 #endif
 
 	RSA_free(srk);
+	BN_free(public_exponent);
 
 	return 0;
 }

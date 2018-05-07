@@ -159,9 +159,8 @@ int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr)
 {
 	FILE *fp;
 	RSA *pub_key;
-	uint8_t *tmp;
-	int i, j;
 	uint32_t key_len;
+	const BIGNUM *modulus, *exponent;
 
 	fp = fopen(fname_pub, "r");
 	if (fp == NULL) {
@@ -181,22 +180,27 @@ int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr)
 	key_len = RSA_size(pub_key);
 	*len = 2 * key_len;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	/* copy N and E */
-
+        modulus = (BIGNUM *)pub_key->n;
+        exponent = (BIGNUM *)pub_key->e;
+#else
+	/* get N and E */
+	RSA_get0_key(pub_key, &modulus, &exponent, NULL);
+#endif
 	/* Copy N component */
-	tmp = (unsigned char *)(((BIGNUM *)pub_key->n)->d);
-	for (j = key_len - 1, i = 0;
-	     i < ((BIGNUM *)pub_key->n)->top * sizeof(BIGNUM *);
-	     i++, j--)
-		key_ptr[j] = tmp[i];
+	BN_bn2bin(modulus, key_ptr);
 
-	/* Copy E component */
+	/*
+	 * Pointer where exponent part of key has to start from.
+	 */
 	key_ptr = key_ptr + key_len;
-	tmp = (unsigned char *)(((BIGNUM *)pub_key->e)->d);
-	for (j = key_len - 1, i = 0;
-	     i < ((BIGNUM *)pub_key->e)->top * sizeof(BIGNUM *);
-	     i++, j--)
-		key_ptr[j] = tmp[i];
+
+	/*
+	 * Copy E component. Move the pointer to the end location
+	 * where exponent bytes needs to be copied.
+	 */
+	BN_bn2bin(exponent, key_ptr + key_len - BN_num_bytes(exponent));
 
 	return SUCCESS;
 }
