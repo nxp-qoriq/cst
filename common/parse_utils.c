@@ -521,7 +521,8 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 	case FIELD_IMAGE_1:
 		if (file_field.count >= 2) {
 			check_field_length(field_name, file_field.value[0]);
-			strcpy(gd.entries[0].name, file_field.value[0]);
+			if (gd.entry1_flag == 0)
+				strcpy(gd.entries[0].name, file_field.value[0]);
 			val64.whole = STR_TO_ULL(file_field.value[1], 16);
 			gd.entries[0].addr_high = val64.m_halfs.high;
 			gd.entries[0].addr_low = val64.m_halfs.low;
@@ -693,11 +694,14 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		break;
 
 	case FIELD_OUTPUT_HDR_FILENAME:
+		if (gd.hdr_file_flag != 0)
+			break;
 		if (file_field.count == 1) {
 			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.hdr_file_name, file_field.value[0]);
-		} else
+		} else {
 			strcpy(gd.hdr_file_name, DEFAULT_HDR_FILE_NAME);
+		}
 		break;
 
 	case FIELD_IMAGE_HASH_FILENAME:

@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <getopt.h>
@@ -45,20 +46,29 @@ static struct option long_options[] = {
 	{"verbose", no_argument, &gd.verbose_flag, 1},
 	{"hash", no_argument, &gd.option_srk_hash, 1},
 	{"img_hash", no_argument, &gd.option_img_hash, 1},
+	{"out", required_argument, 0, 'h'},
+	{"in", required_argument, 0, 'i'},
+	{"app", required_argument, 0, 'a'},
+	{"app_off", required_argument, 0, 'o'},
 	{"help", no_argument, &gd.help_flag, 1},
 	{0, 0, 0, 0}
 };
 
 static void print_usage(char *tool)
 {
-	printf("\nCorrect Usage of Tool is:\n");
-	printf("\n%s [options] <input_file>\n", tool);
-	printf("\t--verbose    Display header Info after Creation\n");
-	printf("\t--hash       Print the SRK(Public key) hash.\n");
-	printf("\t--img_hash   Header is generated without Signature.\n");
-	printf("\t             Image Hash is stored in a separate file.\n");
-	printf("\t--help       Show the Help for Tool Usage.\n");
-	printf("\n<input_file>   Contains all information required by tool");
+	printf("\t--verbose          Display header Info after Creation\n");
+	printf("\t--hash             Print the SRK(Public key) hash.\n");
+	printf("\t--img_hash         Header is generated without Signature.\n");
+	printf("\t                   Image Hash is stored in separate file.\n");
+	printf("\t--help             Show the Help for Tool Usage.\n");
+	printf("\t--out <file>       Header file name\n");
+	printf("\t--in <file>        Input file for signature calculation.\n");
+	printf("\t                   This option would override the filename\n");
+	printf("\t                   in IMAGE_1 in input_file if present\n");
+	printf("\t--app <file>       File to be appended to the header\n");
+	printf("\t--app_off <offset> Offset at which file will be appended \n");
+	printf("\t		     to the header\n");
+	printf("\n<input_file>       Contains all information required by tool");
 	printf("\n\n");
 }
 
@@ -117,7 +127,8 @@ int add_apnd_img(void)
 
 		fp_img = fopen(image_name, "rb");
 		if (fp_img == NULL) {
-			printf("Error in opening the file: %s\n", image_name);
+			printf("Error in opening the file append: %s\n",
+				image_name);
 			return FAILURE;
 		}
 
@@ -203,6 +214,10 @@ int create_hdr(int argc, char **argv)
 	int ret, i, c;
 	int option_index;
 	uint32_t *srk;
+	char ap_file[MAX_FNAME_LEN];
+	uint32_t offset = 0;
+	bool append_flag = false;
+	
 
 	printf("\n\t#----------------------------------------------------#");
 	printf("\n\t#-------         --------     --------        -------#");
@@ -217,14 +232,52 @@ int create_hdr(int argc, char **argv)
 	/* Check the command line argument */
 	c = 0;
 	option_index = 0;
-	while (c != -1)
+	while (c != -1) {
 		c = getopt_long(argc, argv, "", long_options, &option_index);
+		if (c == -1)
+			break;
+
+		switch (c) {
+			case 'h':
+				printf("file name is %s\n", optarg);
+				strcpy(gd.hdr_file_name, optarg);
+				gd.hdr_file_flag = 1;
+				break;
+			case 'i':
+				printf("file name is %s\n", optarg);
+				strcpy(gd.entries[0].name, optarg);
+				gd.entry1_flag = 1;
+				break;
+			case 'a':
+				printf("file name is %s\n", optarg);
+				strcpy(ap_file, optarg);
+				append_flag = true;
+				break;
+			case 'o':
+				offset = STR_TO_UL(optarg, 16);
+				printf("offset is %d\n", offset);
+				append_flag = true;
+				break;
+			default:
+				 printf("?? getopt returned character code 0%o ??\n", c);
+		}
+	}
 
 	if (gd.help_flag == 1) {
 		print_usage(argv[0]);
 		return SUCCESS;
 	}
-		
+
+	if (append_flag == true) {
+		if (strlen(ap_file) == 0 || offset == 0) {
+			printf("Append options --append <filename> --append_offset <offset> both are required \n");
+			return FAILURE;
+		}
+		strcpy(gd.ap_file[gd.ap_count].name, ap_file);
+		gd.ap_file[gd.ap_count].offset = offset;
+		gd.ap_count++;
+	}
+
 	if (optind != argc - 1) {
 		printf("\nError!! Input File is not Specified");
 		print_usage(argv[0]);
