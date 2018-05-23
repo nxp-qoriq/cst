@@ -323,7 +323,7 @@ void calculate_offset_size(void)
 	gd.rsa_size = gd.key_table[gd.srk_sel - 1].key_len / 2;
 
 	/* Calculate the offsets of blocks aligne to boundry 0x200 */
-	gd.srk_offset = OFFSET_ALIGN((gd.num_pbi_words / sizeof(uint32_t)));
+	gd.srk_offset = OFFSET_ALIGN((gd.num_pbi_words * sizeof(uint32_t)));
 	gd.rsa_offset = OFFSET_ALIGN(gd.srk_offset + gd.srk_size);
 }
 
