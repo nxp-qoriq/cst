@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
 {
 	char otpmk_in[2];
 	int c, i, l, ret;
-	char *string;
+	char *string = NULL;
 	char urand_flag = 0;
 
 	printf("\n\t#----------------------------------------------------#");
