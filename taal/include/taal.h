@@ -37,6 +37,7 @@ enum cfg_taal {
 	TA_2_1_ARM8,		/* LS1043, LS1012 */
 	TA_3_0,			/* LS2085 */
 	TA_3_1,			/* LS2088, LS1088 */
+	TA_3_2,			/* LX2160 */
 	TA_UNKNOWN_MAX
 };
 

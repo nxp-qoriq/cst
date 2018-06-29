@@ -76,6 +76,8 @@ static ta_struct_t ta_table[] = {
 
 	{ "LS2088", TA_3_1 },
 	{ "LS1088", TA_3_1 },
+
+	{ "LX2160", TA_3_2 },
 };
 
 #define NUM_TA_TABLE (sizeof(ta_table) / sizeof(ta_struct_t))
@@ -148,6 +150,15 @@ static struct taal_t taal[] = {
 		dump_hdr_ta_3_0,
 	},
 	/* TA_3_1 */
+	{
+		parse_input_file_ta_3_1,
+		fill_structure_ta_3_1,
+		create_header_ta_3_1,
+		calc_img_hash_ta_3_1,
+		calc_srk_hash_ta_3_1,
+		dump_hdr_ta_3_1,
+	},
+	/* TA_3_2 */
 	{
 		parse_input_file_ta_3_1,
 		fill_structure_ta_3_1,
