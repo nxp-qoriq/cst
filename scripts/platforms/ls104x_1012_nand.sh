@@ -47,6 +47,10 @@
 if [ -f bootscript_dec ]; then
     ./uni_sign input_files/uni_sign/ls104x_1012/input_bootscript_secure_dec
 fi
+if [ -f bootscript_enforce ]; then
+    ./uni_sign input_files/uni_sign/ls104x_1012/input_bootscript_secure_enforce
+    ./uni_sign input_files/uni_sign/ls104x_1012/input_initramfs_secure
+fi
 
 # Sign ppa image
 ./uni_sign input_files/uni_sign/ls104x_1012/sd_nand/input_ppa_secure

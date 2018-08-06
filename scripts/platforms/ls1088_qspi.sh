@@ -50,6 +50,11 @@
 if [ -f bootscript_dec ]; then
     ./uni_sign input_files/uni_sign/ls2088_1088/input_bootscript_secure_dec
 fi
+if [ -f bootscript_enforce ]; then
+    ./uni_sign input_files/uni_sign/ls2088_1088/input_bootscript_secure_enforce
+    ./uni_sign input_files/uni_sign/ls2088_1088/input_initramfs_secure
+fi
+
 
 # Sign PPA image
 ./uni_sign input_files/uni_sign/ls2088_1088/qspi_ls1088/input_ppa_secure
