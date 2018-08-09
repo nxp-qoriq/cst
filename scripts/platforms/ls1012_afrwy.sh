@@ -30,9 +30,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #-----------------------------------------------------------------------------
 
-# Sign u-boot image
-./uni_sign input_files/uni_sign/ls104x_1012/ls1012afrwy/input_uboot_secure
-
 # Sign bootscript image
 ./uni_sign input_files/uni_sign/ls104x_1012/input_bootscript_secure
 
@@ -50,8 +47,7 @@ fi
 # Sign kernel image
 ./uni_sign input_files/uni_sign/ls104x_1012/ls1012afrwy/input_kernel_secure
 
-# Sign ppa image
-./uni_sign input_files/uni_sign/ls104x_1012/ls1012afrwy/input_ppa_secure
+# Sign pfe image
 ./uni_sign input_files/uni_sign/ls104x_1012/ls1012afrwy/input_pfe_secure
 
 # Sign uImage.bin
@@ -65,6 +61,4 @@ if [ -f secboot_hdrs_qspiboot.bin ]; then
     rm secboot_hdrs_qspiboot.bin
 fi
 touch secboot_hdrs_qspiboot.bin
-dd if=hdr_uboot.out of=secboot_hdrs_qspiboot.bin bs=1K seek=0
-dd if=hdr_ppa.out of=secboot_hdrs_qspiboot.bin bs=1K seek=16
 dd if=hdr_pfe.out of=secboot_hdrs_qspiboot.bin bs=1K seek=32

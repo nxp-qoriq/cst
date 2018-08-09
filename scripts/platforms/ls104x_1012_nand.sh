@@ -31,12 +31,6 @@
 #
 #-----------------------------------------------------------------------------
 
-# Sign u-boot spl image
-./uni_sign input_files/uni_sign/ls104x_1012/sd_nand/input_spl_uboot_secure
-
-# Sign u-boot image
-./uni_sign input_files/uni_sign/ls104x_1012/sd_nand/input_uboot_secure
-
 # Sign bootscript image
 ./uni_sign input_files/uni_sign/ls104x_1012/sd_nand/input_bootscript_secure
 
@@ -52,23 +46,14 @@ if [ -f bootscript_enforce ]; then
     ./uni_sign input_files/uni_sign/ls104x_1012/input_initramfs_secure
 fi
 
-# Sign ppa image
-./uni_sign input_files/uni_sign/ls104x_1012/sd_nand/input_ppa_secure
-
 # Sign uImage.bin
 ./uni_sign input_files/uni_sign/ls104x_1012/input_uimage_secure
 
 # Sign uImage.dtb
 ./uni_sign input_files/uni_sign/ls104x_1012/input_dtb_secure
 
-# Run PBI tool on u-boot-with-spl-pbl.bin
-./uni_pbi input_files/uni_pbi/ls104x_1012/input_pbi_nand_secure
-
 # Concatenate secure boot headers
 if [ -f secboot_hdrs_nandboot.bin ]; then
     rm secboot_hdrs_nandboot.bin
 fi
 touch secboot_hdrs_nandboot.bin
-dd if=bootscript of=secboot_hdrs_nandboot.bin bs=1K seek=0
-dd if=hdr_bs.out of=secboot_hdrs_nandboot.bin bs=1K seek=256
-dd if=hdr_ppa.out of=secboot_hdrs_nandboot.bin bs=1K seek=512
