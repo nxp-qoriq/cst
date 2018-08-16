@@ -1,0 +1,88 @@
+/*
+ * Copyright 2018 NXP
+ */
+
+---------------------------------------------------
+# Specify the platform. [Mandatory]
+# Choose Platform - LS2088/LS1088
+PLATFORM=LS1088
+---------------------------------------------------
+# GPIO Pin to be set for raising POVDD [Optional]
+POVDD_GPIO=
+---------------------------------------------------
+# One time programmable master key flags in binary form.[Mandatory]
+# 0000 -> Program default minimal OTPMK value
+# 0001 -> Program random OTPMK value
+# 0010 -> Program user supplied OTPMK value
+# 0101 -> Program random OTPMK value with pre-programmed minimal value
+# 0110 -> Program user supplied OTPMK value with pre-programmed minimal value
+# 1xxx -> Don't blow OTPMK
+OTPMK_FLAGS=
+# One time programmable master key value.
+# [Optional dependent on flags, Mandatory in case OTPMK_FLAGS="0010" or "0110"]
+OTPMK_0=
+OTPMK_1=
+OTPMK_2=
+OTPMK_3=
+OTPMK_4=
+OTPMK_5=
+OTPMK_6=
+OTPMK_7=
+---------------------------------------------------
+# Super root key hash [Optional]
+SRKH_0=
+SRKH_1=
+SRKH_2=
+SRKH_3=
+SRKH_4=
+SRKH_5=
+SRKH_6=
+SRKH_7=
+---------------------------------------------------
+# Specify OEM UIDs. [Optional]
+# e.g OEM_UID_0=11111111
+OEM_UID_0=
+OEM_UID_1=
+OEM_UID_2=
+OEM_UID_3=
+OEM_UID_4=
+---------------------------------------------------
+# Specify Debug challenge and response values. [Optional]
+# e.g DCV_0=11111111
+DCV_0=
+DCV_1=
+DRV_0=
+DRV_1=
+---------------------------------------------------
+# Specify Debug Level in binary form. [Optional]
+# 000 -> Wide open: Debug portals are enabled unconditionally.
+# 001 -> Conditionally open via challenge response, without notification.
+# 01x -> Conditionally open via challenge response, with notification.
+# 1xx -> Closed. All debug portals are disabled.
+DBG_LVL=
+---------------------------------------------------
+# System Configuration register bits in binary form [Optional]
+# WP (OEM write protect)
+# ITS (Intent to Secure)
+# NSEC (Non secure)
+# ZD (ZUC Disable)
+# K0,K1,K2,K3,K4,K5,K6 (Key revocation bits)
+# FR0 (Field return 0)
+# FR1 (Field return 1)
+WP=
+ITS=
+NSEC=
+ZD=
+K0=
+K1=
+K2=
+K3=
+K4=
+K5=
+K6=
+FR0=
+FR1=
+---------------------------------------------------
+# Specify the output fuse provisioning file name. (Default:fuse_scr.bin) [Optional]
+OUTPUT_FUSE_FILENAME=fuse_scr.bin
+---------------------------------------------------
