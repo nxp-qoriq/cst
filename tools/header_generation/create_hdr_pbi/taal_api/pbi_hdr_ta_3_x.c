@@ -26,6 +26,7 @@
  */
 
 #include <global.h>
+#include <taal.h>
 #include <parse_utils.h>
 #include <crypto_utils.h>
 #include <pbi_hdr_ta_3_x.h>
@@ -85,14 +86,30 @@ int parse_input_file_ta_3_1(void)
  ***************************************************************************/
 int add_blk_cpy_cmd(uint32_t *pbi_word)
 {
-#define BLK_CPY_HDR 0x80000040
+#define BLK_CPY_HDR_CHASIS_3_0 0x80000040
+#define BLK_CPY_HDR_CHASIS_3_2 0x80000008
+
 	uint32_t file_size, new_file_size;
 	uint32_t align = 4;
 	int i;
+	enum cfg_taal cfg_taal;
+
+	cfg_taal = get_ta_from_file(gd.input_file);
+	if (cfg_taal == TA_UNKNOWN_MAX) {
+		printf("Unable to Get PLATFORM from input file %s\n", gd.input_file);
+		return FAILURE;
+	}
+
 	for (i = 0; i < gd.cp_cmd_count; i++) {
 		file_size = get_file_size(gd.cp_cmd[i].img_name);
 		new_file_size = (file_size+(file_size % align));
-		pbi_word[gd.num_pbi_words++] = BLK_CPY_HDR;
+
+		if (cfg_taal == TA_3_2) {
+			pbi_word[gd.num_pbi_words++] = BLK_CPY_HDR_CHASIS_3_2;
+		} else {
+			pbi_word[gd.num_pbi_words++] = BLK_CPY_HDR_CHASIS_3_0;
+		}
+
 		pbi_word[gd.num_pbi_words++] = gd.cp_cmd[i].src_off;
 		pbi_word[gd.num_pbi_words++] = gd.cp_cmd[i].dst;
 		pbi_word[gd.num_pbi_words++] = new_file_size;
