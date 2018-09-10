@@ -51,9 +51,9 @@ IMAGE_7={,,}
 IMAGE_8={,,}
 ---------------------------------------------------
 # Specify OEM AND FSL ID to be populated in header. [Optional]
-# e.g FSL_UID=11111111
-FSL_UID=11111111
-OEM_UID=99999999
+# e.g FSL_UID_0=11111111
+FSL_UID_0=11111111
+OEM_UID_0=99999999
 ---------------------------------------------------
 # Specify the file names of csf header. (Default :hdr.out) [Optional]
 OUTPUT_HDR_FILENAME=hdr_rootfs.out
