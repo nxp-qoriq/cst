@@ -42,6 +42,9 @@ static struct option long_options[] = {
 	{"verbose", no_argument, &gd.verbose_flag, 1},
 	{"hash", no_argument, &gd.option_srk_hash, 1},
 	{"img_hash", no_argument, &gd.option_img_hash, 1},
+	{"out", required_argument, 0, 'h'},
+	{"in", required_argument, 0, 'i'},
+	{"sben", no_argument, &gd.option_sb_en, 1},
 	{"help", no_argument, &gd.help_flag, 1},
 	{0, 0, 0, 0}
 };
@@ -50,6 +53,9 @@ static void print_usage(char *tool)
 	printf("\nCorrect Usage of Tool is:\n");
 	printf("\n%s [options] <input_file>\n", tool);
 	printf("\t--verbose    Display header Info after Creation. This option is invalid for TA2 platform\n");
+	printf("\t--out <file> Output file name\n");
+	printf("\t--in <file>  Input RCW file.\n");
+	printf("\t--sben       Enable SB_EN in the RCW.\n");
 	printf("\t--hash       Print the SRK(Public key) hash. This option is invalid for TA2 platform\n");
 	printf("\t--img_hash   Header is generated without Signature.\n");
 	printf("\t             Image Hash is stored in a separate file. This option is invalid for TA2 platform\n");
@@ -76,8 +82,26 @@ int main(int argc, char **argv)
 	/* Check the command line argument */
 	c = 0;
 	option_index = 0;
-	while (c != -1)
+	while (c != -1) {
 		c = getopt_long(argc, argv, "", long_options, &option_index);
+		if (c == -1)
+			break;
+
+		switch (c) {
+			case 'h':
+				printf("file name is %s\n", optarg);
+				strcpy(gd.rcw_op_fname, optarg);
+				gd.rcw_opfile_flag = 1;
+				break;
+			case 'i':
+				printf("file name is %s\n", optarg);
+				strcpy(gd.rcw_fname, optarg);
+				gd.rcw_file_flag = 1;
+				break;
+			default:
+				break;
+		}
+	}
 
 	if (gd.help_flag == 1) {
 		printf("\n\t#----------------------------------------------------#");

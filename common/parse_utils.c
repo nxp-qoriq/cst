@@ -353,7 +353,7 @@ void find_value_from_file(char *field_name, FILE *fp)
 	line_size = cal_line_size(fp);
 	ret = fseek(fp, -line_size, SEEK_CUR);
 	if (ret != 0)
-		printf("Error in readeing the file\n");
+		printf("Error in reading the file\n");
 	while ((ret = fread(line_data, 1, line_size, fp))) {
 		*(line_data + line_size) = '\0';
 		remove_whitespace(line_data);
@@ -737,12 +737,18 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 		break;
 
 	case FIELD_RCW_PBI_FILENAME:
+		if (gd.rcw_file_flag != 0) {
+			break;
+		}
 		if (file_field.count == 1) {
 			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.rcw_fname, file_field.value[0]);
 		}
 		break;
 	case FIELD_OUTPUT_RCW_PBI_FILENAME:
+		if (gd.rcw_opfile_flag != 0) {
+			break;
+		}
 		 if (file_field.count == 1) {
 			check_field_length(field_name, file_field.value[0]);
 			strcpy(gd.rcw_op_fname, file_field.value[0]);
@@ -782,7 +788,7 @@ int fill_gd_input_file(char *field_name, FILE *fp)
 	case FIELD_SB_EN:
 		if (file_field.count == 1) {
 			gd.sben_flag = 1;
-			gd.sb_en = STR_TO_UL(file_field.value[0], 16);
+			gd.option_sb_en = STR_TO_UL(file_field.value[0], 16);
 		}
 		break;
 	case FIELD_VERBOSE:

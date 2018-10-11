@@ -136,13 +136,15 @@ struct g_data_t {
 	uint32_t num_pri_key;
 	uint32_t num_ie_key;
 	uint32_t boot_ho;
-	uint32_t sb_en;
+	int option_sb_en;
 	uint8_t bootho_flag;
 	uint8_t sben_flag;
 	uint8_t srk_flag;
 	uint8_t srk_hash_flag;
 	uint8_t hdr_file_flag;
 	uint8_t entry1_flag;
+	uint8_t rcw_file_flag;
+	uint8_t rcw_opfile_flag;
 	char pub_fname[MAX_NUM_KEY][MAX_FNAME_LEN];
 	char pri_fname[MAX_NUM_KEY][MAX_FNAME_LEN];
 	char iek_fname[MAX_NUM_IEKEY][MAX_FNAME_LEN];

@@ -130,7 +130,7 @@ int rcw_sben_boot_ho(FILE *fp_rcw_pbi_ip, FILE *fp_rcw_pbi_op)
 		}
 		if (i == SB_EN_BOOT_HO_WORD) {
 			word = BYTE_SWAP_32(word);
-			if (gd.sb_en == 1)
+			if (gd.option_sb_en == 1)
 				word = word | SB_EN_MASK;
 			if (gd.boot_ho == 1)
 				word = word | BOOT_HO_MASK;
@@ -142,7 +142,7 @@ int rcw_sben_boot_ho(FILE *fp_rcw_pbi_ip, FILE *fp_rcw_pbi_op)
 			return FAILURE;
 		}
 	}
-	printf("\nSB_EN = %x\n", gd.sb_en);
+	printf("\nSB_EN = %x\n", gd.option_sb_en);
 	printf("\nBOOT_HO = %x\n", gd.boot_ho);
 	return SUCCESS;
 }

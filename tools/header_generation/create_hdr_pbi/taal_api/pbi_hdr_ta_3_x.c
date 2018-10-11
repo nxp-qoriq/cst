@@ -230,6 +230,7 @@ int create_pbi(uint32_t hdr_size)
 	/* Reserve Space for Security Header */
 	gd.num_pbi_words += (hdr_size / sizeof(word));
 
+	if (gd.boot1_ptr != 0) {
 	/* Next PBI Command is LOAD_BOOT1_CSF_PTR_CMD */
 	pbi_word[gd.num_pbi_words++] = LOAD_BOOT1_CSF_PTR_CMD;
 	pbi_word[gd.num_pbi_words++] = gd.boot1_ptr;
@@ -237,6 +238,7 @@ int create_pbi(uint32_t hdr_size)
 		printf("Error: BOOT1 PTR is not specified\n");
 		fclose(frcw);
 		return FAILURE;
+	}
 	}
 
 	if (gd.ie_table_addr != 0) {

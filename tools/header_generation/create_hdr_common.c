@@ -226,8 +226,6 @@ int create_hdr(int argc, char **argv)
 	printf("\n\t#----------------------------------------------------#");
 	printf("\n");
 
-	/* Initialization of Global Structure to 0 */
-	memset(&gd, 0, sizeof(struct g_data_t));
 
 	/* Check the command line argument */
 	c = 0;
