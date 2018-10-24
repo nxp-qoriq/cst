@@ -31,12 +31,6 @@
 #
 #-----------------------------------------------------------------------------
 
-# Sign RCW+PBI image
-./uni_pbi input_files/uni_pbi/ls2088_1088/input_pbi_qspi_secure
-
-# Sign u-boot image
-./uni_sign input_files/uni_sign/ls2088_1088/qspi_ls2088/input_uboot_secure
-
 # Sign bootscript image
 ./uni_sign input_files/uni_sign/ls2088_1088/input_bootscript_secure
 
@@ -55,9 +49,6 @@ fi
 
 # Sign kernel image
 ./uni_sign input_files/uni_sign/ls2088_1088/input_kernel_secure
-
-# Sign PPA image
-./uni_sign input_files/uni_sign/ls2088_1088/qspi_ls2088/input_ppa_secure
 
 # Sign mc image
 ./uni_sign input_files/uni_sign/ls2088_1088/qspi_ls2088/input_mc_secure
@@ -79,10 +70,6 @@ if [ -f secboot_hdrs_qspiboot.bin ]; then
     rm secboot_hdrs_qspiboot.bin
 fi
 touch secboot_hdrs_qspiboot.bin
-dd if=bootscript of=secboot_hdrs_qspiboot.bin bs=1K seek=0
-dd if=hdr_bs.out of=secboot_hdrs_qspiboot.bin bs=1K seek=256
-dd if=hdr_ppa.out of=secboot_hdrs_qspiboot.bin bs=1K seek=512
-dd if=hdr_uboot.out of=secboot_hdrs_qspiboot.bin bs=1K seek=768
 dd if=hdr_mc.out of=secboot_hdrs_qspiboot.bin bs=1K seek=1024
 dd if=hdr_dpc.out of=secboot_hdrs_qspiboot.bin bs=1K seek=1280
 dd if=hdr_dpl.out of=secboot_hdrs_qspiboot.bin bs=1K seek=1536

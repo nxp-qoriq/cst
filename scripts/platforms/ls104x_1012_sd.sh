@@ -60,5 +60,4 @@ if [ -f secboot_hdrs_sdboot.bin ]; then
     rm secboot_hdrs_sdboot.bin
 fi
 touch secboot_hdrs_sdboot.bin
-dd if=hdr_ppa.out of=secboot_hdrs_sdboot.bin bs=1K seek=512
 dd if=hdr_kernel.out of=secboot_hdrs_sdboot.bin bs=1K seek=2048
