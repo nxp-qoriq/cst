@@ -46,7 +46,7 @@ int read_file_in_buffer(uint8_t *ptr, char *file_name);
 
 #define BARKER_LEN		4
 #define IOBLOCK			128
-#define MAX_FNAME_LEN		0x64
+#define MAX_FNAME_LEN		0x100
 #define SHA256_DIGEST_LENGTH	32
 
 #define MAX_NUM_KEY		8
