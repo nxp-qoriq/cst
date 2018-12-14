@@ -69,8 +69,16 @@ fi
 if [ -f secboot_hdrs_xspiboot.bin ]; then
     rm secboot_hdrs_xspiboot.bin
 fi
+#Sec headers has to be following offsets:
+#0x700000 MC header
+#0x740000 DPC header
+#0x780000 DPL header
+#0x7C0000 Kernel header
+#0x800000 FIP_DDR_SEC firmware
+#0x880000 Fuse firmware fip image
+
 touch secboot_hdrs_qspiboot.bin
 dd if=hdr_mc.out of=secboot_hdrs_xspiboot.bin bs=1K seek=1024
 dd if=hdr_dpc.out of=secboot_hdrs_xspiboot.bin bs=1K seek=1280
 dd if=hdr_dpl.out of=secboot_hdrs_xspiboot.bin bs=1K seek=1536
-dd if=hdr_kernel.out of=secboot_hdrs_xspiboot.bin bs=1K seek=2048
+dd if=hdr_kernel.out of=secboot_hdrs_xspiboot.bin bs=1K seek=1792
