@@ -1,5 +1,5 @@
 /* Copyright (c) 2015 Freescale Semiconductor, Inc.
- * All rights reserved.
+ * Copyright 2016-2019 NXP
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -78,6 +78,7 @@ static ta_struct_t ta_table[] = {
 	{ "LS1088", TA_3_1 },
 
 	{ "LX2160", TA_3_2 },
+	{ "LS1028", TA_3_2 },
 };
 
 #define NUM_TA_TABLE (sizeof(ta_table) / sizeof(ta_struct_t))

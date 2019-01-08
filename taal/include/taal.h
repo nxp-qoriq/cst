@@ -1,5 +1,5 @@
 /* Copyright (c) 2015 Freescale Semiconductor, Inc.
- * All rights reserved.
+ * Copyright 2016-2019 NXP
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -37,7 +37,7 @@ enum cfg_taal {
 	TA_2_1_ARM8,		/* LS1043, LS1012 */
 	TA_3_0,			/* LS2085 */
 	TA_3_1,			/* LS2088, LS1088 */
-	TA_3_2,			/* LX2160 */
+	TA_3_2,			/* LX2160, LS1028 */
 	TA_UNKNOWN_MAX
 };
 
