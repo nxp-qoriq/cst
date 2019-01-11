@@ -31,6 +31,9 @@
 #
 #-----------------------------------------------------------------------------
 
+#Sign rcw.bin
+./uni_pbi  input_files/uni_pbi/ls1028/input_pbi_flexspi_nor_secure
+
 # Sign PPA image
 ./uni_sign input_files/uni_sign/ls1028/nor/input_ppa_secure
 
