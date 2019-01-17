@@ -2,7 +2,7 @@
 
 #-----------------------------------------------------------------------------
 #
-# File: ls1028_xspi.sh
+# File: ls1028_secboot_hdr.sh
 #
 # Copyright 2019 NXP
 #
@@ -31,15 +31,6 @@
 #
 #-----------------------------------------------------------------------------
 
-#Sign rcw.bin
-./uni_pbi  input_files/uni_pbi/ls1028/input_pbi_flexspi_nor_secure
-
-# Sign PPA image
-./uni_sign input_files/uni_sign/ls1028/nor/input_ppa_secure
-
-# Sign Uboot image
-./uni_sign input_files/uni_sign/ls1028/nor/input_uboot_secure
-
 # Sign bootscript image
 ./uni_sign input_files/uni_sign/ls1028/input_bootscript_secure
 
@@ -62,15 +53,11 @@ fi
 ./uni_sign input_files/uni_sign/ls1028/input_dtb_secure
 
 # Concatenate secure boot headers
-if [ -f secboot_hdrs_xspiboot.bin ]; then
-    rm secboot_hdrs_xspiboot.bin
+if [ -f secboot_hdrs.bin ]; then
+    rm secboot_hdrs.bin
 fi
 #Sec headers has to be following offsets:
-#0x600000 PPA header
-#0x6c0000 Uboot header
 #0x800000 Kernel header
 
-touch secboot_hdrs_qspiboot.bin
-dd if=hdr_ppa.out of=secboot_hdrs_xspiboot.bin bs=1K seek=1024
-dd if=hdr_uboot.out of=secboot_hdrs_xspiboot.bin bs=1K seek=1280
-dd if=hdr_kernel.out of=secboot_hdrs_xspiboot.bin bs=1K seek=1792
+touch secboot_hdrs.bin
+dd if=hdr_kernel.out of=secboot_hdrs.bin bs=1K seek=2048
