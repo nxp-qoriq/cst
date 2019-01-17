@@ -71,6 +71,6 @@ fi
 #0x800000 Kernel header
 
 touch secboot_hdrs_qspiboot.bin
-dd if=hdr_ppa.out of=secboot_hdrs_xspiboot.bin bs=1K seek=1024
-dd if=hdr_uboot.out of=secboot_hdrs_xspiboot.bin bs=1K seek=1280
-dd if=hdr_kernel.out of=secboot_hdrs_xspiboot.bin bs=1K seek=1792
+dd if=hdr_ppa.out of=secboot_hdrs_xspiboot.bin bs=1K seek=0
+dd if=hdr_uboot.out of=secboot_hdrs_xspiboot.bin bs=1K seek=768
+dd if=hdr_kernel.out of=secboot_hdrs_xspiboot.bin bs=1K seek=2048
