@@ -4,7 +4,7 @@
 #
 # File: ls2088_1088_qspi.sh
 #
-# Copyright 2017-2018 NXP
+# Copyright 2017, 2020 NXP
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -70,7 +70,7 @@ if [ -f secboot_hdrs_qspiboot.bin ]; then
     rm secboot_hdrs_qspiboot.bin
 fi
 touch secboot_hdrs_qspiboot.bin
-dd if=hdr_mc.out of=secboot_hdrs_qspiboot.bin bs=1K seek=1024
-dd if=hdr_dpc.out of=secboot_hdrs_qspiboot.bin bs=1K seek=1280
-dd if=hdr_dpl.out of=secboot_hdrs_qspiboot.bin bs=1K seek=1536
-dd if=hdr_kernel.out of=secboot_hdrs_qspiboot.bin bs=1K seek=2048
+dd if=hdr_kernel.out of=secboot_hdrs_qspiboot.bin bs=1K seek=0
+dd if=hdr_mc.out of=secboot_hdrs_qspiboot.bin bs=1K seek=256
+dd if=hdr_dpc.out of=secboot_hdrs_qspiboot.bin bs=1K seek=512
+dd if=hdr_dpl.out of=secboot_hdrs_qspiboot.bin bs=1K seek=768
