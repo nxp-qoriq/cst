@@ -4,7 +4,7 @@
 #
 # File: lx2160_xspi.sh
 #
-# Copyright 2018 NXP
+# Copyright 2018, 2020 NXP
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -78,7 +78,7 @@ fi
 #0x880000 Fuse firmware fip image
 
 touch secboot_hdrs_qspiboot.bin
-dd if=hdr_mc.out of=secboot_hdrs_xspiboot.bin bs=1K seek=1024
-dd if=hdr_dpc.out of=secboot_hdrs_xspiboot.bin bs=1K seek=1280
-dd if=hdr_dpl.out of=secboot_hdrs_xspiboot.bin bs=1K seek=1536
-dd if=hdr_kernel.out of=secboot_hdrs_xspiboot.bin bs=1K seek=1792
+dd if=hdr_kernel.out of=secboot_hdrs_xspiboot.bin bs=1K seek=0
+dd if=hdr_mc.out of=secboot_hdrs_xspiboot.bin bs=1K seek=256
+dd if=hdr_dpc.out of=secboot_hdrs_xspiboot.bin bs=1K seek=512
+dd if=hdr_dpl.out of=secboot_hdrs_xspiboot.bin bs=1K seek=768
