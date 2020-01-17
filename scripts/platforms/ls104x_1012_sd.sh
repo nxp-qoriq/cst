@@ -4,7 +4,7 @@
 #
 # File: ls104x_1012_sd.sh
 #
-# Copyright 2017-2018 NXP
+# Copyright 2017-2018, 2020 NXP
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -60,4 +60,4 @@ if [ -f secboot_hdrs_sdboot.bin ]; then
     rm secboot_hdrs_sdboot.bin
 fi
 touch secboot_hdrs_sdboot.bin
-dd if=hdr_kernel.out of=secboot_hdrs_sdboot.bin bs=1K seek=2048
+dd if=hdr_kernel.out of=secboot_hdrs_sdboot.bin bs=1K seek=0

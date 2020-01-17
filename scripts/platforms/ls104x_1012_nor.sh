@@ -4,7 +4,7 @@
 #
 # File: ls104x_1012_nor.sh
 #
-# Copyright 2017-2018 NXP
+# Copyright 2017-2018, 2020 NXP
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -60,4 +60,4 @@ if [ -f secboot_hdrs_norboot.bin ]; then
     rm secboot_hdrs_norboot.bin
 fi
 touch secboot_hdrs_norboot.bin
-dd if=hdr_kernel.out of=secboot_hdrs_norboot.bin bs=1K seek=2048
+dd if=hdr_kernel.out of=secboot_hdrs_norboot.bin bs=1K seek=0

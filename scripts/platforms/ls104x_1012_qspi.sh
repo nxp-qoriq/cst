@@ -4,7 +4,7 @@
 #
 # File: ls104x_1012_qspi.sh
 #
-# Copyright 2017-2018 NXP
+# Copyright 2017-2018, 2020 NXP
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -65,6 +65,6 @@ if [ -f secboot_hdrs_qspiboot.bin ]; then
 fi
 touch secboot_hdrs_qspiboot.bin
 if [ -f $FBDIR/$pfe_fw ]; then
-dd if=hdr_pfe.out of=secboot_hdrs_qspiboot.bin bs=1K seek=1024
+dd if=hdr_pfe.out of=secboot_hdrs_qspiboot.bin bs=1K seek=256
 fi
-dd if=hdr_kernel.out of=secboot_hdrs_qspiboot.bin bs=1K seek=2048
+dd if=hdr_kernel.out of=secboot_hdrs_qspiboot.bin bs=1K seek=0
