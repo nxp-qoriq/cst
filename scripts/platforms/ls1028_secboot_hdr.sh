@@ -4,7 +4,7 @@
 #
 # File: ls1028_secboot_hdr.sh
 #
-# Copyright 2019 NXP
+# Copyright 2019-2020 NXP
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -64,4 +64,4 @@ fi
 #0x800000 Kernel header
 
 touch secboot_hdrs.bin
-dd if=hdr_kernel.out of=secboot_hdrs.bin bs=1K seek=2048
+dd if=hdr_kernel.out of=secboot_hdrs.bin bs=1K seek=0
