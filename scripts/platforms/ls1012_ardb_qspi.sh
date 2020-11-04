@@ -46,7 +46,7 @@ if [ -f bootscript_enforce ]; then
     ./uni_sign input_files/uni_sign/ls104x_1012/input_initramfs_secure
 fi
 
-if [ -f $pfe_fw ]; then
+if [ -f "$pfe_fw" ]; then
     ./uni_sign input_files/uni_sign/ls104x_1012/input_pfe_secure
 fi
 
@@ -65,6 +65,6 @@ if [ -f secboot_hdrs_qspiboot.bin ]; then
 fi
 touch secboot_hdrs_qspiboot.bin
 dd if=hdr_kernel.out of=secboot_hdrs_qspiboot.bin bs=1K seek=0
-if [ -f $pfe_fw ]; then
+if [ -f "$pfe_fw" ]; then
 dd if=hdr_pfe.out of=secboot_hdrs_qspiboot.bin bs=1K seek=256
 fi
