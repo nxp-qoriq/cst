@@ -1,5 +1,5 @@
 /* Copyright (c) 2015 Freescale Semiconductor, Inc.
- * Copyright 2017 NXP
+ * Copyright 2017, 2021 NXP
  */
 
 ESBC=1
@@ -25,7 +25,7 @@ PRI_KEY=srk.pri
 # DST_ADDR is required only for Non-PBL Platform. [Mandatory]
 # USAGE : IMAGE_NO = {IMAGE_NAME, SRC_ADDR, DST_ADDR}
 # Address can be 64 bit
-IMAGE_1={mc.itb,80000000,ffffffff}
+IMAGE_1={mc.itb,80a00000,ffffffff}
 ---------------------------------------------------
 # Specify OEM AND FSL ID to be populated in header. [Optional]
 # e.g FSL_UID_0=11111111
