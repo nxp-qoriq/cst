@@ -57,7 +57,7 @@ static char *parse_list[] = {
 
 extern struct g_data_t gd;
 extern char line_data[];
-struct input_field file_field;
+extern struct input_field file_field;
 
 #define NUM_PARSE_LIST (sizeof(parse_list) / sizeof(char *))
 
