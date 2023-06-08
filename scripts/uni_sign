@@ -1,5 +1,25 @@
 #!/bin/bash
 
+OPENSSL_CNF=$(cat <<EOF
+.include /usr/lib/ssl/openssl.cnf
+.include openssl_engine_include.cnf
+EOF
+)
+
+OPENSSL_ENGINE_INCLUDE_CNF=$(cat <<EOF
+[openssl_init]
+engines = engine_section
+
+[engine_section]
+pkcs = pkcs11_section
+
+[pkcs11_section]
+engine_id = pkcs11
+MODULE_PATH = /usr/lib/x86_64-linux-gnu/libykcs11.so
+init = 1
+EOF
+)
+
 #-----------------------------------------------------------------------------
 #
 # File: uni_sign
@@ -54,6 +74,11 @@ print_help() {
 ############################################################
 # Script Starts Here
 ############################################################
+echo "${OPENSSL_CNF}" > /tmp/openssl.cnf
+echo "${OPENSSL_ENGINE_INCLUDE_CNF}" > /tmp//openssl_engine_include.cnf
+export OPENSSL_CONF=/tmp/openssl.cnf
+export OPENSSL_CONF_INCLUDE=/tmp
+
 echo ""
 
 # Check if proper arguments are specified

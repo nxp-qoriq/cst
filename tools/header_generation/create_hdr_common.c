@@ -39,7 +39,7 @@
 #include <crypto_utils.h>
 
 extern struct g_data_t gd;
-struct input_field file_field;
+extern struct input_field file_field;
 
 extern char line_data[];
 static struct option long_options[] = {
