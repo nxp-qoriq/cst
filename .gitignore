@@ -1,0 +1,16 @@
+platforms
+*.a
+*.o
+create_hdr_cf
+create_hdr_esbc
+create_hdr_isbc
+create_hdr_pbi
+gen_drv_drbg
+gen_fusescr
+gen_keys
+gen_otpmk_drbg
+gen_sign
+sign_embed
+uni_cfsign
+uni_pbi
+uni_sign
