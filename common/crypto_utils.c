@@ -35,6 +35,12 @@
 
 #include <crypto_utils.h>
 #include <openssl/ssl.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+#include <openssl/evp.h>
+#include <openssl/engine.h>
 
 /***************************************************************************
  * Function	:	crypto_hash_init
@@ -120,30 +126,84 @@ int crypto_rsa_sign(void *img_hash, uint32_t len, void *rsa_sign,
 	int ret;
 	FILE *fpriv;
 	RSA *priv_key;
+	EVP_PKEY *pkey = NULL;
+	ENGINE *e = NULL;
 
-	/* Open the private Key */
-	fpriv = fopen(key_name, "r");
-	if (fpriv == NULL) {
-		printf("Error in file opening %s:\n", key_name);
+	if (!OPENSSL_init_ssl(0, NULL)) {
+		printf("Could not init OpenSSL.\n");
 		return FAILURE;
 	}
 
-	priv_key = PEM_read_RSAPrivateKey(fpriv, NULL, NULL, NULL);
-	fclose(fpriv);
-	if (priv_key == NULL) {
-		printf("Error in key reading %s:\n", key_name);
-		return FAILURE;
+	if (!strncmp(key_name, "pkcs11:", 7)) {
+		ENGINE_load_builtin_engines();
+		e = ENGINE_by_id("pkcs11");
+		if (!e) {
+			printf("Could not find pkcs11 engine.\n");
+			goto rsa_failure;
+		}
+		if (!ENGINE_init(e)) {
+			printf("Could not initialize pkcs11 engine.\n");
+			goto rsa_failure;
+		}
+		if (!ENGINE_set_default_RSA(e)) {
+			printf("Could not set engine as default for RSA.\n");
+			goto rsa_failure;
+		}
+		printf("\n");
+		fflush(stdout);
+		fflush(stderr);
+		printf("Loading private key: %s\n", key_name);
+		pkey = ENGINE_load_private_key(e, key_name, NULL, NULL);
+		if (!pkey) {
+			printf("Could not load specified pkcs11 key.\n");
+			goto rsa_failure;
+		}
+		priv_key = (RSA *)EVP_PKEY_get0_RSA(pkey);
+		ret = RSA_sign(NID_sha256, img_hash, len,
+			       rsa_sign, rsa_len,
+			       priv_key);
+		if (ret != 1) {
+			printf("Error in Signing\n");
+			goto rsa_failure;
+		}
+
+	} else {
+		/* Open the private Key */
+		fpriv = fopen(key_name, "r");
+		if (fpriv == NULL) {
+			printf("Error in file opening %s:\n", key_name);
+			return FAILURE;
+		}
+
+		priv_key = PEM_read_RSAPrivateKey(fpriv, NULL, NULL, NULL);
+		fclose(fpriv);
+		if (priv_key == NULL) {
+			printf("Error in key reading %s:\n", key_name);
+			return FAILURE;
+		}
+
+		/* Sign the Image Hash with Private Key */
+		ret = RSA_sign(NID_sha256, img_hash, len,
+			       rsa_sign, rsa_len,
+			       priv_key);
+		if (ret != 1) {
+			printf("Error in Signing\n");
+			return FAILURE;
+		}
 	}
 
-	/* Sign the Image Hash with Private Key */
-	ret = RSA_sign(NID_sha256, img_hash, len,
-			rsa_sign, rsa_len,
-			priv_key);
-	if (ret != 1) {
-		printf("Error in Signing\n");
-		return FAILURE;
-	}
+	if (pkey) EVP_PKEY_free(pkey);
+	if (e) ENGINE_finish(e);
+	if (e) ENGINE_free(e);
+
 	return SUCCESS;
+
+ rsa_failure:
+	if (pkey) EVP_PKEY_free(pkey);
+	if (e) ENGINE_finish(e);
+	if (e) ENGINE_free(e);
+
+	return FAILURE;
 }
 
 /***************************************************************************
@@ -159,22 +219,59 @@ int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr)
 {
 	FILE *fp;
 	RSA *pub_key;
+	EVP_PKEY *pkey = NULL;
+	ENGINE *e = NULL;
 	uint32_t key_len;
 	const BIGNUM *modulus, *exponent;
 
-	fp = fopen(fname_pub, "r");
-	if (fp == NULL) {
-		fprintf(stderr, "Error in file opening %s:\n",
-			fname_pub);
+	if (!OPENSSL_init_ssl(0, NULL)) {
+		printf("Could not init OpenSSL.\n");
 		return FAILURE;
 	}
 
-	pub_key = PEM_read_RSAPublicKey(fp, NULL, NULL, NULL);
-	fclose(fp);
-	if (pub_key == NULL) {
-		fprintf(stderr, "Error in key reading %s:\n",
-			fname_pub);
-		return FAILURE;
+	if (!strncmp(fname_pub, "pkcs11:", 7)) {
+		ENGINE_load_builtin_engines();
+		e = ENGINE_by_id("pkcs11");
+		if (!e) {
+			printf("Could not find pkcs11 engine.\n");
+			goto rsa_failure;
+		}
+		if (!ENGINE_init(e)) {
+			printf("Could not initialize pkcs11 engine.\n");
+			goto rsa_failure;
+		}
+		if (!ENGINE_set_default_RSA(e)) {
+			printf("Could not set engine as default for RSA.\n");
+			goto rsa_failure;
+		}
+		printf("\n");
+		fflush(stdout);
+		fflush(stderr);
+		printf("Loading public key: %s\n", fname_pub);
+		pkey = ENGINE_load_public_key(e, fname_pub, NULL, NULL);
+		if (!pkey) {
+			printf("Could not load specified pkcs11 key.\n");
+			goto rsa_failure;
+		}
+		pub_key = (RSA *)EVP_PKEY_get0_RSA(pkey);
+		if (!pub_key) {
+			printf("Could not load pkcs11 public key.\n");
+		}
+	} else {
+		fp = fopen(fname_pub, "r");
+		if (fp == NULL) {
+			fprintf(stderr, "Error in file opening %s:\n",
+				fname_pub);
+			return FAILURE;
+		}
+
+		pub_key = PEM_read_RSAPublicKey(fp, NULL, NULL, NULL);
+		fclose(fp);
+		if (pub_key == NULL) {
+			fprintf(stderr, "Error in key reading %s:\n",
+				fname_pub);
+			return FAILURE;
+		}
 	}
 
 	key_len = RSA_size(pub_key);
@@ -202,7 +299,18 @@ int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr)
 	 */
 	BN_bn2bin(exponent, key_ptr + key_len - BN_num_bytes(exponent));
 
+	if (pkey) EVP_PKEY_free(pkey);
+	if (e) ENGINE_finish(e);
+	if (e) ENGINE_free(e);
+
 	return SUCCESS;
+
+ rsa_failure:
+	if (pkey) EVP_PKEY_free(pkey);
+	if (e) ENGINE_finish(e);
+	if (e) ENGINE_free(e);
+
+	return FAILURE;
 }
 
 /***************************************************************************

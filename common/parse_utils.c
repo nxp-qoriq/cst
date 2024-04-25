@@ -283,10 +283,11 @@ int cal_line_size(FILE *fp)
 void get_field_from_file(char *line, char *field_name)
 {
 	int i = 0;
-	char delims[] = ",;=";
+	char fdelims[] = "=;,";
+	char delims[] = ",";
 	char *result = NULL;
 
-	result = strtok(line, delims);
+	result = strtok(line, fdelims);
 	while (result != NULL) {
 		result = strtok(NULL, delims);
 		file_field.value[i] = result;
