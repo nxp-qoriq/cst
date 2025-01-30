@@ -1,5 +1,5 @@
 /* Copyright (c) 2015 Freescale Semiconductor, Inc.
- * Copyright 2018 NXP
+ * Copyright 2018, 2025 NXP
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -39,7 +39,7 @@
 #include <crypto_utils.h>
 
 extern struct g_data_t gd;
-struct input_field file_field;
+extern struct input_field file_field;
 
 extern char line_data[];
 static struct option long_options[] = {

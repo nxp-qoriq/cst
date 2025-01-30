@@ -1,5 +1,5 @@
 /* Copyright (c) 2015 Freescale Semiconductor, Inc.
- * Copyright 2018 NXP
+ * Copyright 2018, 2025 NXP
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -57,7 +57,7 @@ static char *parse_list[] = {
 
 extern struct g_data_t gd;
 extern char line_data[];
-struct input_field file_field;
+extern struct input_field file_field;
 
 #define NUM_PARSE_LIST (sizeof(parse_list) / sizeof(char *))
 
