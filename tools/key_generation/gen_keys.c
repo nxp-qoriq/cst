@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/ssl.h>
+#include <openssl/evp.h>
 #include <unistd.h>
 #include <getopt.h>
 
@@ -54,74 +55,73 @@
 
 static int generate_rsa_keys(const unsigned int n, FILE *fpri, FILE *fpub)
 {
-	RSA *srk = NULL;
+	EVP_PKEY *pkey = NULL;
+	EVP_PKEY_CTX *ctx = NULL;
 	BIGNUM *public_exponent = NULL;
 	int ret = 0;
 
-	/* Allocate space for RSA structure */
-	srk = RSA_new();
-
-	if (srk == NULL) {
+	/* Create a new EVP_PKEY context */
+	ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+	if (ctx == NULL) {
 		return -1;
 	}
 
+	/* Initialize the EVP_PKEY context for key generation */
+	ret = EVP_PKEY_keygen_init(ctx);
+	if (ret <= 0) {
+		EVP_PKEY_CTX_free(ctx);
+		return -1;
+	}
+
+	/* Set the RSA key length */
+	ret = EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, n);
+	if (ret <= 0) {
+		EVP_PKEY_CTX_free(ctx);
+		return -1;
+	}
+
+	/* Set the RSA public exponent */
 	public_exponent = BN_new();
 	if (public_exponent == NULL || !BN_set_word(public_exponent, RSA_F4)) {
+		EVP_PKEY_CTX_free(ctx);
+		BN_free(public_exponent);
+		return -1;
+	}
+	ret = EVP_PKEY_CTX_set1_rsa_keygen_pubexp(ctx, public_exponent);
+	if (ret <= 0) {
+		EVP_PKEY_CTX_free(ctx);
 		BN_free(public_exponent);
 		return -1;
 	}
 
-	ret = RSA_generate_key_ex(srk, n, public_exponent, NULL);
+	/* Generate the RSA key pair */
+	ret = EVP_PKEY_keygen(ctx, &pkey);
+	if (ret <= 0) {
+		EVP_PKEY_CTX_free(ctx);
+		BN_free(public_exponent);
+		return -1;
+	}
+
+	/* Write the private key to file */
+	ret = PEM_write_PrivateKey(fpri, pkey, NULL, NULL, 0, 0, NULL);
 	if (!ret) {
-		RSA_free(srk);
+		EVP_PKEY_free(pkey);
+		EVP_PKEY_CTX_free(ctx);
 		BN_free(public_exponent);
 		return -1;
 	}
 
-	ret = PEM_write_RSAPrivateKey(fpri, srk, NULL, NULL, 0, 0, NULL);
-
+	/* Write the public key to file */
+	ret = PEM_write_PUBKEY(fpub, pkey);
 	if (!ret) {
-		RSA_free(srk);
+		EVP_PKEY_free(pkey);
+		EVP_PKEY_CTX_free(ctx);
 		BN_free(public_exponent);
 		return -1;
 	}
 
-	ret = PEM_write_RSAPublicKey(fpub, srk);
-
-	if (!ret) {
-		RSA_free(srk);
-		BN_free(public_exponent);
-		return -1;
-	}
-
-#ifdef DEBUG
-	printf("public modulus (n):\n");
-	printf("%s\n", BN_bn2hex(srk->n));
-
-	printf("public exponent (e):\n");
-	printf("%s\n", BN_bn2hex(srk->e));
-
-	printf("private exponent (d):\n");
-	printf("%s\n", BN_bn2hex(srk->d));
-
-	printf("secret prime factor (p):\n");
-	printf("%s\n", BN_bn2hex(srk->p));
-	printf("secret prime factor (q):\n");
-	printf("%s\n", BN_bn2hex(srk->q));
-
-	printf("dmp1 [ d mod (p-1) ]:\n");
-	printf("%s\n", BN_bn2hex(srk->dmp1));
-	printf("dmq1 [ d mod (q-1) ]:\n");
-	printf("%s\n", BN_bn2hex(srk->dmq1));
-
-	printf("iqmp [ q^-1 mod p ]:\n");
-	printf("%s\n", BN_bn2hex(srk->iqmp));
-
-	printf("RSA SIZE: %d\n", RSA_size(srk));
-
-#endif
-
-	RSA_free(srk);
+	EVP_PKEY_free(pkey);
+	EVP_PKEY_CTX_free(ctx);
 	BN_free(public_exponent);
 
 	return 0;
