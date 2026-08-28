@@ -43,12 +43,20 @@
 
 int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr,
 			   size_t key_ptr_size);
+/*
+ * Hash context helpers. ctx is an opaque CRYPTO_HASH_CTX_SIZE buffer that
+ * must be passed to crypto_hash_init() before any other call. The context
+ * is released by crypto_hash_final(), and also by crypto_hash_update_file()
+ * if it fails, so the buffer must be re-initialised before being reused.
+ * Calling crypto_hash_init() on a live context leaks the previous one.
+ */
 void crypto_hash_init(void *ctx);
 void crypto_hash_update(void *ctx, void *data, uint32_t len);
 void crypto_hash_final(void *hash, void *ctx);
 int crypto_hash_update_file(void *ctx, char *fname);
 int crypto_rsa_sign(void *img_hash, uint32_t len,
-		void *rsa_sign, uint32_t *rsa_len, char *key_name);
+		void *rsa_sign, uint32_t *rsa_len, char *key_name,
+		size_t rsa_sign_size);
 void crypto_print_attribution(void);
 uint32_t crypto_calculate_crc(void *data, uint32_t length);
 uint32_t crypto_calculate_checksum(void *data, uint32_t num);

@@ -47,6 +47,12 @@
  * EVP_MD_CTX is heap-only, so the buffer carries the handle instead of the
  * context. memcpy() rather than a cast: a byte array carries no alignment
  * guarantee for a pointer.
+ *
+ * crypto_hash_init() must be called before the buffer is used, and the
+ * handle is cleared once the context is released, so the NULL check below
+ * catches reuse after crypto_hash_final() or after a failed update. It
+ * cannot detect a buffer that was never initialised, since that holds
+ * indeterminate bytes rather than NULL.
  ***************************************************************************/
 static void hash_ctx_set(void *ctx, EVP_MD_CTX *md_ctx)
 {
@@ -59,7 +65,7 @@ static EVP_MD_CTX *hash_ctx_get(void *ctx)
 
 	memcpy(&md_ctx, ctx, sizeof(md_ctx));
 	if (md_ctx == NULL) {
-		fprintf(stderr, "Error: hash context used before init\n");
+		fprintf(stderr, "Error: hash context used after release\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -172,10 +178,19 @@ err:
 
 /***************************************************************************
  * Function	:	crypto_rsa_sign
- * Description	:	Sign a SHA256 digest using RSASSA-PKCS1-v1_5
+ * Arguments	:	img_hash - SHA256 digest to sign
+ *			len - Length of the digest
+ *			rsa_sign - Buffer receiving the signature
+ *			rsa_len - Pointer to Length of signature (to be updated)
+ *			key_name - Private Key File Name
+ *			rsa_sign_size - Size of rsa_sign in bytes
+ * Return	:	Success or Failure
+ * Description	:	Sign a SHA256 digest using RSASSA-PKCS1-v1_5. The key
+ *			is rejected if its signature does not fit, as the file
+ *			is untrusted input.
  ***************************************************************************/
 int crypto_rsa_sign(void *img_hash, uint32_t len, void *rsa_sign,
-			uint32_t *rsa_len, char *key_name)
+			uint32_t *rsa_len, char *key_name, size_t rsa_sign_size)
 {
 	FILE *fpriv;
 	EVP_PKEY *priv_key;
@@ -198,6 +213,18 @@ int crypto_rsa_sign(void *img_hash, uint32_t len, void *rsa_sign,
 	}
 
 	sig_len = EVP_PKEY_size(priv_key);
+
+	/*
+	 * EVP_PKEY_sign() writes up to sig_len bytes, so an oversized key
+	 * would otherwise write past the end of the caller's buffer.
+	 */
+	if (sig_len > rsa_sign_size) {
+		fprintf(stderr,
+			"Error: key %s is %zu bits, exceeds the %zu bit maximum\n",
+			key_name, sig_len * 8, rsa_sign_size * 8);
+		EVP_PKEY_free(priv_key);
+		return FAILURE;
+	}
 
 	sign_ctx = EVP_PKEY_CTX_new(priv_key, NULL);
 	if (sign_ctx == NULL) {

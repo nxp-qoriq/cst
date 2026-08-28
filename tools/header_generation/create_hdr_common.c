@@ -506,7 +506,8 @@ int calculate_signature(void)
 {
 	int ret;
 	ret = crypto_rsa_sign(gd.img_hash, SHA256_DIGEST_LENGTH,
-		gd.rsa_sign, &gd.rsa_size, gd.pri_fname[gd.srk_sel - 1]);
+		gd.rsa_sign, &gd.rsa_size, gd.pri_fname[gd.srk_sel - 1],
+		sizeof(gd.rsa_sign));
 	if (ret != SUCCESS)
 		printf("Error in Signing\n");
 
