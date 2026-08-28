@@ -213,7 +213,6 @@ int create_hdr(int argc, char **argv)
 	enum cfg_taal cfg_taal;
 	int ret, i, c;
 	int option_index;
-	uint32_t *srk;
 	char ap_file[MAX_FNAME_LEN];
 	uint32_t offset = 0;
 	bool append_flag = false;
@@ -370,9 +369,17 @@ int create_hdr(int argc, char **argv)
 		for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
 			printf("%02x", gd.srk_hash[i]);
 
-		srk = (uint32_t *)gd.srk_hash;
-		for (i = 0; i < SHA256_DIGEST_LENGTH / sizeof(uint32_t); i++)
-			printf("\n\t SFP SRKHR%i = %08x", i, htonl(srk[i]));
+		/*
+		 * gd.srk_hash is a byte array with no alignment guarantee for
+		 * uint32_t, so copy each word out instead of casting.
+		 */
+		for (i = 0; i < SHA256_DIGEST_LENGTH / sizeof(uint32_t); i++) {
+			uint32_t srk_word;
+
+			memcpy(&srk_word, gd.srk_hash + i * sizeof(srk_word),
+			       sizeof(srk_word));
+			printf("\n\t SFP SRKHR%i = %08x", i, htonl(srk_word));
+		}
 	} else {
 		printf("\nSRK (Public Key) Hash Not Available");
 	}
