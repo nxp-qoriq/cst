@@ -23,6 +23,7 @@ LIB_VERBOSITY ?= 0
 CC=gcc
 LD=gcc
 RM=rm -f
+RMDIR=rm -rf
 
 ifneq ($(OPENSSL_LIB_PATH),)
 LDFLAGS += -L$(OPENSSL_LIB_PATH)
@@ -115,7 +116,7 @@ INSTALL_BINARIES = 	create_hdr_isbc create_hdr_esbc \
 			gen_sign sign_embed gen_fusescr \
 
 # targets that are not files
-.PHONY: all clean
+.PHONY: all clean distclean
 
 # make targets
 all: $(LIB_HASH_DRBG) ${INSTALL_BINARIES}
@@ -181,6 +182,9 @@ install-%: %
 
 clean:
 	${RM} *.o ${INSTALL_BINARIES}
+	${RMDIR} $(patsubst scripts/%,%,$(wildcard scripts/*))
 
 distclean:	clean
 	${RM} *.pub *.pri $(LIB_HASH_DRBG)
+	${RM} *.out fuse_scr.bin rcw_sec.bin rcw_pbi_sec.bin
+	${RM} u-boot-with-spl-pbl-sec.bin

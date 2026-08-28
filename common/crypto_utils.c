@@ -34,41 +34,96 @@
  */
 
 #include <crypto_utils.h>
-#include <openssl/ssl.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#include <openssl/core_names.h>
+#endif
+
+/***************************************************************************
+ * Callers pass an opaque uint8_t ctx[CRYPTO_HASH_CTX_SIZE] buffer, but
+ * EVP_MD_CTX is heap-only, so the buffer carries the handle instead of the
+ * context. memcpy() rather than a cast: a byte array carries no alignment
+ * guarantee for a pointer.
+ *
+ * crypto_hash_init() must be called before the buffer is used, and the
+ * handle is cleared once the context is released, so the NULL check below
+ * catches reuse after crypto_hash_final() or after a failed update. It
+ * cannot detect a buffer that was never initialised, since that holds
+ * indeterminate bytes rather than NULL.
+ ***************************************************************************/
+static void hash_ctx_set(void *ctx, EVP_MD_CTX *md_ctx)
+{
+	memcpy(ctx, &md_ctx, sizeof(md_ctx));
+}
+
+static EVP_MD_CTX *hash_ctx_get(void *ctx)
+{
+	EVP_MD_CTX *md_ctx;
+
+	memcpy(&md_ctx, ctx, sizeof(md_ctx));
+	if (md_ctx == NULL) {
+		fprintf(stderr, "Error: hash context used after release\n");
+		exit(EXIT_FAILURE);
+	}
+
+	return md_ctx;
+}
 
 /***************************************************************************
  * Function	:	crypto_hash_init
- * Description	:	Wrapper function for SHA256_Init
+ * Description	:	Wrapper function for EVP_DigestInit_ex (SHA256)
  ***************************************************************************/
 void crypto_hash_init(void *ctx)
 {
-	SHA256_CTX *c = (SHA256_CTX *)ctx;
-	SHA256_Init(c);
+	EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
+
+	if (md_ctx == NULL ||
+	    EVP_DigestInit_ex(md_ctx, EVP_sha256(), NULL) != 1) {
+		fprintf(stderr, "Error in initializing hash context\n");
+		EVP_MD_CTX_free(md_ctx);
+		exit(EXIT_FAILURE);
+	}
+
+	hash_ctx_set(ctx, md_ctx);
 }
 
 /***************************************************************************
  * Function	:	crypto_hash_update
- * Description	:	Wrapper function for SHA256_Update
+ * Description	:	Wrapper function for EVP_DigestUpdate
  ***************************************************************************/
 void crypto_hash_update(void *ctx, void *data, uint32_t len)
 {
-	SHA256_CTX *c = (SHA256_CTX *)ctx;
-	SHA256_Update(c, data, len);
+	if (EVP_DigestUpdate(hash_ctx_get(ctx), data, len) != 1) {
+		fprintf(stderr, "Error in updating hash context\n");
+		exit(EXIT_FAILURE);
+	}
 }
 
 /***************************************************************************
  * Function	:	crypto_hash_final
- * Description	:	Wrapper function for SHA256_Final
+ * Description	:	Wrapper function for EVP_DigestFinal_ex
  ***************************************************************************/
 void crypto_hash_final(void *hash, void *ctx)
 {
-	SHA256_CTX *c = (SHA256_CTX *)ctx;
-	SHA256_Final(hash, c);
+	EVP_MD_CTX *md_ctx = hash_ctx_get(ctx);
+	int ret;
+
+	ret = EVP_DigestFinal_ex(md_ctx, hash, NULL);
+	EVP_MD_CTX_free(md_ctx);
+	hash_ctx_set(ctx, NULL);
+
+	if (ret != 1) {
+		fprintf(stderr, "Error in finalizing hash context\n");
+		exit(EXIT_FAILURE);
+	}
 }
 
 /***************************************************************************
  * Function	:	crypto_hash_update_file
- * Arguments	:	ctx - SHA256 context
+ * Arguments	:	ctx - hash context
  *			fname - Image Name
  * Return	:	SUCCESS or Failure
  * Description	:	Opens the Image File and updates the context with
@@ -79,13 +134,13 @@ int crypto_hash_update_file(void *ctx, char *fname)
 	FILE *fp;
 	unsigned char buf[IOBLOCK];
 	size_t bytes = 0;
-	SHA256_CTX *c = (SHA256_CTX *)ctx;
+	EVP_MD_CTX *md_ctx = hash_ctx_get(ctx);
 
 	/* open the file */
 	fp = fopen(fname, "rb");
 	if (fp == NULL) {
 		printf("Error in opening the file: %s\n", fname);
-		return FAILURE;
+		goto err;
 	}
 
 	/* go to the begenning */
@@ -97,29 +152,51 @@ int crypto_hash_update_file(void *ctx, char *fname)
 		if (ferror(fp)) {
 			fprintf(stderr, "Error in reading file\n");
 			fclose(fp);
-			return FAILURE;
+			goto err;
 		} else if (feof(fp) && (bytes == 0)) {
 			break;
 		}
 
-		SHA256_Update(c, buf, bytes);
+		if (EVP_DigestUpdate(md_ctx, buf, bytes) != 1) {
+			fprintf(stderr, "Error in updating hash context\n");
+			fclose(fp);
+			goto err;
+		}
 	}
 
 	fclose(fp);
 
 	return SUCCESS;
+
+err:
+	/* Callers abort as soon as this fails, so free rather than leak */
+	EVP_MD_CTX_free(md_ctx);
+	hash_ctx_set(ctx, NULL);
+
+	return FAILURE;
 }
 
 /***************************************************************************
  * Function	:	crypto_rsa_sign
- * Description	:	Wrapper function for RSA_sign
+ * Arguments	:	img_hash - SHA256 digest to sign
+ *			len - Length of the digest
+ *			rsa_sign - Buffer receiving the signature
+ *			rsa_len - Pointer to Length of signature (to be updated)
+ *			key_name - Private Key File Name
+ *			rsa_sign_size - Size of rsa_sign in bytes
+ * Return	:	Success or Failure
+ * Description	:	Sign a SHA256 digest using RSASSA-PKCS1-v1_5. The key
+ *			is rejected if its signature does not fit, as the file
+ *			is untrusted input.
  ***************************************************************************/
 int crypto_rsa_sign(void *img_hash, uint32_t len, void *rsa_sign,
-			uint32_t *rsa_len, char *key_name)
+			uint32_t *rsa_len, char *key_name, size_t rsa_sign_size)
 {
-	int ret;
 	FILE *fpriv;
-	RSA *priv_key;
+	EVP_PKEY *priv_key;
+	EVP_PKEY_CTX *sign_ctx;
+	size_t sig_len;
+	int ret = FAILURE;
 
 	/* Open the private Key */
 	fpriv = fopen(key_name, "r");
@@ -128,22 +205,48 @@ int crypto_rsa_sign(void *img_hash, uint32_t len, void *rsa_sign,
 		return FAILURE;
 	}
 
-	priv_key = PEM_read_RSAPrivateKey(fpriv, NULL, NULL, NULL);
+	priv_key = PEM_read_PrivateKey(fpriv, NULL, NULL, NULL);
 	fclose(fpriv);
 	if (priv_key == NULL) {
 		printf("Error in key reading %s:\n", key_name);
 		return FAILURE;
 	}
 
-	/* Sign the Image Hash with Private Key */
-	ret = RSA_sign(NID_sha256, img_hash, len,
-			rsa_sign, rsa_len,
-			priv_key);
-	if (ret != 1) {
-		printf("Error in Signing\n");
+	sig_len = EVP_PKEY_size(priv_key);
+
+	/*
+	 * EVP_PKEY_sign() writes up to sig_len bytes, so an oversized key
+	 * would otherwise write past the end of the caller's buffer.
+	 */
+	if (sig_len > rsa_sign_size) {
+		fprintf(stderr,
+			"Error: key %s is %zu bits, exceeds the %zu bit maximum\n",
+			key_name, sig_len * 8, rsa_sign_size * 8);
+		EVP_PKEY_free(priv_key);
 		return FAILURE;
 	}
-	return SUCCESS;
+
+	sign_ctx = EVP_PKEY_CTX_new(priv_key, NULL);
+	if (sign_ctx == NULL) {
+		printf("Error in Signing\n");
+		EVP_PKEY_free(priv_key);
+		return FAILURE;
+	}
+
+	if (EVP_PKEY_sign_init(sign_ctx) == 1 &&
+	    EVP_PKEY_CTX_set_rsa_padding(sign_ctx, RSA_PKCS1_PADDING) > 0 &&
+	    EVP_PKEY_CTX_set_signature_md(sign_ctx, EVP_sha256()) > 0 &&
+	    EVP_PKEY_sign(sign_ctx, rsa_sign, &sig_len, img_hash, len) == 1) {
+		*rsa_len = sig_len;
+		ret = SUCCESS;
+	} else {
+		printf("Error in Signing\n");
+	}
+
+	EVP_PKEY_CTX_free(sign_ctx);
+	EVP_PKEY_free(priv_key);
+
+	return ret;
 }
 
 /***************************************************************************
@@ -151,16 +254,24 @@ int crypto_rsa_sign(void *img_hash, uint32_t len, void *rsa_sign,
  * Arguments	:	fname_pub - Public Key File Name
  *			len - Pointer to Length of public Key (to be updated)
  *			key_ptr - Pointer to buffer where public key is stored
+ *			key_ptr_size - Size of that buffer in bytes
  * Return	:	Success or Failure
- * Description	:	OPen the Public Key, read it into the provided buffer
- *			and update the Key lenght.
+ * Description	:	Open the Public Key, read it into the provided buffer
+ *			and update the Key length. The key is rejected if it
+ *			does not fit, as the file is untrusted input.
  ***************************************************************************/
-int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr)
+int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr,
+			   size_t key_ptr_size)
 {
 	FILE *fp;
-	RSA *pub_key;
+	EVP_PKEY *pub_key = NULL;
 	uint32_t key_len;
-	const BIGNUM *modulus, *exponent;
+	char *pem_name = NULL, *pem_hdr = NULL;
+	unsigned char *pem_der = NULL;
+	const unsigned char *der;
+	long pem_len = 0;
+	BIGNUM *modulus = NULL, *exponent = NULL;
+	int ret = FAILURE;
 
 	fp = fopen(fname_pub, "r");
 	if (fp == NULL) {
@@ -169,25 +280,78 @@ int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr)
 		return FAILURE;
 	}
 
-	pub_key = PEM_read_RSAPublicKey(fp, NULL, NULL, NULL);
-	fclose(fp);
-	if (pub_key == NULL) {
-		fprintf(stderr, "Error in key reading %s:\n",
-			fname_pub);
+	/*
+	 * Keys are stored in the PKCS#1 "RSA PUBLIC KEY" PEM format written by
+	 * gen_keys: decode the PEM envelope, then the RSAPublicKey DER body.
+	 */
+	if (PEM_read(fp, &pem_name, &pem_hdr, &pem_der, &pem_len) != 1) {
+		fclose(fp);
+		fprintf(stderr, "Error in key reading %s:\n", fname_pub);
 		return FAILURE;
 	}
+	fclose(fp);
 
-	key_len = RSA_size(pub_key);
+	if (strcmp(pem_name, PEM_STRING_RSA_PUBLIC) != 0) {
+		fprintf(stderr, "Error in key reading %s:\n", fname_pub);
+		fprintf(stderr, "Expected a PEM \"%s\" file, found \"%s\"\n",
+			PEM_STRING_RSA_PUBLIC, pem_name);
+		goto out;
+	}
+
+	pub_key = EVP_PKEY_new();
+	if (pub_key == NULL)
+		goto out;
+
+	der = pem_der;
+	if (d2i_PublicKey(EVP_PKEY_RSA, &pub_key, &der, pem_len) == NULL) {
+		fprintf(stderr, "Error in key reading %s:\n", fname_pub);
+		goto out;
+	}
+
+	key_len = EVP_PKEY_size(pub_key);
+
+	/*
+	 * The key is stored as the modulus followed by the exponent, each
+	 * key_len bytes wide, so an oversized key file would otherwise write
+	 * past the end of the caller's buffer.
+	 */
+	if ((size_t)key_len * 2 > key_ptr_size) {
+		fprintf(stderr,
+			"Error: key %s is %u bits, exceeds the %zu bit maximum\n",
+			fname_pub, key_len * 8, key_ptr_size * 4);
+		goto out;
+	}
+
 	*len = 2 * key_len;
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-	/* copy N and E */
-        modulus = (BIGNUM *)pub_key->n;
-        exponent = (BIGNUM *)pub_key->e;
-#else
 	/* get N and E */
-	RSA_get0_key(pub_key, &modulus, &exponent, NULL);
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	if (EVP_PKEY_get_bn_param(pub_key, OSSL_PKEY_PARAM_RSA_N,
+				  &modulus) != 1 ||
+	    EVP_PKEY_get_bn_param(pub_key, OSSL_PKEY_PARAM_RSA_E,
+				  &exponent) != 1) {
+		fprintf(stderr, "Error in key reading %s:\n", fname_pub);
+		goto out;
+	}
+#else
+	{
+		const RSA *rsa = EVP_PKEY_get0_RSA(pub_key);
+		const BIGNUM *n, *e;
+
+		if (rsa == NULL) {
+			fprintf(stderr, "Error in key reading %s:\n",
+				fname_pub);
+			goto out;
+		}
+
+		RSA_get0_key(rsa, &n, &e, NULL);
+		modulus = BN_dup(n);
+		exponent = BN_dup(e);
+		if (modulus == NULL || exponent == NULL)
+			goto out;
+	}
 #endif
+
 	/* Copy N component */
 	BN_bn2bin(modulus, key_ptr);
 
@@ -202,7 +366,17 @@ int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr)
 	 */
 	BN_bn2bin(exponent, key_ptr + key_len - BN_num_bytes(exponent));
 
-	return SUCCESS;
+	ret = SUCCESS;
+
+out:
+	BN_free(modulus);
+	BN_free(exponent);
+	EVP_PKEY_free(pub_key);
+	OPENSSL_free(pem_name);
+	OPENSSL_free(pem_hdr);
+	OPENSSL_free(pem_der);
+
+	return ret;
 }
 
 /***************************************************************************

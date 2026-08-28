@@ -1,0 +1,32 @@
+# Build output. Objects are written to the top level directory via vpath,
+# so these patterns are anchored to keep them from matching sources.
+*.o
+*.a
+/create_hdr_isbc
+/create_hdr_esbc
+/create_hdr_pbi
+/create_hdr_cf
+/gen_keys
+/gen_otpmk_drbg
+/gen_drv_drbg
+/gen_sign
+/sign_embed
+/gen_fusescr
+
+# Copied into the top level directory by "make all" from scripts/.
+# The originals under scripts/ stay tracked.
+/platforms/
+/uni_sign
+/uni_pbi
+/uni_cfsign
+
+# Key pairs written by gen_keys.
+*.pub
+*.pri
+
+# Headers, signatures and fuse scripts written by the tools.
+*.out
+/fuse_scr.bin
+/rcw_sec.bin
+/rcw_pbi_sec.bin
+/u-boot-with-spl-pbl-sec.bin

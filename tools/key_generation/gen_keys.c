@@ -41,7 +41,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/ssl.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
 #include <unistd.h>
 #include <getopt.h>
 
@@ -54,77 +57,62 @@
 
 static int generate_rsa_keys(const unsigned int n, FILE *fpri, FILE *fpub)
 {
-	RSA *srk = NULL;
-	BIGNUM *public_exponent = NULL;
-	int ret = 0;
+	EVP_PKEY *srk = NULL;
+	EVP_PKEY_CTX *ctx = NULL;
+	BIO *bio_pri = NULL;
+	unsigned char *der = NULL;
+	int derlen;
+	int ret = -1;
 
-	/* Allocate space for RSA structure */
-	srk = RSA_new();
-
-	if (srk == NULL) {
+	ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+	if (ctx == NULL)
 		return -1;
-	}
 
-	public_exponent = BN_new();
-	if (public_exponent == NULL || !BN_set_word(public_exponent, RSA_F4)) {
-		BN_free(public_exponent);
-		return -1;
-	}
+	/* Public exponent is left at the EVP default of RSA_F4 (65537) */
+	if (EVP_PKEY_keygen_init(ctx) != 1 ||
+	    EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, n) <= 0 ||
+	    EVP_PKEY_keygen(ctx, &srk) != 1)
+		goto out;
 
-	ret = RSA_generate_key_ex(srk, n, public_exponent, NULL);
-	if (!ret) {
-		RSA_free(srk);
-		BN_free(public_exponent);
-		return -1;
-	}
+	/* Private key in the PKCS#1 "RSA PRIVATE KEY" PEM format */
+	bio_pri = BIO_new_fp(fpri, BIO_NOCLOSE);
+	if (bio_pri == NULL)
+		goto out;
 
-	ret = PEM_write_RSAPrivateKey(fpri, srk, NULL, NULL, 0, 0, NULL);
+	if (PEM_write_bio_PrivateKey_traditional(bio_pri, srk, NULL, NULL, 0,
+						 NULL, NULL) != 1)
+		goto out;
 
-	if (!ret) {
-		RSA_free(srk);
-		BN_free(public_exponent);
-		return -1;
-	}
+	/* Public key in the PKCS#1 "RSA PUBLIC KEY" PEM format */
+	derlen = i2d_PublicKey(srk, &der);
+	if (derlen <= 0)
+		goto out;
 
-	ret = PEM_write_RSAPublicKey(fpub, srk);
-
-	if (!ret) {
-		RSA_free(srk);
-		BN_free(public_exponent);
-		return -1;
-	}
+	/* PEM_write() returns the number of bytes written, 0 on error */
+	if (PEM_write(fpub, PEM_STRING_RSA_PUBLIC, "", der, derlen) <= 0)
+		goto out;
 
 #ifdef DEBUG
-	printf("public modulus (n):\n");
-	printf("%s\n", BN_bn2hex(srk->n));
+	{
+		BIO *bio_out = BIO_new_fp(stdout, BIO_NOCLOSE);
 
-	printf("public exponent (e):\n");
-	printf("%s\n", BN_bn2hex(srk->e));
-
-	printf("private exponent (d):\n");
-	printf("%s\n", BN_bn2hex(srk->d));
-
-	printf("secret prime factor (p):\n");
-	printf("%s\n", BN_bn2hex(srk->p));
-	printf("secret prime factor (q):\n");
-	printf("%s\n", BN_bn2hex(srk->q));
-
-	printf("dmp1 [ d mod (p-1) ]:\n");
-	printf("%s\n", BN_bn2hex(srk->dmp1));
-	printf("dmq1 [ d mod (q-1) ]:\n");
-	printf("%s\n", BN_bn2hex(srk->dmq1));
-
-	printf("iqmp [ q^-1 mod p ]:\n");
-	printf("%s\n", BN_bn2hex(srk->iqmp));
-
-	printf("RSA SIZE: %d\n", RSA_size(srk));
-
+		if (bio_out != NULL) {
+			EVP_PKEY_print_private(bio_out, srk, 0, NULL);
+			BIO_free(bio_out);
+		}
+		printf("RSA SIZE: %d\n", EVP_PKEY_size(srk));
+	}
 #endif
 
-	RSA_free(srk);
-	BN_free(public_exponent);
+	ret = 0;
 
-	return 0;
+out:
+	OPENSSL_free(der);
+	BIO_free(bio_pri);
+	EVP_PKEY_free(srk);
+	EVP_PKEY_CTX_free(ctx);
+
+	return ret;
 }
 
 void usage(void)

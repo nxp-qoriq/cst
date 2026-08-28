@@ -213,7 +213,6 @@ int create_hdr(int argc, char **argv)
 	enum cfg_taal cfg_taal;
 	int ret, i, c;
 	int option_index;
-	uint32_t *srk;
 	char ap_file[MAX_FNAME_LEN];
 	uint32_t offset = 0;
 	bool append_flag = false;
@@ -370,9 +369,17 @@ int create_hdr(int argc, char **argv)
 		for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
 			printf("%02x", gd.srk_hash[i]);
 
-		srk = (uint32_t *)gd.srk_hash;
-		for (i = 0; i < SHA256_DIGEST_LENGTH / sizeof(uint32_t); i++)
-			printf("\n\t SFP SRKHR%i = %08x", i, htonl(srk[i]));
+		/*
+		 * gd.srk_hash is a byte array with no alignment guarantee for
+		 * uint32_t, so copy each word out instead of casting.
+		 */
+		for (i = 0; i < SHA256_DIGEST_LENGTH / sizeof(uint32_t); i++) {
+			uint32_t srk_word;
+
+			memcpy(&srk_word, gd.srk_hash + i * sizeof(srk_word),
+			       sizeof(srk_word));
+			printf("\n\t SFP SRKHR%i = %08x", i, htonl(srk_word));
+		}
 	} else {
 		printf("\nSRK (Public Key) Hash Not Available");
 	}
@@ -426,7 +433,8 @@ int create_srk_calc_hash(uint32_t max_keys)
 		key_len = 0;
 		ret = crypto_extract_pub_key(gd.pub_fname[i],
 					&key_len,
-					gd.key_table[i].pkey);
+					gd.key_table[i].pkey,
+					sizeof(gd.key_table[i].pkey));
 		if (gd.hton_flag == 0)
 			gd.key_table[i].key_len = key_len;
 		else
@@ -498,7 +506,8 @@ int calculate_signature(void)
 {
 	int ret;
 	ret = crypto_rsa_sign(gd.img_hash, SHA256_DIGEST_LENGTH,
-		gd.rsa_sign, &gd.rsa_size, gd.pri_fname[gd.srk_sel - 1]);
+		gd.rsa_sign, &gd.rsa_size, gd.pri_fname[gd.srk_sel - 1],
+		sizeof(gd.rsa_sign));
 	if (ret != SUCCESS)
 		printf("Error in Signing\n");
 
@@ -599,7 +608,8 @@ int create_ie_file(char *file_name)
 		key_len = 0;
 		ret = crypto_extract_pub_key(gd.iek_fname[i],
 					&key_len,
-				gd.ie_table.srk_table[i].pkey);
+				gd.ie_table.srk_table[i].pkey,
+				sizeof(gd.ie_table.srk_table[i].pkey));
 		if (ret != SUCCESS)
 			return ret;
 

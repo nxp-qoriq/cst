@@ -133,7 +133,7 @@ int main(int argc, char **argv)
 	}
 
 	ret = crypto_rsa_sign(img_hash, SHA256_DIGEST_LENGTH,
-			rsa_sign, &len, priv_key);
+			rsa_sign, &len, priv_key, sizeof(rsa_sign));
 	if (ret != SUCCESS) {
 		printf("Error in Signing\n");
 		return FAILURE;

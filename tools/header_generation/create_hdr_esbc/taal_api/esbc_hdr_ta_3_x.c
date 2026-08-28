@@ -274,7 +274,8 @@ static int calc_srk_hash_ta_3_x(uint32_t max_keys)
 		gd.srk_sel = 1;
 		ret = crypto_extract_pub_key(gd.pub_fname[0],
 					&gd.key_len,
-					gd.key_table[0].pkey);
+					gd.key_table[0].pkey,
+					sizeof(gd.key_table[0].pkey));
 
 		return ret;
 	}

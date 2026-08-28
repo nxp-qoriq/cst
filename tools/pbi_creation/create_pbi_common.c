@@ -556,6 +556,11 @@ int create_pbi_ta2(int argc, char **argv)
 	/* Initialization of Global Structure to 0 */
 	/* Check the command line argument */
 	ret = ta2_parse_input_file(parse_list, NUM_PARSE_LIST);
+	if (ret != SUCCESS) {
+		printf("Error in parsing the input file\n");
+		return FAILURE;
+	}
+
 	printf("Input File Name : %s\n", gd.rcw_fname);
 
 	fp_rcw_pbi_ip = fopen(gd.rcw_fname, "rb");
@@ -587,7 +592,20 @@ int create_pbi_ta2(int argc, char **argv)
 
 	/* modify rcw field based on sben and boot_ho */
 	ret = rcw_sben_boot_ho(fp_rcw_pbi_ip, fp_rcw_pbi_op);
+	if (ret != SUCCESS)
+		goto exit;
+
+	/*
+	 * Check the read before the first comparison, otherwise an RCW that
+	 * ends before the stop command leaves 'word' indeterminate.
+	 */
 	ret = fread(&word, sizeof(word), 1, fp_rcw_pbi_ip);
+	if (ret == 0) {
+		printf("Error in Reading PBI Words\n");
+		ret = FAILURE;
+		goto exit;
+	}
+
 	while (BYTE_SWAP_32(word) != gd.stop_cmd) {
 		ret = fwrite(&word, sizeof(word), 1, fp_rcw_pbi_op);
 		if (ret == 0) {
