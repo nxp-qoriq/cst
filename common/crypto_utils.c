@@ -227,11 +227,14 @@ int crypto_rsa_sign(void *img_hash, uint32_t len, void *rsa_sign,
  * Arguments	:	fname_pub - Public Key File Name
  *			len - Pointer to Length of public Key (to be updated)
  *			key_ptr - Pointer to buffer where public key is stored
+ *			key_ptr_size - Size of that buffer in bytes
  * Return	:	Success or Failure
- * Description	:	OPen the Public Key, read it into the provided buffer
- *			and update the Key lenght.
+ * Description	:	Open the Public Key, read it into the provided buffer
+ *			and update the Key length. The key is rejected if it
+ *			does not fit, as the file is untrusted input.
  ***************************************************************************/
-int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr)
+int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr,
+			   size_t key_ptr_size)
 {
 	FILE *fp;
 	EVP_PKEY *pub_key = NULL;
@@ -279,6 +282,19 @@ int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr)
 	}
 
 	key_len = EVP_PKEY_size(pub_key);
+
+	/*
+	 * The key is stored as the modulus followed by the exponent, each
+	 * key_len bytes wide, so an oversized key file would otherwise write
+	 * past the end of the caller's buffer.
+	 */
+	if ((size_t)key_len * 2 > key_ptr_size) {
+		fprintf(stderr,
+			"Error: key %s is %u bits, exceeds the %zu bit maximum\n",
+			fname_pub, key_len * 8, key_ptr_size * 4);
+		goto out;
+	}
+
 	*len = 2 * key_len;
 
 	/* get N and E */

@@ -433,7 +433,8 @@ int create_srk_calc_hash(uint32_t max_keys)
 		key_len = 0;
 		ret = crypto_extract_pub_key(gd.pub_fname[i],
 					&key_len,
-					gd.key_table[i].pkey);
+					gd.key_table[i].pkey,
+					sizeof(gd.key_table[i].pkey));
 		if (gd.hton_flag == 0)
 			gd.key_table[i].key_len = key_len;
 		else
@@ -606,7 +607,8 @@ int create_ie_file(char *file_name)
 		key_len = 0;
 		ret = crypto_extract_pub_key(gd.iek_fname[i],
 					&key_len,
-				gd.ie_table.srk_table[i].pkey);
+				gd.ie_table.srk_table[i].pkey,
+				sizeof(gd.ie_table.srk_table[i].pkey));
 		if (ret != SUCCESS)
 			return ret;
 

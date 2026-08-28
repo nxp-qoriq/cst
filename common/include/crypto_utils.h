@@ -41,7 +41,8 @@
 
 #define CRYPTO_HASH_CTX_SIZE	0x400
 
-int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr);
+int crypto_extract_pub_key(char *fname_pub, uint32_t *len, uint8_t *key_ptr,
+			   size_t key_ptr_size);
 void crypto_hash_init(void *ctx);
 void crypto_hash_update(void *ctx, void *data, uint32_t len);
 void crypto_hash_final(void *hash, void *ctx);
