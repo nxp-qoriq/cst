@@ -110,8 +110,9 @@ int add_blk_cpy_cmd(uint32_t *pbi_word)
 #define BLK_CPY_HDR_CHASIS_3_0 0x80000040
 #define BLK_CPY_HDR_CHASIS_3_2 0x80000008
 
-	uint32_t file_size, new_file_size;
+	uint32_t new_file_size;
 	uint32_t align = 4;
+	int file_size;
 	int i;
 	enum cfg_taal cfg_taal;
 
@@ -123,7 +124,14 @@ int add_blk_cpy_cmd(uint32_t *pbi_word)
 
 	for (i = 0; i < gd.cp_cmd_count; i++) {
 		file_size = get_file_size(gd.cp_cmd[i].img_name);
-		new_file_size = (file_size+(file_size % align));
+		if (file_size < 0) {
+			printf("Error in getting size of file %s\n",
+			       gd.cp_cmd[i].img_name);
+			return FAILURE;
+		}
+		/* The copied block is padded up to the next align boundary */
+		new_file_size = file_size +
+				((align - (file_size % align)) % align);
 
 		if (pbi_check_space(4) != SUCCESS)
 			return FAILURE;
@@ -239,8 +247,8 @@ int create_pbi(uint32_t hdr_size)
 		ret = fread(&word, sizeof(word), 1, frcw);
 		if (ret == 0) {
 			printf("Error in Reading RCW Words\n");
-			fclose(frcw);
-			return FAILURE;
+			ret = FAILURE;
+			goto err;
 		}
 		rcw_word[i] = word;
 	}
@@ -250,8 +258,8 @@ int create_pbi(uint32_t hdr_size)
 
 	/* First PBI Word is LOAD_SEC_HDR_CMD */
 	if (pbi_check_space(1 + hdr_size / sizeof(word)) != SUCCESS) {
-		fclose(frcw);
-		return FAILURE;
+		ret = FAILURE;
+		goto err;
 	}
 	pbi_word[gd.num_pbi_words++] = LOAD_SEC_HDR_CMD;
 
@@ -261,15 +269,15 @@ int create_pbi(uint32_t hdr_size)
 	if (gd.boot1_ptr != 0) {
 	/* Next PBI Command is LOAD_BOOT1_CSF_PTR_CMD */
 	if (pbi_check_space(2) != SUCCESS) {
-		fclose(frcw);
-		return FAILURE;
+		ret = FAILURE;
+		goto err;
 	}
 	pbi_word[gd.num_pbi_words++] = LOAD_BOOT1_CSF_PTR_CMD;
 	pbi_word[gd.num_pbi_words++] = gd.boot1_ptr;
 	if (gd.boot1_ptr == 0) {
 		printf("Error: BOOT1 PTR is not specified\n");
-		fclose(frcw);
-		return FAILURE;
+		ret = FAILURE;
+		goto err;
 	}
 	}
 
@@ -278,8 +286,8 @@ int create_pbi(uint32_t hdr_size)
 		 * IE Table Address
 		 */
 		if (pbi_check_space(4) != SUCCESS) {
-			fclose(frcw);
-			return FAILURE;
+			ret = FAILURE;
+			goto err;
 		}
 
 		/* Lower Address */
@@ -293,31 +301,28 @@ int create_pbi(uint32_t hdr_size)
 			(uint32_t)(gd.ie_table_addr >> 32);
 	}
 	ret = get_blk_cpy_cmd(gd.input_file);
-	if (ret != SUCCESS) {
-		fclose(frcw);
-		return ret;
-	}
+	if (ret != SUCCESS)
+		goto err;
+
 	ret = add_blk_cpy_cmd(pbi_word);
-	if (ret != SUCCESS) {
-		fclose(frcw);
-		return ret;
-	}
+	if (ret != SUCCESS)
+		goto err;
 
 	/* Read Other PBI commands
 	 * pbi_len indicates no. of PBI words */
 	if (pbi_check_space(gd.pbi_len) != SUCCESS) {
 		printf("Invalid RCW File (%s). PBI length field is %u words\n",
 		       gd.rcw_fname, gd.pbi_len);
-		fclose(frcw);
-		return FAILURE;
+		ret = FAILURE;
+		goto err;
 	}
 
 	for (i = 0; i < gd.pbi_len; i++) {
 		ret = fread(&word, sizeof(word), 1, frcw);
 		if (ret == 0) {
 			printf("Error in Reading PBI Commands\n");
-			fclose(frcw);
-			return FAILURE;
+			ret = FAILURE;
+			goto err;
 		}
 		pbi_word[gd.num_pbi_words++] = word;
 	}
@@ -325,11 +330,6 @@ int create_pbi(uint32_t hdr_size)
 	fclose(frcw);
 
 	/* The last two words must be the stop command followed by its CRC */
-	if (gd.num_pbi_words < 2) {
-		printf("Error: Invalid PBI. No Stop Command\n");
-		return FAILURE;
-	}
-
 	if ((pbi_word[gd.num_pbi_words - 2] != CRC_STOP_CMD) &&
 	    (pbi_word[gd.num_pbi_words - 2] != STOP_CMD)) {
 		printf("Error: Invalid PBI. No Stop Command\n");
@@ -345,6 +345,10 @@ int create_pbi(uint32_t hdr_size)
 			(gd.num_pbi_words << PBI_LEN_SHIFT);
 
 	return SUCCESS;
+
+err:
+	fclose(frcw);
+	return ret;
 }
 
 int update_crc_checksum(void)
