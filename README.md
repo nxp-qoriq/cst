@@ -193,10 +193,25 @@ SRK hash, OTPMK, debug response and related fuses. Templates are in
 | `lib_hash_drbg/` | Hash DRBG used by the OTPMK and debug-response generators |
 | `scripts/` | Wrapper scripts copied to the top level by `make` |
 | `input_files/` | Ready-made input files for each supported board |
+| `byte_swap.py` | Standalone helper, see below |
 
 Header layouts are implemented per trust-architecture revision under
 `tools/header_generation/*/taal_api/`. Adding a platform that reuses an existing
 layout is a matter of extending the table in `taal/taal.c`.
+
+## Byte swapping images
+
+`byte_swap.py` reverses the byte order within each fixed-size block of a binary,
+zero padding the input up to a multiple of the block size first. It is needed where
+a boot source presents flash contents to the SoC in the opposite byte order to the
+one the image was built in. It is a standalone helper and is not part of the build
+or of any signing flow.
+
+```sh
+./byte_swap.py u-boot.bin u-boot-swapped.bin 4
+```
+
+Requires Python 3; no third-party modules.
 
 ## Differences from upstream
 
@@ -210,6 +225,9 @@ layout is a matter of extending the table in `taal/taal.c`.
 * A misaligned load when printing the SRK hash was replaced with a defined access.
 * `make clean` now undoes `make`, and generated files are excluded from version
   control.
+* The `byte_swap` helper is a Python script rather than a Tcl one, producing
+  identical output. The Tcl version truncated its output file before reading its
+  input, so naming the same file for both destroyed the image.
 
 One deliberate output change: the PBI block-copy command previously derived its
 length with a padding expression that did not round up, so an image whose size was
