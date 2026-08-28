@@ -36,6 +36,27 @@ uint8_t barker[] = {0x12, 0x19, 0x20, 0x01};
 extern char line_data[];
 extern struct input_field file_field;
 
+/*
+ * PBI words are stored in gd.hdr_struct just after the RCW words, so the
+ * number that fits is bounded by MAX_HDR_SIZE. The PBI length comes from a
+ * field in the supplied RCW and can name far more words than that, so every
+ * write must be capacity-checked.
+ */
+#define MAX_PBI_WORDS	((uint32_t)((MAX_HDR_SIZE - \
+				     NUM_RCW_WORD * sizeof(uint32_t)) / \
+				    sizeof(uint32_t)))
+
+static int pbi_check_space(uint32_t extra)
+{
+	if (extra > MAX_PBI_WORDS || gd.num_pbi_words > MAX_PBI_WORDS - extra) {
+		printf("Error: PBI is too large. Need %u words, limit is %u\n",
+		       gd.num_pbi_words + extra, MAX_PBI_WORDS);
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
+
 
 /****************************************************************************
  * API's for PARSING INPUT FILES
@@ -103,6 +124,9 @@ int add_blk_cpy_cmd(uint32_t *pbi_word)
 	for (i = 0; i < gd.cp_cmd_count; i++) {
 		file_size = get_file_size(gd.cp_cmd[i].img_name);
 		new_file_size = (file_size+(file_size % align));
+
+		if (pbi_check_space(4) != SUCCESS)
+			return FAILURE;
 
 		if (cfg_taal == TA_3_2) {
 			pbi_word[gd.num_pbi_words++] = BLK_CPY_HDR_CHASIS_3_2;
@@ -225,6 +249,10 @@ int create_pbi(uint32_t hdr_size)
 	gd.num_pbi_words = 0;
 
 	/* First PBI Word is LOAD_SEC_HDR_CMD */
+	if (pbi_check_space(1 + hdr_size / sizeof(word)) != SUCCESS) {
+		fclose(frcw);
+		return FAILURE;
+	}
 	pbi_word[gd.num_pbi_words++] = LOAD_SEC_HDR_CMD;
 
 	/* Reserve Space for Security Header */
@@ -232,6 +260,10 @@ int create_pbi(uint32_t hdr_size)
 
 	if (gd.boot1_ptr != 0) {
 	/* Next PBI Command is LOAD_BOOT1_CSF_PTR_CMD */
+	if (pbi_check_space(2) != SUCCESS) {
+		fclose(frcw);
+		return FAILURE;
+	}
 	pbi_word[gd.num_pbi_words++] = LOAD_BOOT1_CSF_PTR_CMD;
 	pbi_word[gd.num_pbi_words++] = gd.boot1_ptr;
 	if (gd.boot1_ptr == 0) {
@@ -245,6 +277,11 @@ int create_pbi(uint32_t hdr_size)
 		/* Add PBI Command to Update SCRATCH Register with
 		 * IE Table Address
 		 */
+		if (pbi_check_space(4) != SUCCESS) {
+			fclose(frcw);
+			return FAILURE;
+		}
+
 		/* Lower Address */
 		pbi_word[gd.num_pbi_words++] = CCSR_W_SCRATCHRW13_CMD;
 		pbi_word[gd.num_pbi_words++] =
@@ -256,14 +293,25 @@ int create_pbi(uint32_t hdr_size)
 			(uint32_t)(gd.ie_table_addr >> 32);
 	}
 	ret = get_blk_cpy_cmd(gd.input_file);
-	if (ret != SUCCESS)
+	if (ret != SUCCESS) {
+		fclose(frcw);
 		return ret;
+	}
 	ret = add_blk_cpy_cmd(pbi_word);
-	if (ret != SUCCESS)
+	if (ret != SUCCESS) {
+		fclose(frcw);
 		return ret;
+	}
 
 	/* Read Other PBI commands
 	 * pbi_len indicates no. of PBI words */
+	if (pbi_check_space(gd.pbi_len) != SUCCESS) {
+		printf("Invalid RCW File (%s). PBI length field is %u words\n",
+		       gd.rcw_fname, gd.pbi_len);
+		fclose(frcw);
+		return FAILURE;
+	}
+
 	for (i = 0; i < gd.pbi_len; i++) {
 		ret = fread(&word, sizeof(word), 1, frcw);
 		if (ret == 0) {
@@ -275,6 +323,12 @@ int create_pbi(uint32_t hdr_size)
 	}
 
 	fclose(frcw);
+
+	/* The last two words must be the stop command followed by its CRC */
+	if (gd.num_pbi_words < 2) {
+		printf("Error: Invalid PBI. No Stop Command\n");
+		return FAILURE;
+	}
 
 	if ((pbi_word[gd.num_pbi_words - 2] != CRC_STOP_CMD) &&
 	    (pbi_word[gd.num_pbi_words - 2] != STOP_CMD)) {

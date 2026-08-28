@@ -587,7 +587,20 @@ int create_pbi_ta2(int argc, char **argv)
 
 	/* modify rcw field based on sben and boot_ho */
 	ret = rcw_sben_boot_ho(fp_rcw_pbi_ip, fp_rcw_pbi_op);
+	if (ret != SUCCESS)
+		goto exit;
+
+	/*
+	 * Check the read before the first comparison, otherwise an RCW that
+	 * ends before the stop command leaves 'word' indeterminate.
+	 */
 	ret = fread(&word, sizeof(word), 1, fp_rcw_pbi_ip);
+	if (ret == 0) {
+		printf("Error in Reading PBI Words\n");
+		ret = FAILURE;
+		goto exit;
+	}
+
 	while (BYTE_SWAP_32(word) != gd.stop_cmd) {
 		ret = fwrite(&word, sizeof(word), 1, fp_rcw_pbi_op);
 		if (ret == 0) {
