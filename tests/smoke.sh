@@ -83,8 +83,8 @@ openssl pkeyutl -verify -pubin -inkey srk_spki.pub -sigfile sign.out -in hash.ou
 	-pkeyopt digest:sha256 > verify.log 2>&1 || { cat verify.log; fail "openssl cannot verify sign.out"; }
 pass "openssl verifies the RSA signature"
 
-# The public key in SubjectPublicKeyInfo form is accepted by OpenSSL 3 builds
-if openssl version | grep -q '^OpenSSL 3'; then
+# The public key in SubjectPublicKeyInfo form is accepted since OpenSSL 3
+if openssl version | grep -qE '^OpenSSL ([3-9]|[1-9][0-9])\.'; then
 	sed 's/^PUB_KEY=.*/PUB_KEY=srk_spki.pub/' \
 		input_files/uni_sign/ls104x_1012/input_bootscript_secure > input_spki
 	./uni_sign input_spki > spki.log 2>&1 || { cat spki.log; fail "SPKI public key"; }
