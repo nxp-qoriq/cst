@@ -61,3 +61,51 @@ jobs:
 
       - name: Smoke test
         run: tests/smoke.sh
+
+  build-openssl4:
+    name: ubuntu-26.04 (OpenSSL 4.0)
+    runs-on: ubuntu-26.04
+    env:
+      OPENSSL_VERSION: 4.0.2
+      OPENSSL_SHA256: 736b467530f916737b7031310ccb21d8218c6229e61e8e160cd1d3458cd543a8
+      OPENSSL_DIR: ${{ github.workspace }}/.openssl-4
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential perl
+
+      - name: Cache OpenSSL
+        id: cache-openssl
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.OPENSSL_DIR }}
+          key: openssl-${{ env.OPENSSL_VERSION }}-ubuntu-26.04
+
+      - name: Build OpenSSL
+        if: steps.cache-openssl.outputs.cache-hit != 'true'
+        run: |
+          curl -sSfL -o openssl.tar.gz \
+            https://github.com/openssl/openssl/releases/download/openssl-$OPENSSL_VERSION/openssl-$OPENSSL_VERSION.tar.gz
+          echo "$OPENSSL_SHA256  openssl.tar.gz" | sha256sum -c -
+          tar xzf openssl.tar.gz
+          cd openssl-$OPENSSL_VERSION
+          ./Configure --prefix=$OPENSSL_DIR --libdir=lib no-tests no-docs
+          make -j$(nproc)
+          make install_sw
+
+      - name: Toolchain versions
+        run: |
+          gcc --version | head -1
+          LD_LIBRARY_PATH=$OPENSSL_DIR/lib $OPENSSL_DIR/bin/openssl version
+
+      - name: Build
+        run: |
+          CFLAGS="-I$OPENSSL_DIR/include" LDFLAGS="-L$OPENSSL_DIR/lib -Wl,-rpath,$OPENSSL_DIR/lib" make
+          ldd create_hdr_isbc gen_keys | grep libcrypto.so.4
+
+      - name: Smoke test
+        run: |
+          PATH=$OPENSSL_DIR/bin:$PATH LD_LIBRARY_PATH=$OPENSSL_DIR/lib tests/smoke.sh
