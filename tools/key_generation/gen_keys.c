@@ -37,13 +37,18 @@
  *     Eric Young (eay@cryptsoft.com)"
  */
 
-#define OPENSSL_NO_KRB5
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/ssl.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <openssl/bio.h>
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#include <openssl/encoder.h>
+#endif
 
 #define RSA_LEN1	1024
 #define RSA_LEN2	2048	
@@ -52,79 +57,99 @@
 #define PRI_KEY_FILE "srk.pri"
 #define PUB_KEY_FILE "srk.pub"
 
-static int generate_rsa_keys(const unsigned int n, FILE *fpri, FILE *fpub)
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+static int write_key_pem(EVP_PKEY *pkey, int selection, FILE *fp)
 {
-	RSA *srk = NULL;
-	BIGNUM *public_exponent = NULL;
-	int ret = 0;
+	OSSL_ENCODER_CTX *ectx;
+	int ok;
 
-	/* Allocate space for RSA structure */
-	srk = RSA_new();
-
-	if (srk == NULL) {
+	ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, selection, "PEM",
+					     "type-specific", NULL);
+	if (ectx == NULL)
 		return -1;
-	}
 
-	public_exponent = BN_new();
-	if (public_exponent == NULL || !BN_set_word(public_exponent, RSA_F4)) {
-		BN_free(public_exponent);
+	ok = OSSL_ENCODER_to_fp(ectx, fp);
+	OSSL_ENCODER_CTX_free(ectx);
+
+	return (ok == 1) ? 0 : -1;
+}
+
+static int write_private_key(EVP_PKEY *pkey, FILE *fp)
+{
+	return write_key_pem(pkey, EVP_PKEY_KEYPAIR, fp);
+}
+
+static int write_public_key(EVP_PKEY *pkey, FILE *fp)
+{
+	return write_key_pem(pkey, EVP_PKEY_PUBLIC_KEY, fp);
+}
+#else
+static int write_private_key(EVP_PKEY *pkey, FILE *fp)
+{
+	RSA *rsa = EVP_PKEY_get1_RSA(pkey);
+	int ok;
+
+	if (rsa == NULL)
 		return -1;
-	}
+	ok = PEM_write_RSAPrivateKey(fp, rsa, NULL, NULL, 0, 0, NULL);
+	RSA_free(rsa);
 
-	ret = RSA_generate_key_ex(srk, n, public_exponent, NULL);
-	if (!ret) {
-		RSA_free(srk);
-		BN_free(public_exponent);
+	return (ok == 1) ? 0 : -1;
+}
+
+static int write_public_key(EVP_PKEY *pkey, FILE *fp)
+{
+	RSA *rsa = EVP_PKEY_get1_RSA(pkey);
+	int ok;
+
+	if (rsa == NULL)
 		return -1;
-	}
+	ok = PEM_write_RSAPublicKey(fp, rsa);
+	RSA_free(rsa);
 
-	ret = PEM_write_RSAPrivateKey(fpri, srk, NULL, NULL, 0, 0, NULL);
-
-	if (!ret) {
-		RSA_free(srk);
-		BN_free(public_exponent);
-		return -1;
-	}
-
-	ret = PEM_write_RSAPublicKey(fpub, srk);
-
-	if (!ret) {
-		RSA_free(srk);
-		BN_free(public_exponent);
-		return -1;
-	}
-
-#ifdef DEBUG
-	printf("public modulus (n):\n");
-	printf("%s\n", BN_bn2hex(srk->n));
-
-	printf("public exponent (e):\n");
-	printf("%s\n", BN_bn2hex(srk->e));
-
-	printf("private exponent (d):\n");
-	printf("%s\n", BN_bn2hex(srk->d));
-
-	printf("secret prime factor (p):\n");
-	printf("%s\n", BN_bn2hex(srk->p));
-	printf("secret prime factor (q):\n");
-	printf("%s\n", BN_bn2hex(srk->q));
-
-	printf("dmp1 [ d mod (p-1) ]:\n");
-	printf("%s\n", BN_bn2hex(srk->dmp1));
-	printf("dmq1 [ d mod (q-1) ]:\n");
-	printf("%s\n", BN_bn2hex(srk->dmq1));
-
-	printf("iqmp [ q^-1 mod p ]:\n");
-	printf("%s\n", BN_bn2hex(srk->iqmp));
-
-	printf("RSA SIZE: %d\n", RSA_size(srk));
-
+	return (ok == 1) ? 0 : -1;
+}
 #endif
 
-	RSA_free(srk);
-	BN_free(public_exponent);
+static int generate_rsa_keys(const unsigned int n, FILE *fpri, FILE *fpub)
+{
+	EVP_PKEY *srk = NULL;
+	EVP_PKEY_CTX *ctx;
+	int ret = -1;
 
-	return 0;
+	ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+	if (ctx == NULL)
+		return -1;
+
+	if (EVP_PKEY_keygen_init(ctx) != 1 ||
+	    EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, n) != 1 ||
+	    EVP_PKEY_keygen(ctx, &srk) != 1)
+		goto out;
+
+	if (write_private_key(srk, fpri) != 0)
+		goto out;
+
+	if (write_public_key(srk, fpub) != 0)
+		goto out;
+
+#ifdef DEBUG
+	{
+		BIO *out = BIO_new_fp(stdout, BIO_NOCLOSE);
+
+		if (out != NULL) {
+			EVP_PKEY_print_private(out, srk, 0, NULL);
+			BIO_free(out);
+		}
+		printf("RSA SIZE: %d\n", EVP_PKEY_size(srk));
+	}
+#endif
+
+	ret = 0;
+out:
+	EVP_PKEY_free(srk);
+	EVP_PKEY_CTX_free(ctx);
+
+	return ret;
 }
 
 void usage(void)

@@ -1,0 +1,25 @@
+Source: cst
+Section: devel
+Priority: optional
+Maintainer: Vincent Jardin <vjardin@free.fr>
+Build-Depends: debhelper-compat (= 13),
+               libssl-dev,
+               openssl <!nocheck>
+Standards-Version: 4.7.2
+Homepage: https://github.com/nxp-qoriq/cst
+Vcs-Git: https://github.com/vjardin/cst.git
+Vcs-Browser: https://github.com/vjardin/cst
+Rules-Requires-Root: no
+
+Package: cst
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: openssl
+Description: NXP Code Signing Tool for QorIQ and Layerscape secure boot
+ CST generates the RSA key pairs, CSF headers and signatures used by the
+ secure boot flow of NXP QorIQ and Layerscape processors: ISBC and ESBC
+ headers, PBI/RCW signing, CF headers for non-PBL devices, OTPMK and
+ debug response values, and fuse provisioning scripts.
+ .
+ The sample input files and the per-platform signing scripts are installed
+ under /usr/share/cst.

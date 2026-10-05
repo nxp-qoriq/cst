@@ -1,0 +1,32 @@
+#!/usr/bin/make -f
+# Copyright 2026 Free Mobile, Vincent Jardin
+
+include /usr/share/dpkg/buildflags.mk
+
+export CFLAGS += $(CPPFLAGS)
+export LDFLAGS
+
+TOOLS = create_hdr_isbc create_hdr_esbc create_hdr_pbi create_hdr_cf \
+	gen_keys gen_otpmk_drbg gen_drv_drbg gen_sign sign_embed gen_fusescr
+WRAPPERS = scripts/uni_sign scripts/uni_pbi scripts/uni_cfsign
+PKGDIR = debian/cst
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	$(MAKE)
+
+override_dh_auto_test:
+	tests/smoke.sh
+
+override_dh_auto_install:
+	install -D -m 755 -t $(PKGDIR)/usr/bin $(TOOLS) $(WRAPPERS)
+	install -d $(PKGDIR)/usr/share/cst
+	cp -r input_files scripts/platforms $(PKGDIR)/usr/share/cst/
+	rm -f $(PKGDIR)/usr/share/cst/input_files/wer
+	install -m 644 byte_swap.tcl $(PKGDIR)/usr/share/cst/
+
+override_dh_auto_clean:
+	$(MAKE) distclean
+	rm -rf uni_sign uni_pbi uni_cfsign platforms

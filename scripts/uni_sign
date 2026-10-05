@@ -38,9 +38,11 @@
 #
 #-----------------------------------------------------------------------------
 
+tool_dir=$(dirname "$0")
+
 # Help Function
 print_help() {
-	./create_hdr_isbc --help
+	"$tool_dir"/create_hdr_isbc --help
 	echo "-----------------------------------------------------"
 	echo "- uni_sign is a wrapper script over the TOOL"
 	echo "- Correct Usage (OPtions as specified above):"
@@ -86,9 +88,9 @@ else
 	#########################################################
 
 	if [ $? -eq 0 ]; then
-		./create_hdr_esbc $@
+		"$tool_dir"/create_hdr_esbc $@
 	else
-		./create_hdr_isbc $@
+		"$tool_dir"/create_hdr_isbc $@
 	fi
 
 fi

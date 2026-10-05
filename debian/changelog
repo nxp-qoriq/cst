@@ -1,0 +1,5 @@
+cst (2.0+git20260905.5c05dc2) unstable; urgency=medium
+
+  * Initial packaging, snapshot of commit 5c05dc2.
+
+ -- Vincent Jardin <vjardin@free.fr>  Sat, 05 Sep 2026 10:18:47 +0200

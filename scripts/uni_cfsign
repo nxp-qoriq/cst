@@ -39,9 +39,11 @@
 #-----------------------------------------------------------------------------
 
 
+tool_dir=$(dirname "$0")
+
 # Help Function
 print_help() {
-	./create_hdr_cf --help
+	"$tool_dir"/create_hdr_cf --help
 	echo "-----------------------------------------------------"
 	echo "- uni_cfsign is a wrapper script over the TOOL"
 	echo "- Correct Usage (OPtions as specified above):"
@@ -73,7 +75,7 @@ else
 
 	# Check if Input File exists
 	if [ -s $input_file ]; then
-		./create_hdr_cf $@
+		"$tool_dir"/create_hdr_cf $@
 	else
 		echo "Input File $input_file does not exist"
 		print_help
