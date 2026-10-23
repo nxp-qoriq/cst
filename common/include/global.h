@@ -37,6 +37,7 @@ int create_srk_calc_hash(uint32_t max_keys);
 int parse_input_file(char **list, uint32_t num_list);
 int calculate_signature(void);
 int create_img_hash_file(void);
+int create_srkh_file(void);
 int append_signature(void);
 int create_ie_file(char *file_name);
 int read_file_in_buffer(uint8_t *ptr, char *file_name);
@@ -143,6 +144,7 @@ struct g_data_t {
 	uint8_t srk_hash_flag;
 	uint8_t hdr_file_flag;
 	uint8_t entry1_flag;
+	uint8_t srkh_file_flag;
 	uint8_t rcw_file_flag;
 	uint8_t rcw_opfile_flag;
 	char pub_fname[MAX_NUM_KEY][MAX_FNAME_LEN];
@@ -172,6 +174,7 @@ struct g_data_t {
 
 	char hdr_file_name[MAX_FNAME_LEN];
 	char img_hash_file_name[MAX_FNAME_LEN];
+	char srkh_file_name[MAX_FNAME_LEN];
 	char rsa_sign_file_name[MAX_FNAME_LEN];
 	char sg_file_name[MAX_FNAME_LEN];
 
