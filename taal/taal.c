@@ -95,6 +95,7 @@ static struct taal_t taal[] = {
 		calc_img_hash_ta_1_x_pbl,
 		calc_srk_hash_ta_1_x_pbl,
 		dump_hdr_ta_1_x_pbl,
+		verify_ta_1_x_pbl,
 	},
 	/* TA_1_X_NONPBL */
 	{
@@ -104,6 +105,7 @@ static struct taal_t taal[] = {
 		calc_img_hash_ta_1_x_nonpbl,
 		calc_srk_hash_ta_1_x_nonpbl,
 		dump_hdr_ta_1_x_nonpbl,
+		verify_ta_1_x_nonpbl,
 	},
 	/* TA_2_0_PBL */
 	{
@@ -113,6 +115,7 @@ static struct taal_t taal[] = {
 		calc_img_hash_ta_2_0_pbl,
 		calc_srk_hash_ta_2_0_pbl,
 		dump_hdr_ta_2_0_pbl,
+		verify_ta_2_0_pbl,
 	},
 	/* TA_2_0_NONPBL */
 	{
@@ -122,6 +125,7 @@ static struct taal_t taal[] = {
 		calc_img_hash_ta_2_0_nonpbl,
 		calc_srk_hash_ta_2_0_nonpbl,
 		dump_hdr_ta_2_0_nonpbl,
+		verify_ta_2_0_nonpbl,
 	},
 	/* TA_2_1_ARM7 */
 	{
@@ -131,6 +135,7 @@ static struct taal_t taal[] = {
 		calc_img_hash_ta_2_1_arm7,
 		calc_srk_hash_ta_2_1_arm7,
 		dump_hdr_ta_2_1_arm7,
+		verify_ta_2_1_arm7,
 	},
 	/* TA_2_1_ARM8 */
 	{
@@ -140,6 +145,7 @@ static struct taal_t taal[] = {
 		calc_img_hash_ta_2_1_arm8,
 		calc_srk_hash_ta_2_1_arm8,
 		dump_hdr_ta_2_1_arm8,
+		verify_ta_2_1_arm8,
 	},
 	/* TA_3_0 */
 	{
@@ -149,6 +155,7 @@ static struct taal_t taal[] = {
 		calc_img_hash_ta_3_0,
 		calc_srk_hash_ta_3_0,
 		dump_hdr_ta_3_0,
+		verify_ta_3_0,
 	},
 	/* TA_3_1 */
 	{
@@ -158,6 +165,7 @@ static struct taal_t taal[] = {
 		calc_img_hash_ta_3_1,
 		calc_srk_hash_ta_3_1,
 		dump_hdr_ta_3_1,
+		verify_ta_3_1,
 	},
 	/* TA_3_2 */
 	{
@@ -167,10 +175,11 @@ static struct taal_t taal[] = {
 		calc_img_hash_ta_3_1,
 		calc_srk_hash_ta_3_1,
 		dump_hdr_ta_3_1,
+		verify_ta_3_1,
 	},
 	/* TA_UNKNOWN_MAX */
 	{
-		NULL, NULL, NULL, NULL, NULL, NULL
+		NULL, NULL, NULL, NULL, NULL, NULL, NULL
 	}
 };
 	
@@ -265,6 +274,40 @@ int taal_dump_header(enum cfg_taal ta)
 }
 
 /***************************************************************************
+ * Function	:	taal_verify
+ * Arguments	:	ta - Trust ARCH Type enum
+ *			req - verification request
+ * Return	:	ERROR or SUCCESS
+ * Description	:	Verify produced headers and images from their bytes
+ ***************************************************************************/
+int taal_verify(enum cfg_taal ta, struct verify_req *req)
+{
+	if (taal[ta].verify)
+		return (*taal[ta].verify)(req);
+
+	printf("\n TA Abstraction Layer Error.. Missing Function Definition");
+	return FAILURE;
+}
+
+/***************************************************************************
+ * Function	:	get_ta_from_platform
+ * Arguments	:	plat_name - PLATFORM name
+ * Return	:	TA Type
+ * Description	:	Map a PLATFORM name to its TA_TYPE
+ ***************************************************************************/
+enum cfg_taal get_ta_from_platform(const char *plat_name)
+{
+	int i;
+
+	for (i = 0; i < NUM_TA_TABLE; i++) {
+		if (strcmp(ta_table[i].plat_name, plat_name) == 0)
+			return ta_table[i].ta_type;
+	}
+
+	return TA_UNKNOWN_MAX;
+}
+
+/***************************************************************************
  * Function	:	get_ta_from_file
  * Arguments	:	file_name - Input File Name
  * Return	:	TA Type
@@ -272,7 +315,6 @@ int taal_dump_header(enum cfg_taal ta)
  ***************************************************************************/
 enum cfg_taal get_ta_from_file(char *file_name)
 {
-	int i = 0;
 	char *plat_name;
 
 	FILE *fp;
@@ -286,12 +328,8 @@ enum cfg_taal get_ta_from_file(char *file_name)
 	find_value_from_file("PLATFORM", fp);
 	if (file_field.count == 1) {
 		plat_name = file_field.value[0];
-		for (i = 0; i < NUM_TA_TABLE; i++) {
-			if (strcmp(ta_table[i].plat_name, plat_name) == 0) {
-				fclose(fp);
-				return ta_table[i].ta_type;
-			}
-		}
+		fclose(fp);
+		return get_ta_from_platform(plat_name);
 	} else {
 		fprintf(stderr, "Unable to Get PLATFORM from %s\n", file_name);
 		fclose(fp);

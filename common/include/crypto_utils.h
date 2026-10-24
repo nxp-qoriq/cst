@@ -48,6 +48,10 @@ void crypto_hash_final(void *hash, void *ctx);
 int crypto_hash_update_file(void *ctx, char *fname);
 int crypto_rsa_sign(void *img_hash, uint32_t len,
 		void *rsa_sign, uint32_t *rsa_len, char *key_name);
+int crypto_rsa_verify(const void *img_hash, uint32_t len,
+		const void *rsa_sign, uint32_t rsa_len,
+		const uint8_t *modulus, const uint8_t *exponent,
+		uint32_t mod_len);
 void crypto_print_attribution(void);
 uint32_t crypto_calculate_crc(void *data, uint32_t length);
 uint32_t crypto_calculate_checksum(void *data, uint32_t num);

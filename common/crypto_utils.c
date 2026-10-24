@@ -40,6 +40,7 @@
 #include <openssl/rsa.h>
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
 #include <openssl/core_names.h>
+#include <openssl/param_build.h>
 #endif
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
@@ -182,6 +183,105 @@ int crypto_rsa_sign(void *img_hash, uint32_t len, void *rsa_sign,
 out:
 	EVP_PKEY_CTX_free(pctx);
 	EVP_PKEY_free(priv_key);
+	return ret;
+}
+
+/***************************************************************************
+ * Function	:	rsa_pub_from_bin
+ * Arguments	:	modulus, exponent - big endian, mod_len bytes each
+ * Return	:	EVP_PKEY or NULL
+ * Description	:	Build an RSA public key from an SRK table entry
+ ***************************************************************************/
+static EVP_PKEY *rsa_pub_from_bin(const uint8_t *modulus,
+				  const uint8_t *exponent, uint32_t mod_len)
+{
+	EVP_PKEY *pkey = NULL;
+	BIGNUM *n, *e;
+
+	n = BN_bin2bn(modulus, mod_len, NULL);
+	e = BN_bin2bn(exponent, mod_len, NULL);
+	if (n == NULL || e == NULL)
+		goto out;
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	{
+		OSSL_PARAM_BLD *bld = OSSL_PARAM_BLD_new();
+		OSSL_PARAM *params = NULL;
+		EVP_PKEY_CTX *ctx = NULL;
+
+		if (bld == NULL ||
+		    OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_N, n) != 1 ||
+		    OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_E, e) != 1 ||
+		    (params = OSSL_PARAM_BLD_to_param(bld)) == NULL ||
+		    (ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL)) == NULL ||
+		    EVP_PKEY_fromdata_init(ctx) != 1 ||
+		    EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY,
+				      params) != 1)
+			pkey = NULL;
+		EVP_PKEY_CTX_free(ctx);
+		OSSL_PARAM_free(params);
+		OSSL_PARAM_BLD_free(bld);
+	}
+#else
+	{
+		RSA *rsa = RSA_new();
+
+		if (rsa == NULL)
+			goto out;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+		rsa->n = n;
+		rsa->e = e;
+#else
+		if (RSA_set0_key(rsa, n, e, NULL) != 1) {
+			RSA_free(rsa);
+			goto out;
+		}
+#endif
+		n = e = NULL;
+		pkey = EVP_PKEY_new();
+		if (pkey == NULL || EVP_PKEY_assign_RSA(pkey, rsa) != 1) {
+			RSA_free(rsa);
+			EVP_PKEY_free(pkey);
+			pkey = NULL;
+		}
+	}
+#endif
+out:
+	BN_free(n);
+	BN_free(e);
+	return pkey;
+}
+
+/***************************************************************************
+ * Function	:	crypto_rsa_verify
+ * Arguments	:	img_hash, len - SHA256 digest
+ *			rsa_sign, rsa_len - PKCS#1 v1.5 signature
+ *			modulus, exponent, mod_len - public key, SRK layout
+ * Return	:	SUCCESS when the signature verifies, FAILURE otherwise
+ ***************************************************************************/
+int crypto_rsa_verify(const void *img_hash, uint32_t len,
+		const void *rsa_sign, uint32_t rsa_len,
+		const uint8_t *modulus, const uint8_t *exponent,
+		uint32_t mod_len)
+{
+	int ret = FAILURE;
+	EVP_PKEY *pub_key;
+	EVP_PKEY_CTX *pctx;
+
+	pub_key = rsa_pub_from_bin(modulus, exponent, mod_len);
+	if (pub_key == NULL)
+		return FAILURE;
+
+	pctx = EVP_PKEY_CTX_new(pub_key, NULL);
+	if (pctx != NULL &&
+	    EVP_PKEY_verify_init(pctx) == 1 &&
+	    EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PADDING) == 1 &&
+	    EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha256()) == 1 &&
+	    EVP_PKEY_verify(pctx, rsa_sign, rsa_len, img_hash, len) == 1)
+		ret = SUCCESS;
+
+	EVP_PKEY_CTX_free(pctx);
+	EVP_PKEY_free(pub_key);
 	return ret;
 }
 

@@ -111,3 +111,12 @@ __weak int calc_srk_hash_ta_3_1(void) { return (error_unsupported()); }
 
 __weak int dump_hdr_ta_3_0(void) { return (error_unsupported()); }
 __weak int dump_hdr_ta_3_1(void) { return (error_unsupported()); }
+
+__weak int verify_ta_1_x_pbl(struct verify_req *r) { return (error_unsupported()); }
+__weak int verify_ta_1_x_nonpbl(struct verify_req *r) { return (error_unsupported()); }
+__weak int verify_ta_2_0_pbl(struct verify_req *r) { return (error_unsupported()); }
+__weak int verify_ta_2_0_nonpbl(struct verify_req *r) { return (error_unsupported()); }
+__weak int verify_ta_2_1_arm7(struct verify_req *r) { return (error_unsupported()); }
+__weak int verify_ta_2_1_arm8(struct verify_req *r) { return (error_unsupported()); }
+__weak int verify_ta_3_0(struct verify_req *r) { return (error_unsupported()); }
+__weak int verify_ta_3_1(struct verify_req *r) { return (error_unsupported()); }

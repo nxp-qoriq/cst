@@ -49,4 +49,8 @@ int calc_srk_hash_ta_1_x_nonpbl(void);
 int dump_hdr_ta_1_x_pbl(void);
 int dump_hdr_ta_1_x_nonpbl(void);
 
+struct verify_req;
+int verify_ta_1_x_pbl(struct verify_req *);
+int verify_ta_1_x_nonpbl(struct verify_req *);
+
 #endif
