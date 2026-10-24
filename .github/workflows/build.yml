@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libssl-dev
+          sudo apt-get install -y build-essential libssl-dev libjson-c-dev
 
       - name: Toolchain versions
         run: |
@@ -32,6 +32,9 @@ jobs:
 
       - name: Smoke test
         run: tests/smoke.sh
+
+      - name: Verification test
+        run: tests/verify.sh
 
       - name: Install
         run: |
@@ -46,7 +49,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential libssl-dev git
+          DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential libssl-dev libjson-c-dev git
           git config --global --add safe.directory '*'
 
       - uses: actions/checkout@v7
@@ -62,6 +65,9 @@ jobs:
       - name: Smoke test
         run: tests/smoke.sh
 
+      - name: Verification test
+        run: tests/verify.sh
+
   build-openssl4:
     name: ubuntu-26.04 (OpenSSL 4.0)
     runs-on: ubuntu-26.04
@@ -75,7 +81,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential perl
+          sudo apt-get install -y build-essential perl libjson-c-dev
 
       - name: Cache OpenSSL
         id: cache-openssl
@@ -109,3 +115,29 @@ jobs:
       - name: Smoke test
         run: |
           PATH=$OPENSSL_DIR/bin:$PATH LD_LIBRARY_PATH=$OPENSSL_DIR/lib tests/smoke.sh
+
+      - name: Verification test
+        run: |
+          PATH=$OPENSSL_DIR/bin:$PATH LD_LIBRARY_PATH=$OPENSSL_DIR/lib tests/verify.sh
+
+  sanitizers:
+    name: ubuntu-24.04 (ASan, UBSan)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libssl-dev libjson-c-dev
+
+      - name: Build
+        run: |
+          CFLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g" \
+          LDFLAGS="-fsanitize=address,undefined" make
+
+      - name: Smoke test
+        run: ASAN_OPTIONS=detect_leaks=0 tests/smoke.sh
+
+      - name: Verification test
+        run: ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1 tests/verify.sh

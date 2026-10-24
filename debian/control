@@ -3,6 +3,7 @@ Section: devel
 Priority: optional
 Maintainer: Vincent Jardin <vjardin@free.fr>
 Build-Depends: debhelper-compat (= 13),
+               libjson-c-dev,
                libssl-dev,
                openssl <!nocheck>
 Standards-Version: 4.7.2

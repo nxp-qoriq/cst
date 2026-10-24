@@ -33,6 +33,7 @@ CCFLAGS += -I$(OPENSSL_INC_PATH)
 endif
 
 LIBS += -lssl -lcrypto -ldl
+JSON_LIBS ?= -ljson-c
 
 genkeys_OBJS = gen_keys.o
 genotpmk_OBJS = gen_otpmk_drbg.o
@@ -89,6 +90,14 @@ gen_fusescr_OBJS = $(basename $(gen_fusescr_SRCS))
 gen_fusescr_OBJS := $(notdir $(gen_fusescr_OBJS))
 gen_fusescr_OBJS := $(gen_fusescr_OBJS:%=%.o)
 
+cst_verify_SRCS = $(wildcard common/*.c) \
+		$(wildcard taal/*.c) \
+		$(wildcard tools/verification/*.c)
+
+cst_verify_OBJS = $(basename $(cst_verify_SRCS))
+cst_verify_OBJS := $(notdir $(cst_verify_OBJS))
+cst_verify_OBJS := $(cst_verify_OBJS:%=%.o)
+
 vpath %.c 	common/ taal/ tools/header_generation/ \
 		tools/header_generation/create_hdr_isbc/ tools/header_generation/create_hdr_isbc/taal_api/ \
 		tools/header_generation/create_hdr_esbc/ tools/header_generation/create_hdr_esbc/taal_api/ \
@@ -98,12 +107,14 @@ vpath %.c 	common/ taal/ tools/header_generation/ \
 		tools/pbi_creation/ \
 		tools/signature_generation/ \
 		tools/fuse_provisioning \
+		tools/verification/ \
 
 INCLUDES = 	-Itools/header_generation/create_hdr_isbc/include/ \
 		-Itools/header_generation/create_hdr_esbc/include/ \
 		-Itools/header_generation/create_hdr_pbi/include/ \
 		-Itools/header_generation/create_hdr_cf/include/ \
 		-Itools/fuse_provisioning/include/ \
+		-Itools/verification/include/ \
 		-Itaal/include -Icommon/include \
 		-I$(LIB_HASH_DRBG_INCLUDE_PATH)
 
@@ -113,6 +124,7 @@ INSTALL_BINARIES = 	create_hdr_isbc create_hdr_esbc \
 			create_hdr_pbi create_hdr_cf \
 			gen_keys gen_otpmk_drbg gen_drv_drbg \
 			gen_sign sign_embed gen_fusescr \
+			cst_verify \
 
 # targets that are not files
 .PHONY: all clean
@@ -156,6 +168,9 @@ gen_drv_drbg: ${gendrv_OBJS} $(LIB_HASH_DRBG)
 
 gen_fusescr: ${gen_fusescr_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
+
+cst_verify: ${cst_verify_OBJS}
+	${LD} ${LDFLAGS} -o $@ $^ ${LIBS} ${JSON_LIBS}
 
 $(LIB_HASH_DRBG):
 	@echo "#########################################"

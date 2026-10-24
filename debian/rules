@@ -7,7 +7,8 @@ export CFLAGS += $(CPPFLAGS)
 export LDFLAGS
 
 TOOLS = create_hdr_isbc create_hdr_esbc create_hdr_pbi create_hdr_cf \
-	gen_keys gen_otpmk_drbg gen_drv_drbg gen_sign sign_embed gen_fusescr
+	gen_keys gen_otpmk_drbg gen_drv_drbg gen_sign sign_embed gen_fusescr \
+	cst_verify
 WRAPPERS = scripts/uni_sign scripts/uni_pbi scripts/uni_cfsign
 PKGDIR = debian/cst
 
@@ -19,6 +20,7 @@ override_dh_auto_build:
 
 override_dh_auto_test:
 	tests/smoke.sh
+	tests/verify.sh
 
 override_dh_auto_install:
 	install -D -m 755 -t $(PKGDIR)/usr/bin $(TOOLS) $(WRAPPERS)
