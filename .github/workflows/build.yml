@@ -6,6 +6,9 @@ on:
   push:
   pull_request:
 
+env:
+  LIBQORIQ_RCW_REF: main
+
 jobs:
   build:
     name: ${{ matrix.os }}
@@ -22,10 +25,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential libssl-dev libjson-c-dev
 
+      - name: Install libqoriq-rcw from the source
+        run: |
+          sudo apt-get install -y git meson ninja-build pkg-config libmcpp-dev
+          git clone --depth 1 --branch "$LIBQORIQ_RCW_REF" https://github.com/vjardin/libqoriq-rcw "$RUNNER_TEMP/libqoriq-rcw"
+          meson setup "$RUNNER_TEMP/libqoriq-rcw/build" "$RUNNER_TEMP/libqoriq-rcw" --prefix=/usr/local --libdir=lib -Dtests=false -Dman=disabled
+          sudo meson install -C "$RUNNER_TEMP/libqoriq-rcw/build"
+          sudo ldconfig
+
       - name: Toolchain versions
         run: |
           gcc --version | head -1
           openssl version
+          pkg-config --modversion libqoriq-rcw
 
       - name: Build
         run: make
@@ -83,6 +95,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential perl libjson-c-dev
 
+      - name: Install libqoriq-rcw
+        run: |
+          sudo apt-get install -y git meson ninja-build pkg-config libmcpp-dev
+          git clone --depth 1 --branch "$LIBQORIQ_RCW_REF" https://github.com/vjardin/libqoriq-rcw "$RUNNER_TEMP/libqoriq-rcw"
+          meson setup "$RUNNER_TEMP/libqoriq-rcw/build" "$RUNNER_TEMP/libqoriq-rcw" --prefix=/usr/local --libdir=lib -Dtests=false -Dman=disabled
+          sudo meson install -C "$RUNNER_TEMP/libqoriq-rcw/build"
+          sudo ldconfig
+
       - name: Cache OpenSSL
         id: cache-openssl
         uses: actions/cache@v6
@@ -130,6 +150,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libssl-dev libjson-c-dev
+
+      - name: Install libqoriq-rcw
+        run: |
+          sudo apt-get install -y git meson ninja-build pkg-config libmcpp-dev
+          git clone --depth 1 --branch "$LIBQORIQ_RCW_REF" https://github.com/vjardin/libqoriq-rcw "$RUNNER_TEMP/libqoriq-rcw"
+          meson setup "$RUNNER_TEMP/libqoriq-rcw/build" "$RUNNER_TEMP/libqoriq-rcw" --prefix=/usr/local --libdir=lib -Dtests=false -Dman=disabled
+          sudo meson install -C "$RUNNER_TEMP/libqoriq-rcw/build"
+          sudo ldconfig
 
       - name: Build
         run: |

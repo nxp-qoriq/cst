@@ -17,6 +17,7 @@ BuildRequires:  gcc
 BuildRequires:  make
 BuildRequires:  openssl-devel
 BuildRequires:  json-c-devel
+BuildRequires:  pkgconfig(libqoriq-rcw) >= 1.4.0
 # tests/smoke.sh verifies the signatures with the openssl command
 BuildRequires:  openssl
 Recommends:     openssl

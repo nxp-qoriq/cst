@@ -32,6 +32,7 @@
 #include <stddef.h>
 #include <global.h>
 #include <taal.h>
+#include <qoriq-rcw/rcw.h>
 
 #define VR_CSF_HDR_SIZE		0x50
 #define VR_SRK_ENTRY_SIZE	(sizeof(struct srk_table_t))
@@ -50,6 +51,8 @@
 enum verify_mode {
 	VERIFY_ESBC,
 	VERIFY_ISBC,
+	VERIFY_PBI,
+	VERIFY_PBL,
 };
 
 enum vr_status {
@@ -84,6 +87,11 @@ struct verify_req {
 	struct verify_blob img[VR_MAX_IMG];
 	int num_img;
 
+	int flash_base_set;
+	uint64_t flash_base;
+	int xip_set;
+	uint64_t xip_base;
+	uint64_t xip_size;
 	uint32_t hdr_size;
 
 	int srk_hash_set;
@@ -205,7 +213,7 @@ int vr_check_signature(struct verify_req *r, const char *id,
 void vr_report_flags(struct verify_req *r, const char *id,
 		     const struct csf_hdr_view *h);
 
-/* verify_esbc_ta_3_x.c, verify_isbc_ta_3_x.c */
+/* verify_esbc_ta_3_x.c, verify_isbc_ta_3_x.c, verify_pbi_ta_3_x.c */
 int verify_esbc_ta_3_x(struct verify_req *r, int ta30);
 int verify_isbc_ta_3_x(struct verify_req *r, int ta30);
 int verify_isbc_buffers(struct verify_req *r, int ta30, const char *what,
@@ -213,5 +221,38 @@ int verify_isbc_buffers(struct verify_req *r, int ta30, const char *what,
 			const struct verify_blob *img, int num_img,
 			struct csf_hdr_view *out_hdr, struct srk_view *out_srk,
 			struct sg_entry_view *out_sg);
+int verify_pbi_ta_3_x(struct verify_req *r, int ta30);
+int verify_pbl_ta_3_x(struct verify_req *r, int ta30);
+
+/* PBI command stream of the TA 3.x service processor, as libqoriq-rcw walks it */
+struct pbi_cmd {
+	uint32_t idx;
+	uint32_t word;
+	rcw_pbi_op_t op;
+	uint32_t nargs;
+	uint32_t arg[3];
+};
+
+struct pbi_view {
+	rcw_pbl_report_t rep;
+	struct pbi_cmd *cmds;
+	int ncmd;
+	int cap;
+	int oom;
+	int sec_hdr_idx;
+	int csf_ptr_set;
+	uint32_t csf_ptr;
+	int stop_idx;
+	int nblk;
+};
+
+int pbi_decode(const uint8_t *buf, size_t len, struct pbi_view *v);
+void pbi_free(struct pbi_view *v);
+void pbi_dump(const uint8_t *buf, size_t len, const struct pbi_view *v);
+int pbi_parse_sec_hdr(const uint8_t *buf, size_t len, const struct pbi_view *v,
+		      int ta30, struct csf_hdr_view *h, uint64_t *hdr_off);
+int verify_pbi_stream(struct verify_req *r, int ta30, const uint8_t *buf,
+		      size_t len, struct pbi_view *v, struct csf_hdr_view *h,
+		      struct srk_view *srk);
 
 #endif

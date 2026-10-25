@@ -37,6 +37,10 @@ static int verify_ta_3_x(struct verify_req *r, int ta30)
 		return verify_esbc_ta_3_x(r, ta30);
 	case VERIFY_ISBC:
 		return verify_isbc_ta_3_x(r, ta30);
+	case VERIFY_PBI:
+		return verify_pbi_ta_3_x(r, ta30);
+	case VERIFY_PBL:
+		return verify_pbl_ta_3_x(r, ta30);
 	}
 	return FAILURE;
 }

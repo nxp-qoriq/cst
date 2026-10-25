@@ -35,6 +35,17 @@ endif
 LIBS += -lssl -lcrypto -ldl
 JSON_LIBS ?= -ljson-c
 
+RCW_PKG ?= libqoriq-rcw
+RCW_MIN_VERSION ?= 1.4.0
+HAVE_RCW := $(shell pkg-config --atleast-version=$(RCW_MIN_VERSION) $(RCW_PKG) 2>/dev/null && echo yes)
+ifeq ($(HAVE_RCW),yes)
+RCW_CFLAGS ?= $(shell pkg-config --cflags $(RCW_PKG))
+RCW_LIBS ?= $(shell pkg-config --libs $(RCW_PKG))
+VERIFY_BINARIES = cst_verify
+else
+$(info $(RCW_PKG) >= $(RCW_MIN_VERSION) not found by pkg-config, cst_verify is not built)
+endif
+
 genkeys_OBJS = gen_keys.o
 genotpmk_OBJS = gen_otpmk_drbg.o
 gendrv_OBJS = gen_drv_drbg.o
@@ -118,13 +129,13 @@ INCLUDES = 	-Itools/header_generation/create_hdr_isbc/include/ \
 		-Itaal/include -Icommon/include \
 		-I$(LIB_HASH_DRBG_INCLUDE_PATH)
 
-CCFLAGS= -g -Wall -Wno-strict-aliasing -Werror $(INCLUDES)
+CCFLAGS= -g -Wall -Wno-strict-aliasing -Werror $(INCLUDES) $(RCW_CFLAGS)
 
 INSTALL_BINARIES = 	create_hdr_isbc create_hdr_esbc \
 			create_hdr_pbi create_hdr_cf \
 			gen_keys gen_otpmk_drbg gen_drv_drbg \
 			gen_sign sign_embed gen_fusescr \
-			cst_verify \
+			$(VERIFY_BINARIES)
 
 # targets that are not files
 .PHONY: all clean
@@ -170,7 +181,7 @@ gen_fusescr: ${gen_fusescr_OBJS}
 	${LD} ${LDFLAGS} -o $@ $^ ${LIBS}
 
 cst_verify: ${cst_verify_OBJS}
-	${LD} ${LDFLAGS} -o $@ $^ ${LIBS} ${JSON_LIBS}
+	${LD} ${LDFLAGS} -o $@ $^ ${LIBS} ${JSON_LIBS} ${RCW_LIBS}
 
 $(LIB_HASH_DRBG):
 	@echo "#########################################"
@@ -195,7 +206,7 @@ install-%: %
 	$(INSTALL) -m 755 $< $(DESTDIR)$(BIN_DEST_DIR)/cst/
 
 clean:
-	${RM} *.o ${INSTALL_BINARIES}
+	${RM} *.o ${INSTALL_BINARIES} cst_verify
 
 distclean:	clean
 	${RM} *.pub *.pri $(LIB_HASH_DRBG)

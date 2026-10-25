@@ -200,6 +200,10 @@ static const char *mode_name(enum verify_mode m)
 		return "esbc";
 	case VERIFY_ISBC:
 		return "isbc";
+	case VERIFY_PBI:
+		return "pbi";
+	case VERIFY_PBL:
+		return "pbl";
 	}
 	return "?";
 }

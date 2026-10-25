@@ -39,6 +39,9 @@ enum {
 	OPT_HDR = 256,
 	OPT_IMG,
 	OPT_IN,
+	OPT_PBL,
+	OPT_FLASH_BASE,
+	OPT_XIP_WINDOW,
 	OPT_HDR_SIZE,
 	OPT_PLATFORM,
 	OPT_TA,
@@ -52,6 +55,9 @@ static const struct option long_options[] = {
 	{"hdr", required_argument, 0, OPT_HDR},
 	{"img", required_argument, 0, OPT_IMG},
 	{"in", required_argument, 0, OPT_IN},
+	{"pbl", required_argument, 0, OPT_PBL},
+	{"flash-base", required_argument, 0, OPT_FLASH_BASE},
+	{"xip-window", required_argument, 0, OPT_XIP_WINDOW},
 	{"hdr-size", required_argument, 0, OPT_HDR_SIZE},
 	{"platform", required_argument, 0, OPT_PLATFORM},
 	{"ta", required_argument, 0, OPT_TA},
@@ -70,9 +76,11 @@ static void print_usage(void)
 	       "  cst_verify esbc --hdr <hdr> --img <image> [common]\n"
 	       "  cst_verify esbc --in <image with prepended header> [common]\n"
 	       "  cst_verify isbc --hdr <hdr_bl2> --img <img1> [--img <img2> ...] [common]\n"
-	       "  cst_verify dump <esbc|isbc> <same arguments>\n"
+	       "  cst_verify pbi  --pbl <pbl> [common]\n"
+	       "  cst_verify pbl  --pbl <pbl> --flash-base <addr> [--xip-window <base>:<size>] [common]\n"
+	       "  cst_verify dump <esbc|isbc|pbi|pbl> <same arguments>\n"
 	       "\n"
-	       "Verify the CSF headers and images produced by CST for the\n"
+	       "Verify the CSF headers, PBI and images produced by CST for the\n"
 	       "trust architecture 3.x BootROM and TF-A BL2, from the output\n"
 	       "files only.\n"
 	       "\n"
@@ -96,6 +104,10 @@ static int parse_mode(const char *s, enum verify_mode *m)
 		*m = VERIFY_ESBC;
 	else if (strcmp(s, "isbc") == 0)
 		*m = VERIFY_ISBC;
+	else if (strcmp(s, "pbi") == 0)
+		*m = VERIFY_PBI;
+	else if (strcmp(s, "pbl") == 0)
+		*m = VERIFY_PBL;
 	else
 		return -1;
 	return 0;
@@ -132,6 +144,20 @@ static int parse_pub(struct verify_req *r, char *list)
 		r->num_pub++;
 	}
 	return r->num_pub ? 0 : -1;
+}
+
+static int parse_xip(struct verify_req *r, char *arg)
+{
+	char *colon = strchr(arg, ':');
+
+	if (colon == NULL)
+		return -1;
+	*colon = '\0';
+	if (vr_parse_u64(arg, &r->xip_base) != 0 ||
+	    vr_parse_u64(colon + 1, &r->xip_size) != 0)
+		return -1;
+	r->xip_set = 1;
+	return 0;
 }
 
 static void free_req(struct verify_req *r)
@@ -171,7 +197,7 @@ int main(int argc, char **argv)
 		optind = 2;
 	}
 	if (optind >= argc || parse_mode(argv[optind], &r.mode) != 0) {
-		fprintf(stderr, "cst_verify: expected esbc or isbc\n");
+		fprintf(stderr, "cst_verify: expected esbc, isbc, pbi or pbl\n");
 		return VR_EXIT_ERROR;
 	}
 	optind++;
@@ -190,7 +216,17 @@ int main(int argc, char **argv)
 			img_name[num_img++] = optarg;
 			break;
 		case OPT_IN:
+		case OPT_PBL:
 			in_name = optarg;
+			break;
+		case OPT_FLASH_BASE:
+			if (vr_parse_u64(optarg, &r.flash_base) != 0)
+				goto bad_arg;
+			r.flash_base_set = 1;
+			break;
+		case OPT_XIP_WINDOW:
+			if (parse_xip(&r, optarg) != 0)
+				goto bad_arg;
 			break;
 		case OPT_HDR_SIZE:
 			if (vr_parse_u64(optarg, &v) != 0 || v > 0xffffffffULL)
