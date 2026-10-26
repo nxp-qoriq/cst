@@ -414,7 +414,7 @@ int create_srk_calc_hash(uint32_t max_keys)
 		return FAILURE;
 	}
 
-	if (gd.option_img_hash == 0) {
+	if (gd.option_img_hash == 0 && gd.option_srk_hash == 0) {
 		if (gd.num_srk_entries != gd.num_pri_key) {
 			printf("Public and Private Key Count Mismatch\n");
 			return FAILURE;
