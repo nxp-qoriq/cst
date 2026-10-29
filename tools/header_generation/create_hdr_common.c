@@ -50,6 +50,7 @@ static struct option long_options[] = {
 	{"in", required_argument, 0, 'i'},
 	{"app", required_argument, 0, 'a'},
 	{"app_off", required_argument, 0, 'o'},
+	{"srkh-file", required_argument, 0, 'k'},
 	{"help", no_argument, &gd.help_flag, 1},
 	{0, 0, 0, 0}
 };
@@ -58,6 +59,8 @@ static void print_usage(char *tool)
 {
 	printf("\t--verbose          Display header Info after Creation\n");
 	printf("\t--hash             Print the SRK(Public key) hash.\n");
+	printf("\t--srkh-file <file> Write the SRK hash as the SRKH_0..SRKH_7\n");
+	printf("\t                   fields of a gen_fusescr input file\n");
 	printf("\t--img_hash         Header is generated without Signature.\n");
 	printf("\t                   Image Hash is stored in separate file.\n");
 	printf("\t--help             Show the Help for Tool Usage.\n");
@@ -256,6 +259,11 @@ int create_hdr(int argc, char **argv)
 				printf("offset is %d\n", offset);
 				append_flag = true;
 				break;
+			case 'k':
+				strncpy(gd.srkh_file_name, optarg,
+					MAX_FNAME_LEN - 1);
+				gd.srkh_file_flag = 1;
+				break;
 			default:
 				 printf("?? getopt returned character code 0%o ??\n", c);
 		}
@@ -373,8 +381,19 @@ int create_hdr(int argc, char **argv)
 		srk = (uint32_t *)gd.srk_hash;
 		for (i = 0; i < SHA256_DIGEST_LENGTH / sizeof(uint32_t); i++)
 			printf("\n\t SFP SRKHR%i = %08x", i, htonl(srk[i]));
+		if (gd.srkh_file_flag) {
+			ret = create_srkh_file();
+			if (ret != SUCCESS)
+				return ret;
+			printf("\n\t SRKH fields written to %s",
+			       gd.srkh_file_name);
+		}
 	} else {
 		printf("\nSRK (Public Key) Hash Not Available");
+		if (gd.srkh_file_flag) {
+			printf("\nError: --srkh-file needs the SRK hash\n");
+			return FAILURE;
+		}
 	}
 	ret = get_apnd_img(gd.input_file);
 	if (ret != SUCCESS)
@@ -532,6 +551,34 @@ int append_signature(void)
 
 	fclose(fhdr);
 
+	return SUCCESS;
+}
+
+/***************************************************************************
+ * Function	:	create_srkh_file
+ * Arguments	:	NONE
+ * Return	:	SUCCESS or FAILURE
+ * Description	:	Writes the SRK hash as SRKH_0..SRKH_7 gen_fusescr fields
+ ***************************************************************************/
+int create_srkh_file(void)
+{
+	int i;
+	FILE *fp;
+	uint32_t word;
+
+	fp = fopen(gd.srkh_file_name, "w");
+	if (fp == NULL) {
+		printf("Error in opening the file: %s\n", gd.srkh_file_name);
+		return FAILURE;
+	}
+	for (i = 0; i < SHA256_DIGEST_LENGTH / sizeof(uint32_t); i++) {
+		memcpy(&word, gd.srk_hash + i * sizeof(uint32_t), sizeof(word));
+		fprintf(fp, "SRKH_%d=%08x\n", i, htonl(word));
+	}
+	if (fclose(fp) != 0) {
+		printf("Error in Writing to file %s\n", gd.srkh_file_name);
+		return FAILURE;
+	}
 	return SUCCESS;
 }
 

@@ -67,6 +67,20 @@ run_hdr pbi_ta3   rcw_sec.bin    uni_pbi    input_files/uni_pbi/lx2160/input_pbi
 grep -qE '^[0-9a-f]{64}$' srk_hash.log || fail "--hash did not print a 64 hex digit SRK hash"
 pass "--hash prints SRK hash"
 
+# --srkh-file writes the hash as gen_fusescr fields, in SFP register order
+./uni_sign --hash --srkh-file srkh.txt input_files/uni_sign/ls104x_1012/input_bootscript_secure > /dev/null 2>&1
+[ "$(wc -l < srkh.txt)" = 8 ] || fail "srkh.txt does not have 8 lines"
+for i in 0 1 2 3 4 5 6 7; do
+	want=$(grep -oE "SFP SRKHR$i = [0-9a-f]{8}" srk_hash.log | cut -d' ' -f4)
+	grep -qx "SRKH_$i=$want" srkh.txt || fail "srkh.txt: SRKH_$i differs from SFP SRKHR$i"
+done
+hash=$(grep -E '^[0-9a-f]{64}$' srk_hash.log)
+[ "$(cut -d= -f2 srkh.txt | tr -d '\n')" = "$hash" ] || fail "srkh.txt words do not concatenate to the SRK hash"
+grep -v '^SRKH_' input_files/gen_fusescr/ls104x_1012/input_fuse_file > input_fuse_srkh
+cat srkh.txt >> input_fuse_srkh
+./gen_fusescr input_fuse_srkh > fuse_srkh.log 2>&1 || { cat fuse_srkh.log; fail "gen_fusescr with --srkh-file output"; }
+pass "--srkh-file output feeds gen_fusescr"
+
 # Two step flow: --img_hash, gen_sign, sign_embed
 cp hdr_bs.out hdr_bs.ref
 ./uni_sign --img_hash input_files/uni_sign/ls104x_1012/input_bootscript_secure > two_step.log 2>&1
