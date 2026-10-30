@@ -11,6 +11,7 @@
 /gen_sign
 /sign_embed
 /gen_fusescr
+/cst_verify
 /lib_hash_drbg/src/otpmk
 
 # Copied to the top directory by "make"

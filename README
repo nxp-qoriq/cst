@@ -12,6 +12,8 @@ CST tool providing the following tools:
 3. Signature Geneartion
 	- gen_sign
 	- sign_embed
+4. Verification
+	- cst_verify
 
 Wrapper scripts for invoking the Header creation tools have also been provided:
 1. uni_pbi (create_hdr_pbi)

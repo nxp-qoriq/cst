@@ -6,6 +6,9 @@ on:
   push:
   pull_request:
 
+env:
+  LIBQORIQ_RCW_REF: main
+
 jobs:
   build:
     name: ${{ matrix.os }}
@@ -20,18 +23,30 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libssl-dev
+          sudo apt-get install -y build-essential libssl-dev libjson-c-dev
+
+      - name: Install libqoriq-rcw from the source
+        run: |
+          sudo apt-get install -y git meson ninja-build pkg-config libmcpp-dev
+          git clone --depth 1 --branch "$LIBQORIQ_RCW_REF" https://github.com/vjardin/libqoriq-rcw "$RUNNER_TEMP/libqoriq-rcw"
+          meson setup "$RUNNER_TEMP/libqoriq-rcw/build" "$RUNNER_TEMP/libqoriq-rcw" --prefix=/usr/local --libdir=lib -Dtests=false -Dman=disabled
+          sudo meson install -C "$RUNNER_TEMP/libqoriq-rcw/build"
+          sudo ldconfig
 
       - name: Toolchain versions
         run: |
           gcc --version | head -1
           openssl version
+          pkg-config --modversion libqoriq-rcw
 
       - name: Build
         run: make
 
       - name: Smoke test
         run: tests/smoke.sh
+
+      - name: Verification test
+        run: tests/verify.sh
 
       - name: Install
         run: |
@@ -46,7 +61,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential libssl-dev git
+          DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential libssl-dev libjson-c-dev git
           git config --global --add safe.directory '*'
 
       - uses: actions/checkout@v7
@@ -62,6 +77,9 @@ jobs:
       - name: Smoke test
         run: tests/smoke.sh
 
+      - name: Verification test
+        run: tests/verify.sh
+
   build-openssl4:
     name: ubuntu-26.04 (OpenSSL 4.0)
     runs-on: ubuntu-26.04
@@ -75,7 +93,15 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential perl
+          sudo apt-get install -y build-essential perl libjson-c-dev
+
+      - name: Install libqoriq-rcw
+        run: |
+          sudo apt-get install -y git meson ninja-build pkg-config libmcpp-dev
+          git clone --depth 1 --branch "$LIBQORIQ_RCW_REF" https://github.com/vjardin/libqoriq-rcw "$RUNNER_TEMP/libqoriq-rcw"
+          meson setup "$RUNNER_TEMP/libqoriq-rcw/build" "$RUNNER_TEMP/libqoriq-rcw" --prefix=/usr/local --libdir=lib -Dtests=false -Dman=disabled
+          sudo meson install -C "$RUNNER_TEMP/libqoriq-rcw/build"
+          sudo ldconfig
 
       - name: Cache OpenSSL
         id: cache-openssl
@@ -109,3 +135,37 @@ jobs:
       - name: Smoke test
         run: |
           PATH=$OPENSSL_DIR/bin:$PATH LD_LIBRARY_PATH=$OPENSSL_DIR/lib tests/smoke.sh
+
+      - name: Verification test
+        run: |
+          PATH=$OPENSSL_DIR/bin:$PATH LD_LIBRARY_PATH=$OPENSSL_DIR/lib tests/verify.sh
+
+  sanitizers:
+    name: ubuntu-24.04 (ASan, UBSan)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libssl-dev libjson-c-dev
+
+      - name: Install libqoriq-rcw
+        run: |
+          sudo apt-get install -y git meson ninja-build pkg-config libmcpp-dev
+          git clone --depth 1 --branch "$LIBQORIQ_RCW_REF" https://github.com/vjardin/libqoriq-rcw "$RUNNER_TEMP/libqoriq-rcw"
+          meson setup "$RUNNER_TEMP/libqoriq-rcw/build" "$RUNNER_TEMP/libqoriq-rcw" --prefix=/usr/local --libdir=lib -Dtests=false -Dman=disabled
+          sudo meson install -C "$RUNNER_TEMP/libqoriq-rcw/build"
+          sudo ldconfig
+
+      - name: Build
+        run: |
+          CFLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -O1 -g" \
+          LDFLAGS="-fsanitize=address,undefined" make
+
+      - name: Smoke test
+        run: ASAN_OPTIONS=detect_leaks=0 tests/smoke.sh
+
+      - name: Verification test
+        run: ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=print_stacktrace=1 tests/verify.sh

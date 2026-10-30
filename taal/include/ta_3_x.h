@@ -49,4 +49,8 @@ int calc_srk_hash_ta_3_1(void);
 int dump_hdr_ta_3_0(void);
 int dump_hdr_ta_3_1(void);
 
+struct verify_req;
+int verify_ta_3_0(struct verify_req *);
+int verify_ta_3_1(struct verify_req *);
+
 #endif

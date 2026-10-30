@@ -16,6 +16,8 @@ Source0:        https://github.com/vjardin/cst/archive/%{commit}/%{name}-%{short
 BuildRequires:  gcc
 BuildRequires:  make
 BuildRequires:  openssl-devel
+BuildRequires:  json-c-devel
+BuildRequires:  pkgconfig(libqoriq-rcw) >= 1.4.0
 # tests/smoke.sh verifies the signatures with the openssl command
 BuildRequires:  openssl
 Recommends:     openssl
@@ -39,7 +41,7 @@ under %{_datadir}/%{name}.
 install -D -m 755 -t %{buildroot}%{_bindir} \
         create_hdr_isbc create_hdr_esbc create_hdr_pbi create_hdr_cf \
         gen_keys gen_otpmk_drbg gen_drv_drbg gen_sign sign_embed gen_fusescr \
-        scripts/uni_sign scripts/uni_pbi scripts/uni_cfsign
+        cst_verify scripts/uni_sign scripts/uni_pbi scripts/uni_cfsign
 install -d %{buildroot}%{_datadir}/%{name}
 cp -r input_files scripts/platforms %{buildroot}%{_datadir}/%{name}/
 # stray shell snippet committed upstream by mistake
@@ -48,6 +50,7 @@ install -m 644 byte_swap.tcl %{buildroot}%{_datadir}/%{name}/
 
 %check
 tests/smoke.sh
+tests/verify.sh
 
 %files
 %license LICENSE
@@ -62,6 +65,7 @@ tests/smoke.sh
 %{_bindir}/gen_sign
 %{_bindir}/sign_embed
 %{_bindir}/gen_fusescr
+%{_bindir}/cst_verify
 %{_bindir}/uni_sign
 %{_bindir}/uni_pbi
 %{_bindir}/uni_cfsign

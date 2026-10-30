@@ -61,4 +61,10 @@ int dump_hdr_ta_2_0_nonpbl(void);
 int dump_hdr_ta_2_1_arm7(void);
 int dump_hdr_ta_2_1_arm8(void);
 
+struct verify_req;
+int verify_ta_2_0_pbl(struct verify_req *);
+int verify_ta_2_0_nonpbl(struct verify_req *);
+int verify_ta_2_1_arm7(struct verify_req *);
+int verify_ta_2_1_arm8(struct verify_req *);
+
 #endif

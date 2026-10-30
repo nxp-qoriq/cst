@@ -53,6 +53,9 @@ typedef int (*ta_img_hash)(void);
 typedef int (*ta_srk_hash)(void);
 typedef int (*ta_dump)(void);
 
+struct verify_req;
+typedef int (*ta_verify)(struct verify_req *);
+
 struct taal_t {
 	ta_parse	parse_input_file;
 	ta_fill		fill_structure;
@@ -60,6 +63,7 @@ struct taal_t {
 	ta_img_hash	calc_img_hash;
 	ta_srk_hash	calc_srk_hash;
 	ta_dump		dump_hdr;
+	ta_verify	verify;
 };
 
 /* Wrappers over target API */
@@ -69,8 +73,10 @@ int taal_create_hdr(enum cfg_taal);
 int taal_calc_img_hash(enum cfg_taal);
 int taal_calc_srk_hash(enum cfg_taal);
 int taal_dump_header(enum cfg_taal);
+int taal_verify(enum cfg_taal, struct verify_req *);
 
 /* Get TA from File */
 enum cfg_taal get_ta_from_file(char *file_name);
+enum cfg_taal get_ta_from_platform(const char *plat_name);
 
 #endif
