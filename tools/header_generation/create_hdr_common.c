@@ -394,7 +394,7 @@ int create_hdr(int argc, char **argv)
  ***************************************************************************/
 int create_srk_calc_hash(uint32_t max_keys)
 {
-	int i, ret;
+	int i, ret = SUCCESS;
 	uint32_t key_len;
 	uint8_t ctx[CRYPTO_HASH_CTX_SIZE];
 
