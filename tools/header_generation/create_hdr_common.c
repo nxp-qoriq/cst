@@ -414,8 +414,12 @@ int create_srk_calc_hash(uint32_t max_keys)
 		return FAILURE;
 	}
 
+	/* PRI_KEY is either the private key of KEY_SELECT alone, or the
+	 * private keys of the whole PUB_KEY list, in the same order.
+	 */
 	if (gd.option_img_hash == 0 && gd.option_srk_hash == 0) {
-		if (gd.num_srk_entries != gd.num_pri_key) {
+		if (gd.num_pri_key != 1 &&
+		    gd.num_pri_key != gd.num_srk_entries) {
 			printf("Public and Private Key Count Mismatch\n");
 			return FAILURE;
 		}
@@ -497,8 +501,11 @@ int parse_input_file(char **list, uint32_t num_list)
 int calculate_signature(void)
 {
 	int ret;
+	/* A single PRI_KEY is the private key of the selected SRK */
+	uint32_t pri = (gd.num_pri_key == 1) ? 0 : gd.srk_sel - 1;
+
 	ret = crypto_rsa_sign(gd.img_hash, SHA256_DIGEST_LENGTH,
-		gd.rsa_sign, &gd.rsa_size, gd.pri_fname[gd.srk_sel - 1]);
+		gd.rsa_sign, &gd.rsa_size, gd.pri_fname[pri]);
 	if (ret != SUCCESS)
 		printf("Error in Signing\n");
 
